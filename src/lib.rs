@@ -7,6 +7,8 @@
 
 extern crate core;
 
+pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
+
 pub use bmp::BmpFile;
 pub use color::Color;
 pub use event::*;
@@ -19,4 +21,7 @@ pub mod color;
 pub mod event;
 pub mod point;
 pub mod size;
+
+#[cfg(target_os = "redox")]
+#[path="orbital/window.rs"]
 pub mod window;

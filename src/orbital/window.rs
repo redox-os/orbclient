@@ -4,6 +4,7 @@ use std::mem;
 use std::slice;
 use std::thread;
 
+use super::FONT;
 use super::Event;
 use super::Color;
 
@@ -21,8 +22,6 @@ pub struct Window {
     t: String,
     /// The input scheme
     file: File,
-    /// Font file
-    font: Vec<u8>,
     /// Window data
     data: Box<[Color]>,
 }
@@ -30,11 +29,6 @@ pub struct Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Box<Self>> {
-        let mut font = Vec::new();
-        if let Ok(mut font_file) = File::open("file:/ui/unifont.font") {
-            let _ = font_file.read_to_end(&mut font);
-        }
-
         match File::open(&format!("orbital:/{}/{}/{}/{}/{}", x, y, w, h, title)) {
             Ok(file) => {
                 Some(box Window {
@@ -44,7 +38,6 @@ impl Window {
                     h: h,
                     t: title.to_string(),
                     file: file,
-                    font: font,
                     data: vec![Color::rgb(0, 0, 0); (w * h * 4) as usize].into_boxed_slice(),
                 })
             }
@@ -139,7 +132,7 @@ impl Window {
         for row in 0..16 {
             let row_data;
             if offset < self.font.len() {
-                row_data = self.font[offset];
+                row_data = FONT[offset];
             } else {
                 row_data = 0;
             }
