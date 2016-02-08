@@ -131,7 +131,7 @@ impl Window {
         let mut offset = (c as usize) * 16;
         for row in 0..16 {
             let row_data;
-            if offset < self.font.len() {
+            if offset < FONT.len() {
                 row_data = FONT[offset];
             } else {
                 row_data = 0;
