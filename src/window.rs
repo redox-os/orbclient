@@ -3,7 +3,6 @@ use std::io::*;
 use std::mem;
 use std::slice;
 use std::thread;
-use std::to_num::ToNum;
 
 use super::Event;
 use super::Color;
@@ -60,16 +59,16 @@ impl Window {
             if let Some(path_str) = path.to_str() {
                 let mut parts = path_str.split('/').skip(1);
                 if let Some(x) = parts.next() {
-                    self.x = x.to_num_signed();
+                    self.x = x.parse::<i32>().unwrap_or(0);
                 }
                 if let Some(y) = parts.next() {
-                    self.y = y.to_num_signed();
+                    self.y = y.parse::<i32>().unwrap_or(0);
                 }
                 if let Some(w) = parts.next() {
-                    self.w = w.to_num();
+                    self.w = w.parse::<u32>().unwrap_or(0);
                 }
                 if let Some(h) = parts.next() {
-                    self.h = h.to_num();
+                    self.h = h.parse::<u32>().unwrap_or(0);
                 }
             }
         }
