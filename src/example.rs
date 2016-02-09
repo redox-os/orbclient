@@ -24,6 +24,7 @@ fn main() {
 
     loop {
         for event in window.events() {
+            println!("{:?}", event.to_option());
             if let EventOption::Quit(_) = event.to_option() {
                 return;
             }

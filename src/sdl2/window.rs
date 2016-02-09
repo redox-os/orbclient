@@ -1,9 +1,7 @@
-extern crate num;
 extern crate sdl2;
 
-use self::num::traits::ToPrimitive;
-
-use super::{FONT, Color, Event, KeyEvent, MouseEvent, QuitEvent};
+use super::{FONT, Color};
+use super::event::*;
 
 /// A window
 #[allow(dead_code)]
@@ -163,75 +161,97 @@ impl Window {
         }
     }
 
-    fn convert_event(&self, event: sdl2::event::Event) -> Event {
-        match event {
-            sdl2::event::Event::MouseMotion { .. } => {
-               let mouse = self.ctx.mouse().mouse_state();
-               MouseEvent {
-                x: mouse.1,
-                y: mouse.2,
-                left_button: mouse.0.left(),
-                middle_button: mouse.0.middle(),
-                right_button: mouse.0.right()
-                }.to_event()
-            },
-            sdl2::event::Event::MouseButtonDown { .. } => {
-               let mouse = self.ctx.mouse().mouse_state();
-               MouseEvent {
-                x: mouse.1,
-                y: mouse.2,
-                left_button: mouse.0.left(),
-                middle_button: mouse.0.middle(),
-                right_button: mouse.0.right()
-                }.to_event()
-            },
-            sdl2::event::Event::MouseButtonUp { .. } => {
-               let mouse = self.ctx.mouse().mouse_state();
-               MouseEvent {
-                x: mouse.1,
-                y: mouse.2,
-                left_button: mouse.0.left(),
-                middle_button: mouse.0.middle(),
-                right_button: mouse.0.right()
-                }.to_event()
-            },
-            sdl2::event::Event::KeyDown { scancode, .. } => KeyEvent {
-                character: if let Some(sc) = scancode {
-                    if let Some(c) = sc.name().chars().next() {
-                        c
-                    } else {
-                        '\0'
-                    }
-                } else {
-                    '\0'
-                },
-                scancode: if let Some(sc) = scancode {
-                    sc.to_u8().unwrap_or(0)
-                } else {
-                    0
-                },
-                pressed: true,
-            }.to_event(),
-            sdl2::event::Event::KeyUp { scancode, .. } => KeyEvent {
-                character: if let Some(sc) = scancode {
-                    if let Some(c) = sc.name().chars().next() {
-                        c
-                    } else {
-                        '\0'
-                    }
-                } else {
-                    '\0'
-                },
-                scancode: if let Some(sc) = scancode {
-                    sc.to_u8().unwrap_or(0)
-                } else {
-                    0
-                },
-                pressed: false,
-            }.to_event(),
-            sdl2::event::Event::Quit { .. } => QuitEvent.to_event(),
-            _ => Event::new(),
+    fn convert_keycode(&self, keycode_option: Option<sdl2::keyboard::Keycode>) -> Option<(char, u8)> {
+        if let Some(keycode) = keycode_option {
+            match keycode {
+                sdl2::keyboard::Keycode::Return => Some(('\n', 0)),
+
+                sdl2::keyboard::Keycode::Escape => Some(('\x1B', K_ESC)),
+                sdl2::keyboard::Keycode::Backspace => Some(('\0', K_BKSP)),
+                sdl2::keyboard::Keycode::Tab => Some(('\t', K_TAB)),
+                sdl2::keyboard::Keycode::LCtrl => Some(('\0', K_CTRL)),
+                sdl2::keyboard::Keycode::RCtrl => Some(('\0', K_CTRL)),
+                sdl2::keyboard::Keycode::LAlt => Some(('\0', K_ALT)),
+                sdl2::keyboard::Keycode::RAlt => Some(('\0', K_ALT)),
+                sdl2::keyboard::Keycode::F1 => Some(('\0', K_F1)),
+                sdl2::keyboard::Keycode::F2 => Some(('\0', K_F2)),
+                sdl2::keyboard::Keycode::F3 => Some(('\0', K_F3)),
+                sdl2::keyboard::Keycode::F4 => Some(('\0', K_F4)),
+                sdl2::keyboard::Keycode::F5 => Some(('\0', K_F5)),
+                sdl2::keyboard::Keycode::F6 => Some(('\0', K_F6)),
+                sdl2::keyboard::Keycode::F7 => Some(('\0', K_F7)),
+                sdl2::keyboard::Keycode::F8 => Some(('\0', K_F8)),
+                sdl2::keyboard::Keycode::F9 => Some(('\0', K_F9)),
+                sdl2::keyboard::Keycode::F10 => Some(('\0', K_F10)),
+                sdl2::keyboard::Keycode::Home => Some(('\0', K_HOME)),
+                sdl2::keyboard::Keycode::Up => Some(('\0', K_UP)),
+                sdl2::keyboard::Keycode::PageUp => Some(('\0', K_PGUP)),
+                sdl2::keyboard::Keycode::Left => Some(('\0', K_LEFT)),
+                sdl2::keyboard::Keycode::Right => Some(('\0', K_RIGHT)),
+                sdl2::keyboard::Keycode::End => Some(('\0', K_END)),
+                sdl2::keyboard::Keycode::Down => Some(('\0', K_DOWN)),
+                sdl2::keyboard::Keycode::PageDown => Some(('\0', K_PGDN)),
+                sdl2::keyboard::Keycode::Delete => Some(('\0', K_DEL)),
+                sdl2::keyboard::Keycode::F11 => Some(('\0', K_F11)),
+                sdl2::keyboard::Keycode::F12 => Some(('\0', K_F12)),
+                sdl2::keyboard::Keycode::LShift => Some(('\0', K_LEFT_SHIFT)),
+                sdl2::keyboard::Keycode::RShift => Some(('\0', K_RIGHT_SHIFT)),
+                _ => None
+            }
+        } else {
+            None
         }
+    }
+
+    fn convert_event(&self, event: sdl2::event::Event) -> Vec<Event> {
+        let mut events = Vec::new();
+
+        let mouse_event = || -> Event {
+            let mouse = self.ctx.mouse().mouse_state();
+            MouseEvent {
+                x: mouse.1,
+                y: mouse.2,
+                left_button: mouse.0.left(),
+                middle_button: mouse.0.middle(),
+                right_button: mouse.0.right()
+            }.to_event()
+        };
+
+        match event {
+            sdl2::event::Event::MouseMotion { .. } => events.push(mouse_event()),
+            sdl2::event::Event::MouseButtonDown { .. } => events.push(mouse_event()),
+            sdl2::event::Event::MouseButtonUp { .. } => events.push(mouse_event()),
+            sdl2::event::Event::KeyDown { keycode, .. } => if let Some(code) = self.convert_keycode(keycode) {
+                events.push(KeyEvent {
+                    character: code.0,
+                    scancode: code.1,
+                    pressed: true
+                }.to_event());
+            },
+            sdl2::event::Event::KeyUp { keycode, .. } => if let Some(code) = self.convert_keycode(keycode) {
+                events.push(KeyEvent {
+                    character: code.0,
+                    scancode: code.1,
+                    pressed: false
+                }.to_event());
+            },
+            sdl2::event::Event::TextInput { text, .. } => for c in text.chars() {
+                events.push(KeyEvent {
+                    character: c,
+                    scancode: 0,
+                    pressed: true
+                }.to_event());
+                events.push(KeyEvent {
+                    character: c,
+                    scancode: 0,
+                    pressed: false
+                }.to_event());
+            },
+            sdl2::event::Event::Quit { .. } => events.push(QuitEvent.to_event()),
+            _ => (),
+        }
+
+        events
     }
 
     /// Return a iterator over events
@@ -243,29 +263,32 @@ impl Window {
         };
 
         while let Some(event) = self.event_pump.poll_event() {
-            if iter.count < iter.events.len() {
-                iter.events[iter.count] = self.convert_event(event);
-                iter.count += 1;
-            } else {
+            for converted_event in self.convert_event(event) {
+                if iter.count < iter.events.len() {
+                    iter.events[iter.count] = converted_event;
+                    iter.count += 1;
+                } else {
+                    break;
+                }
+            }
+            if iter.count + 2 < iter.events.len() {
                 break;
             }
         }
 
         if iter.count == 0 {
             let event = self.event_pump.wait_event();
-            iter.events[iter.count] = self.convert_event(event);
-            iter.count += 1;
+            for converted_event in self.convert_event(event) {
+                if iter.count < iter.events.len() {
+                    iter.events[iter.count] = converted_event;
+                    iter.count += 1;
+                } else {
+                    break;
+                }
+            }
         }
 
         iter
-    }
-
-    /// Poll for an event
-    // TODO: Replace with events()
-    #[deprecated]
-    pub fn poll(&mut self) -> Option<Event> {
-        let event = self.event_pump.wait_event();
-        Some(self.convert_event(event))
     }
 
     /// Flip the window buffer
