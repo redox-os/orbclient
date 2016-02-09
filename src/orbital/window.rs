@@ -184,7 +184,7 @@ impl Window {
     }
 
     /// Return a iterator over events
-    pub fn events(&mut self) -> EventIter {
+    fn events_inner(&mut self, wait: bool) -> EventIter {
         let mut iter = EventIter {
             events: [Event::new(); 128],
             i: 0,
@@ -196,7 +196,11 @@ impl Window {
             match self.file.read(unsafe {
                 slice::from_raw_parts_mut(iter.events.as_mut_ptr() as *mut u8, iter.events.len() * mem::size_of::<Event>())
             }){
-                Ok(0) => thread::yield_now(),
+                Ok(0) => if wait {
+                    thread::yield_now();
+                } else {
+                    break 'blocking;
+                },
                 Ok(count) => {
                     iter.count = count/mem::size_of::<Event>();
                     break 'blocking;
@@ -208,18 +212,14 @@ impl Window {
         iter
     }
 
-    /// Poll for an event
-    // TODO: Replace with events()
-    #[deprecated]
-    pub fn poll(&mut self) -> Option<Event> {
-        loop {
-            let mut event = Event::new();
-            match self.file.read(&mut event) {
-                Ok(0) => thread::yield_now(),
-                Ok(_) => return Some(event),
-                Err(_) => return None,
-            }
-        }
+    /// Blocking iterator over events
+    pub fn events(&mut self) -> EventIter {
+        self.events_inner(true)
+    }
+
+    /// Nonblocking iterator over events
+    pub fn events_no_wait(&mut self) -> EventIter {
+        self.events_inner(false)
     }
 
     /// Flip the window buffer

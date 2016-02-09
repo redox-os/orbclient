@@ -255,12 +255,24 @@ impl Window {
     }
 
     /// Return a iterator over events
-    pub fn events(&mut self) -> EventIter {
+    fn events_inner(&mut self, wait: bool) -> EventIter {
         let mut iter = EventIter {
             events: [Event::new(); 128],
             i: 0,
             count: 0,
         };
+
+        if wait {
+            let event = self.event_pump.wait_event();
+            for converted_event in self.convert_event(event) {
+                if iter.count < iter.events.len() {
+                    iter.events[iter.count] = converted_event;
+                    iter.count += 1;
+                } else {
+                    break;
+                }
+            }
+        }
 
         while let Some(event) = self.event_pump.poll_event() {
             for converted_event in self.convert_event(event) {
@@ -276,19 +288,17 @@ impl Window {
             }
         }
 
-        if iter.count == 0 {
-            let event = self.event_pump.wait_event();
-            for converted_event in self.convert_event(event) {
-                if iter.count < iter.events.len() {
-                    iter.events[iter.count] = converted_event;
-                    iter.count += 1;
-                } else {
-                    break;
-                }
-            }
-        }
-
         iter
+    }
+
+    /// Blocking iterator over events
+    pub fn events(&mut self) -> EventIter {
+        self.events_inner(true)
+    }
+
+    /// Nonblocking iterator over events
+    pub fn events_no_wait(&mut self) -> EventIter {
+        self.events_inner(false)
     }
 
     /// Flip the window buffer
