@@ -1,21 +1,31 @@
 extern crate orbclient;
 
-use orbclient::{Color, EventOption, Window};
+use std::cmp::max;
+use std::env;
 
-use std::thread;
+use orbclient::{BmpFile, Color, EventOption, Window};
 
 fn main() {
-    let mut window = Window::new(-1, -1, 400, 300, "Test").unwrap();
-    window.set(Color::rgb(0, 255, 0));
-    window.char(16, 16, 'A', Color::rgb(255, 255, 255));
+    let path = match env::args().nth(1) {
+        Some(arg) => arg,
+        None => "res/redox.bmp".to_string(),
+    };
+
+    let bmp = BmpFile::from_path(&path);
+    let mut window = Window::new(-1,
+                                 -1,
+                                 max(32, bmp.width() as u32),
+                                 max(32, bmp.height() as u32),
+                                 &path)
+                         .unwrap();
+    window.set(Color::rgb(0, 0, 0));
+    window.image(0, 0, bmp.width() as u32, bmp.height() as u32, &bmp);
     window.sync();
 
-    'events: loop {
+    loop {
         for event in window.events() {
-            println!("{:?}", event.to_option());
-            match event.to_option() {
-                EventOption::Quit(_) => break 'events,
-                _ => ()
+            if let EventOption::Quit(_) = event.to_option() {
+                return;
             }
         }
     }
