@@ -25,3 +25,7 @@ pub mod size;
 #[cfg(target_os = "redox")]
 #[path="orbital/window.rs"]
 pub mod window;
+
+#[cfg(not(target_os = "redox"))]
+#[path="sdl2/window.rs"]
+pub mod window;
