@@ -5,6 +5,7 @@ repository = "https://github.com/redox-os/orbclient"
 version = "0.1.2"
 license-file = "LICENSE"
 readme = "README.md"
+keywords = ["orbital", "redox", "ui"]
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 
 [lib]
