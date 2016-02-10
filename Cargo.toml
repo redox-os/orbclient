@@ -13,8 +13,8 @@ name = "orbclient"
 path = "src/lib.rs"
 
 [[bin]]
-name = "example"
-path = "src/example.rs"
+name = "redox_icon_display"
+path = "examples/redox_icon_display.rs"
 
 [target.i686-unknown-linux-gnu.dependencies]
 sdl2 = "0.9"
