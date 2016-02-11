@@ -191,10 +191,11 @@ impl Window {
 
     // Allows to draw a bottom border in the window
     // x_limit is the top limit of the border!!!
-    pub fn set_border_bottom(&mut self, color: Color, density: u32) {
+    pub fn set_border_bottom(&mut self, y_limit: i32, color: Color, density: u32) {
         for x in 0..self.x {
             for y in 0..(y_limit + density) {
-                self.pixel(x, self.y - y, color);
+                let new_y : i32 = self.height as i32;
+                self.pixel(x, (new_y - y), color);
             }
         }
     }
