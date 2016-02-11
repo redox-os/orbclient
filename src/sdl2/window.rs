@@ -99,12 +99,14 @@ impl Window {
 
     /// Draw a pixel
     pub fn pixel(&mut self, x: i32, y: i32, color: Color) {
+        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
         self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
         self.inner.draw_point(sdl2::rect::Point::new(x, y));
     }
 
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
+        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
         self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
 
         let mut offset = (c as usize) * 16;
@@ -132,9 +134,11 @@ impl Window {
     // TODO: Improve speed
     #[allow(unused_variables)]
     pub fn set(&mut self, color: Color) {
-        let w = self.w;
-        let h = self.h;
-        self.rect(0, 0, w, h, color);
+        if let Some(rect) = sdl2::rect::Rect::new(0, 0, self.w, self.h).unwrap_or(None) {
+            self.inner.set_blend_mode(sdl2::render::BlendMode::None);
+            self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
+            self.inner.fill_rect(rect);
+        }
     }
 
     /// Draw rectangle
@@ -142,6 +146,7 @@ impl Window {
     #[allow(unused_variables)]
     pub fn rect(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, color: Color) {
         if let Some(rect) = sdl2::rect::Rect::new(start_x, start_y, w, h).unwrap_or(None) {
+            self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
             self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
             self.inner.fill_rect(rect);
         }
