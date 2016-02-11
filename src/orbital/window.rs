@@ -158,6 +158,8 @@ impl Window {
         }
     }
 
+    // Allows to draw a left border in the window
+    // x_limit is the left limit of the border!!!
     pub fn set_border_left(&mut self, x_limit: i32, color: Color, density: i32) {
         for y in 0..self.height {
             for x in x_limit..(x_limit + density) {
@@ -166,6 +168,8 @@ impl Window {
         }
     }
 
+    // Allows to draw a right border in the window
+    // x_limit is the left limit of the border!!!
     pub fn set_border_right(&mut self, x_limit: i32, color: Color, density: i32) {
         for y in 0..self.height {
             for x in x_limit..(x_limit + density) {
@@ -175,6 +179,8 @@ impl Window {
         }
     }
 
+    // Allows to draw a top border in the window
+    // x_limit is the top limit of the border!!!
     pub fn set_border_top(&mut self, y_limit: i32, color: Color, density: u32) {
         for x in 0..self.width {
             for y in y_limit..(y_limit + density) {
@@ -183,6 +189,8 @@ impl Window {
         }
     }
 
+    // Allows to draw a bottom border in the window
+    // x_limit is the top limit of the border!!!
     pub fn set_border_bottom(&mut self, color: Color, density: u32) {
         for x in 0..self.x {
             for y in 0..(y_limit + density) {
