@@ -158,6 +158,39 @@ impl Window {
         }
     }
 
+    pub fn set_border_left(&mut self, x_limit: i32, color: Color, density: i32) {
+        for y in 0..self.height {
+            for x in x_limit..(x_limit + density) {
+                self.pixel(x, y as i32, color);
+            }
+        }
+    }
+
+    pub fn set_border_right(&mut self, x_limit: i32, color: Color, density: i32) {
+        for y in 0..self.height {
+            for x in x_limit..(x_limit + density) {
+                let new_x : i32 = self.width as i32;
+                self.pixel((new_x - x), y as i32, color);
+            }
+        }
+    }
+
+    pub fn set_border_top(&mut self, y_limit: i32, color: Color, density: u32) {
+        for x in 0..self.width {
+            for y in y_limit..(y_limit + density) {
+                self.pixel(x, y, color);
+            }
+        }
+    }
+
+    pub fn set_border_bottom(&mut self, color: Color, density: u32) {
+        for x in 0..self.x {
+            for y in 0..(y_limit + density) {
+                self.pixel(x, self.y - y, color);
+            }
+        }
+    }
+
     /// Draw rectangle
     // TODO: Improve speed
     #[allow(unused_variables)]
