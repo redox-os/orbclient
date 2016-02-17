@@ -2,7 +2,7 @@
 name = "orbclient"
 description = "The Orbital Client Library"
 repository = "https://github.com/redox-os/orbclient"
-version = "0.1.3"
+version = "0.1.4"
 license-file = "LICENSE"
 readme = "README.md"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
@@ -19,6 +19,12 @@ path = "src/example.rs"
 sdl2 = "0.9"
 
 [target.x86_64-unknown-linux-gnu.dependencies]
+sdl2 = "0.9"
+
+[target.i686-unknown-linux-musl.dependencies]
+sdl2 = "0.9"
+
+[target.x86_64-unknown-linux-musl.dependencies]
 sdl2 = "0.9"
 
 [target.i686-pc-windows-gnu.dependencies]
