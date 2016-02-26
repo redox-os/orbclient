@@ -99,6 +99,14 @@ impl Window {
         // TODO
     }
 
+    pub fn data(&self) -> &[Color] {
+        &self.data
+    }
+
+    pub fn data_mut(&mut self) -> &mut [Color] {
+        &mut self.data
+    }
+
     /// Draw a pixel
     pub fn pixel(&mut self, x: i32, y: i32, color: Color) {
         if x >= 0 && y >= 0 && x < self.w as i32 && y < self.h as i32 {

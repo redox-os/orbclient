@@ -1,5 +1,7 @@
 extern crate sdl2;
 
+use std::{mem, slice};
+
 use super::{FONT, Color};
 use super::event::*;
 
@@ -95,6 +97,16 @@ impl Window {
     /// Set title
     pub fn set_title(&mut self, _: &str) {
         // TODO
+    }
+
+    pub fn data(&self) -> &[Color] {
+        let bytes = self.inner.surface().unwrap().without_lock().unwrap();
+        unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
+    }
+
+    pub fn data_mut(&mut self) -> &mut [Color] {
+        let bytes = self.inner.surface_mut().unwrap().without_lock_mut().unwrap();
+        unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
     }
 
     /// Draw a pixel

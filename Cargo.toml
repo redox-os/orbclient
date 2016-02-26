@@ -11,10 +11,6 @@ authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 name = "orbclient"
 path = "src/lib.rs"
 
-[[bin]]
-name = "example"
-path = "src/example.rs"
-
 [target.i686-unknown-linux-gnu.dependencies]
 sdl2 = "0.9"
 
