@@ -20,6 +20,8 @@ pub struct Window {
     h: u32,
     /// The title of the window
     t: String,
+    /// True if the window should not wait for events
+    async: bool,
     /// The input scheme
     file: File,
     /// Window data
@@ -29,7 +31,12 @@ pub struct Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Box<Self>> {
-        match File::open(&format!("orbital:/{}/{}/{}/{}/{}", x, y, w, h, title)) {
+        Window::new_flags(x, y, w, h, title, false)
+    }
+
+    /// Create a new window with flags
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Box<Self>> {
+        match File::open(&format!("orbital:{}/{}/{}/{}/{}/{}", if async { "a" } else { "" }, x, y, w, h, title)) {
             Ok(file) => {
                 Some(box Window {
                     x: x,
@@ -37,6 +44,7 @@ impl Window {
                     w: w,
                     h: h,
                     t: title.to_string(),
+                    async: async,
                     file: file,
                     data: vec![Color::rgb(0, 0, 0); (w * h * 4) as usize].into_boxed_slice(),
                 })
@@ -191,8 +199,8 @@ impl Window {
         }
     }
 
-    /// Return a iterator over events
-    fn events_inner(&mut self, wait: bool) -> EventIter {
+    /// Blocking iterator over events
+    pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
             events: [Event::new(); 128],
             i: 0,
@@ -204,7 +212,7 @@ impl Window {
             match self.file.read(unsafe {
                 slice::from_raw_parts_mut(iter.events.as_mut_ptr() as *mut u8, iter.events.len() * mem::size_of::<Event>())
             }){
-                Ok(0) => if wait {
+                Ok(0) => if ! self.async {
                     thread::yield_now();
                 } else {
                     break 'blocking;
@@ -218,16 +226,6 @@ impl Window {
         }
 
         iter
-    }
-
-    /// Blocking iterator over events
-    pub fn events(&mut self) -> EventIter {
-        self.events_inner(true)
-    }
-
-    /// Nonblocking iterator over events
-    pub fn events_no_wait(&mut self) -> EventIter {
-        self.events_inner(false)
     }
 
     /// Flip the window buffer

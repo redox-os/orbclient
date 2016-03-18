@@ -18,6 +18,8 @@ pub struct Window {
     h: u32,
     /// The title of the window
     t: String,
+    /// True if the window should not wait for events
+    async: bool,
     /// SDL2 Context
     ctx: sdl2::Sdl,
     /// Video Context
@@ -31,6 +33,11 @@ pub struct Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Box<Self>> {
+        Window::new_flags(x, y, w, h, title, false)
+    }
+
+    /// Create a new window with flags
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Box<Self>> {
         let ctx = sdl2::init().unwrap();
         let video_ctx = ctx.video().unwrap();
         let event_pump = ctx.event_pump().unwrap();
@@ -48,6 +55,7 @@ impl Window {
                 w: w,
                 h: h,
                 t: title.to_string(),
+                async: async,
                 ctx: ctx,
                 video_ctx: video_ctx,
                 event_pump: event_pump,
@@ -273,13 +281,18 @@ impl Window {
 
     /// Return a iterator over events
     fn events_inner(&mut self, wait: bool) -> EventIter {
+
+    }
+
+    /// Blocking iterator over events
+    pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
             events: [Event::new(); 128],
             i: 0,
             count: 0,
         };
 
-        if wait {
+        if ! self.async {
             let event = self.event_pump.wait_event();
             for converted_event in self.convert_event(event) {
                 if iter.count < iter.events.len() {
@@ -306,16 +319,6 @@ impl Window {
         }
 
         iter
-    }
-
-    /// Blocking iterator over events
-    pub fn events(&mut self) -> EventIter {
-        self.events_inner(true)
-    }
-
-    /// Nonblocking iterator over events
-    pub fn events_no_wait(&mut self) -> EventIter {
-        self.events_inner(false)
     }
 
     /// Flip the window buffer
