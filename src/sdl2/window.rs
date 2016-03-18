@@ -279,11 +279,6 @@ impl Window {
         events
     }
 
-    /// Return a iterator over events
-    fn events_inner(&mut self, wait: bool) -> EventIter {
-
-    }
-
     /// Blocking iterator over events
     pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
