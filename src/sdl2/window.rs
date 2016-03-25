@@ -124,6 +124,13 @@ impl Window {
         self.inner.draw_point(sdl2::rect::Point::new(x, y));
     }
 
+    /// Draw a line
+    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
+        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
+        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
+        self.inner.draw_line(sdl2::rect::Point::new(x1, y1), sdl2::rect::Point::new(x2, y2));
+    }
+
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
