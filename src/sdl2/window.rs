@@ -130,7 +130,7 @@ impl Window {
         self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
         self.inner.draw_line(sdl2::rect::Point::new(x1, y1), sdl2::rect::Point::new(x2, y2));
     }
-
+    
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
