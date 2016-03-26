@@ -142,6 +142,24 @@ impl Window {
         }
     }
 
+    /// Draw a line
+    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
+        let triangle_x = x2 - x1;
+        let triangle_y = y2 - y1;
+
+        if triangle_x > triangle_y {
+            let ratio = triangle_y as f32 / triangle_x as f32;
+            for pixel in x1..x2 {
+                self.pixel(pixel, y1 + (ratio * pixel as f32 - x1 as f32) as i32, color);
+            }
+        } else if triangle_y >= triangle_x {
+            let ratio = triangle_x as f32 / triangle_y as f32;
+            for pixel in y1..y2 {
+                self.pixel(x1 + (ratio * pixel as f32 - y1 as f32) as i32, pixel, color);
+            }
+        }
+    }
+
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         let mut offset = (c as usize) * 16;
