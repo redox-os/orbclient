@@ -142,6 +142,7 @@ impl Window {
         }
     }
 
+    /// Draw a line
     pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
         let triangle_x = x2 - x1;
         let triangle_y = y2 - y1;
