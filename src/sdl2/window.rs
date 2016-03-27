@@ -126,9 +126,22 @@ impl Window {
 
     /// Draw a line
     pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-        self.inner.draw_line(sdl2::rect::Point::new(x1, y1), sdl2::rect::Point::new(x2, y2));
+        let triangle_x = x2 - x1;
+        let triangle_y = y2 - y1;
+
+        if triangle_x < triangle_y {
+            let ratio = triangle_y as f32 / triangle_x as f32;
+            for pixel in x1..x2 {
+                self.pixel(pixel, y1 + (ratio * pixel as f32 - x1 as f32) as i32, color);
+            }
+        } else if triangle_y <= triangle_x && triangle_y != 0 {
+            let ratio = triangle_x as f32 / triangle_y as f32;
+            for pixel in y1..y2 {
+                self.pixel(x1 + (ratio * pixel as f32 - y1 as f32) as i32, pixel, color);
+            }
+        } else if triangle_x == 0 && triangle_y == 0 {
+            self.pixel(x1, y1, color);
+        }
     }
 
     /// Draw multiple lines from point to point.
