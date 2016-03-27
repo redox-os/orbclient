@@ -126,8 +126,8 @@ impl Window {
 
     /// Draw a line
     pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
-        let triangle_x = x2 - x1;
-        let triangle_y = y2 - y1;
+        let triangle_x = x1 - x2;
+        let triangle_y = y1 - y2;
 
         if triangle_x > triangle_y {
             let ratio = triangle_y as f32 / triangle_x as f32;
