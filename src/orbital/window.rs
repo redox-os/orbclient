@@ -206,6 +206,11 @@ impl Window {
         }
     }
 
+    /// Sets the whole window to black
+    pub fn clear(&mut self) {
+        self.set(Color::rgb(0,0,0));
+    }
+
     // Allows to draw a left border in the window
     // x_limit is the left limit of the border!!!
     pub fn set_border_left(&mut self, x_limit: i32, color: Color, density: i32) {
