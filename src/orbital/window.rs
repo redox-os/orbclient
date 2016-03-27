@@ -162,6 +162,18 @@ impl Window {
         }
     }
 
+    pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
+        if points.len() == 0 {
+            // when no points given, do nothing
+        } else if points.len() == 1 {
+            self.pixel(points[0][0], points[0][1], color);
+        } else {
+            for i in 0..points.len() - 1 {
+                self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
+            }
+        }
+    }
+
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         let mut offset = (c as usize) * 16;
