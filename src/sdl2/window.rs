@@ -134,7 +134,7 @@ impl Window {
             for pixel in x1..x2 {
                 self.pixel(pixel, y1 + (ratio * pixel as f32 - x1 as f32) as i32, color);
             }
-        } else if triangle_y >= triangle_x && triangle_y != 0 {
+        } else if triangle_y <= triangle_x && triangle_y != 0 {
             let ratio = triangle_x as f32 / triangle_y as f32;
             for pixel in y1..y2 {
                 self.pixel(x1 + (ratio * pixel as f32 - y1 as f32) as i32, pixel, color);
