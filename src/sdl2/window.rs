@@ -125,19 +125,24 @@ impl Window {
     }
 
     /// Draw a line
+    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
+        let triangle_x = x2 - x1;
+        let triangle_y = y2 - y1;
 
-    pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
-        if points.len() == 0 {
-            // when no points given, do nothing
-        } else if points.len() == 1 {
-            self.pixel(points[0][0], points[0][1], color);
-        } else {
-            for i in 0..points.len() - 1 {
-                self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
+        if triangle_x > triangle_y {
+            let ratio = triangle_y as f32 / triangle_x as f32;
+            for pixel in x1..x2 {
+                self.pixel(pixel, y1 + (ratio * pixel as f32 - x1 as f32) as i32, color);
             }
+        } else if triangle_y >= triangle_x && triangle_y != 0 {
+            let ratio = triangle_x as f32 / triangle_y as f32;
+            for pixel in y1..y2 {
+                self.pixel(x1 + (ratio * pixel as f32 - y1 as f32) as i32, pixel, color);
+            }
+        } else if triangle_x == 0 && triangle_y == 0 {
+            self.pixel(x1, y1, color);
         }
     }
-
 
     /// Draw multiple lines from point to point.
     pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
