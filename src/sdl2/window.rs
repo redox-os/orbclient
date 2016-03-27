@@ -174,11 +174,9 @@ impl Window {
     // TODO: Improve speed
     #[allow(unused_variables)]
     pub fn set(&mut self, color: Color) {
-        if let Some(rect) = sdl2::rect::Rect::new(0, 0, self.w, self.h).unwrap_or(None) {
-            self.inner.set_blend_mode(sdl2::render::BlendMode::None);
-            self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-            self.inner.fill_rect(rect);
-        }
+        self.inner.set_blend_mode(sdl2::render::BlendMode::None);
+        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
+        self.inner.clear();
     }
 
     /// Sets the whole window to black
