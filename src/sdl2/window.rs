@@ -141,7 +141,7 @@ impl Window {
         let dx = x2 - x1;
         let dy = y2 - y1;
 
-        if dx > dy {
+        if dx >= dy {
             for x in x1..x2 {
                 let y = y1 + ((dy * (x - x1)) as f32 / dx as f32) as i32;
                 self.pixel(x, y, color);
