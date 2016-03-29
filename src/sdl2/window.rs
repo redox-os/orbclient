@@ -125,10 +125,35 @@ impl Window {
     }
 
     /// Draw a line
-    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-        self.inner.draw_line(sdl2::rect::Point::new(x1, y1), sdl2::rect::Point::new(x2, y2));
+    pub fn line(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32, color: Color) {
+        let mut x1 = argx1;
+        let mut y1 = argy1;
+        let mut x2 = argx2;
+        let mut y2 = argy2;
+
+        if x2 < x1 {
+            x1 = argx2;
+            y1 = argy2;
+            x2 = argx1;
+            y2 = argy1;
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        if dx >= dy {
+            for x in x1..x2 {
+                let y = y1 + ((dy * (x - x1)) as f32 / dx as f32) as i32;
+                self.pixel(x, y, color);
+            }
+        }
+
+        if dy > dx {
+            for y in y1..y2 {
+                let x = x1 + ((dx * (y - y1)) as f32 / dy as f32) as i32;
+                self.pixel(x, y, color);
+            }
+        }
     }
 
     /// Draw multiple lines from point to point.
