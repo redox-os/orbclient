@@ -143,25 +143,29 @@ impl Window {
     }
 
     /// Draw a line
-    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color) {
-        let triangle_x = x2 - x1;
-        let triangle_y = y2 - y1;
+    pub fn line(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32, color: Color) {
+        let mut x1 = argx1;
+        let mut y1 = argy1;
+        let mut x2 = argx2;
+        let mut y2 = argy2;
 
-        if triangle_x > triangle_y {
-            let ratio = triangle_y as f32 / triangle_x as f32;
-            for pixel in x1..x2 {
-                self.pixel(pixel, y1 + (ratio * pixel as f32 - x1 as f32) as i32, color);
-            }
-        } else if triangle_y > triangle_x {
-            let ratio = triangle_x as f32 / triangle_y as f32;
-            for pixel in y1..y2 {
-                self.pixel(x1 + (ratio * pixel as f32 - y1 as f32) as i32, pixel, color);
-            }
-        } else if triangle_x == 0 && triangle_y == 0 {
-            self.pixel(x1, y1, color);
+        if x2 < x1 {
+            x1 = argx2;
+            y1 = argy2;
+            x2 = argx1;
+            y2 = argy1;
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        //let ratio = dy as f32 / dx as f32;
+        for x in x1..x2 {
+            let y = y1 + ((dy * (x - x1)) as f32 / dx as f32) as i32;
+            self.pixel(x, y, color);
         }
     }
-
+    
     pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
         if points.len() == 0 {
             // when no points given, do nothing
