@@ -59,7 +59,7 @@ impl Window {
                 ctx: ctx,
                 video_ctx: video_ctx,
                 event_pump: event_pump,
-                inner: window.renderer().build().unwrap(),
+                inner: window.renderer().software().build().unwrap(),
             })),
             Err(_) => None
         }
@@ -108,12 +108,16 @@ impl Window {
     }
 
     pub fn data(&self) -> &[Color] {
-        let bytes = self.inner.surface().unwrap().without_lock().unwrap();
+        let window = self.inner.window().unwrap();
+        let surface = window.surface(&self.event_pump).unwrap();
+        let bytes = surface.without_lock().unwrap();
         unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
     }
 
     pub fn data_mut(&mut self) -> &mut [Color] {
-        let bytes = self.inner.surface_mut().unwrap().without_lock_mut().unwrap();
+        let window = self.inner.window_mut().unwrap();
+        let surface = window.surface_mut(&self.event_pump).unwrap();
+        let bytes = surface.without_lock_mut().unwrap();
         unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
     }
 
@@ -143,7 +147,7 @@ impl Window {
             }
         }
     }
-    
+
     /// Draw a character, using the loaded font
     pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
