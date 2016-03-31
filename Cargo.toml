@@ -13,8 +13,8 @@ name = "orbclient"
 path = "src/lib.rs"
 
 [[bin]]
-name = "black_window"
-path = "examples/black_window.rs"
+name = "data"
+path = "examples/data.rs"
 
 [[bin]]
 name = "redox_icon_display"
