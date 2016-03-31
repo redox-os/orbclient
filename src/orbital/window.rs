@@ -1,8 +1,13 @@
+extern crate system;
+
+use std::cmp;
 use std::fs::File;
 use std::io::*;
 use std::mem;
 use std::slice;
 use std::thread;
+
+use self::system::graphics::fast_set;
 
 use super::FONT;
 use super::Event;
@@ -165,7 +170,7 @@ impl Window {
             self.pixel(x, y, color);
         }
     }
-    
+
     pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
         if points.len() == 0 {
             // when no points given, do nothing
@@ -205,8 +210,8 @@ impl Window {
     // TODO: Improve speed
     #[allow(unused_variables)]
     pub fn set(&mut self, color: Color) {
-        for mut d in self.data.iter_mut() {
-            *d = color;
+        unsafe {
+            fast_set(self.data.as_mut_ptr() as *mut u32, color.data, self.data.len());
         }
     }
 
@@ -215,55 +220,20 @@ impl Window {
         self.set(Color::rgb(0,0,0));
     }
 
-    // Allows to draw a left border in the window
-    // x_limit is the left limit of the border!!!
-    pub fn set_border_left(&mut self, x_limit: i32, color: Color, density: i32) {
-        for y in 0..self.h as i32 {
-            for x in x_limit..(x_limit + density) {
-                self.pixel(x, y, color);
-            }
-        }
-    }
-
-    // Allows to draw a right border in the window
-    // x_limit is the left limit of the border!!!
-    pub fn set_border_right(&mut self, x_limit: i32, color: Color, density: i32) {
-        for y in 0..self.h as i32 {
-            for x in x_limit..(x_limit + density) {
-                let new_x : i32 = self.w as i32;
-                self.pixel((new_x - x), y, color);
-            }
-        }
-    }
-
-    // Allows to draw a top border in the window
-    // x_limit is the top limit of the border!!!
-    pub fn set_border_top(&mut self, y_limit: i32, color: Color, density: i32) {
-        for x in 0..self.w as i32 {
-            for y in y_limit..(y_limit + density) {
-                self.pixel(x, y, color);
-            }
-        }
-    }
-
-    // Allows to draw a bottom border in the window
-    // x_limit is the top limit of the border!!!
-    pub fn set_border_bottom(&mut self, y_limit: i32, color: Color, density: i32) {
-        for x in 0..self.x {
-            for y in 0..(y_limit + density) {
-                let new_y : i32 = self.h as i32;
-                self.pixel(x, (new_y - y), color);
-            }
-        }
-    }
-
     /// Draw rectangle
-    // TODO: Improve speed
     #[allow(unused_variables)]
-    pub fn rect(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, color: Color) {
-        for y in start_y..start_y + h as i32 {
-            for x in start_x..start_x + w as i32 {
-                self.pixel(x, y, color);
+    pub fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
+        let data = color.data;
+
+        let start_y = cmp::max(0, cmp::min(self.h as i32 - 1, y));
+        let end_y = cmp::max(start_y, cmp::min(self.h as i32 - 1, y + h as i32));
+
+        let start_x = cmp::max(0, cmp::min(self.w as i32 - 1, x));
+        let len = cmp::max(start_x, cmp::min(self.w as i32 - 1, x + w as i32)) - start_x;
+
+        for y in start_y..end_y {
+            unsafe {
+                fast_set(self.data.as_mut_ptr().offset((y * self.w as i32 + start_x) as isize) as *mut u32, data, len as usize);
             }
         }
     }

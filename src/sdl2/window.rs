@@ -188,50 +188,7 @@ impl Window {
         self.set(Color::rgb(0,0,0));
     }
 
-    // Allows to draw a left border in the window
-    // x_limit is the left limit of the border!!!
-    pub fn set_border_left(&mut self, x_limit: i32, color: Color, density: i32) {
-        for y in 0..self.h {
-            for x in x_limit..(x_limit + density) {
-                self.pixel(x, y as i32, color);
-            }
-        }
-    }
-
-    // Allows to draw a right border in the window
-    // x_limit is the left limit of the border!!!
-    pub fn set_border_right(&mut self, x_limit: i32, color: Color, density: i32) {
-        for y in 0..self.h {
-            for x in x_limit..(x_limit + density) {
-                let new_x : i32 = self.w as i32;
-                self.pixel((new_x - x), y as i32, color);
-            }
-        }
-    }
-
-    // Allows to draw a top border in the window
-    // x_limit is the top limit of the border!!!
-    pub fn set_border_top(&mut self, y_limit: i32, color: Color, density: i32) {
-        for x in 0..self.w {
-            for y in y_limit..(y_limit + density) {
-                self.pixel(x as i32, y, color);
-            }
-        }
-    }
-
-    // Allows to draw a bottom border in the window
-    // x_limit is the top limit of the border!!!
-    pub fn set_border_bottom(&mut self, y_limit: i32, color: Color, density: i32) {
-        for x in 0..self.w {
-            for y in y_limit..(y_limit + density) {
-                let new_y : i32 = self.h as i32;
-                self.pixel(x as i32, (new_y - y), color);
-            }
-        }
-    }
-
     /// Draw rectangle
-    // TODO: Improve speed
     #[allow(unused_variables)]
     pub fn rect(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, color: Color) {
         if let Some(rect) = sdl2::rect::Rect::new(start_x, start_y, w, h).unwrap_or(None) {
