@@ -135,6 +135,49 @@ impl Window {
         self.inner.draw_line(sdl2::rect::Point::new(argx1, argy1), sdl2::rect::Point::new(argx2, argy2));
     }
 
+    /// Draw a triangle filled in with color
+    pub fn filled_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32, color: Color) {
+        struct Point { // (ca1ek): this should be built in into the library, makes more sense imo
+            x: i32,
+            y: i32
+        }
+
+        struct FloatPoint {
+            x: f32,
+            y: f32
+        }
+
+        let p1 = Point {x: x1, y: y1};
+        let p2 = Point {x: x2, y: y2};
+        let p3 = Point {x: x3, y: y3};
+
+        let points = [p1, p2, p3];
+
+        // used for calculating bounding box of the triangle
+        let upmost = points.iter().max_by_key(|p| -p.y).unwrap().clone();
+        let leftmost = points.iter().max_by_key(|p| -p.x).unwrap().clone();
+        let rightmost = points.iter().max_by_key(|p| p.x).unwrap().clone();
+        let lowmost = points.iter().max_by_key(|p| p.y).unwrap().clone();
+
+        let p1 = FloatPoint {x: x1 as f32, y: y1 as f32};
+        let p2 = FloatPoint {x: x2 as f32, y: y2 as f32};
+        let p3 = FloatPoint {x: x3 as f32, y: y3 as f32};
+
+        for px in leftmost.x..rightmost.x {
+            for py in upmost.y..lowmost.y {
+                let p = FloatPoint {x: px as f32, y: py as f32};
+
+                let alpha = ((p2.y - p3.y)*(p.x - p3.x) + (p3.x - p2.x)*(p.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+                let beta = ((p3.y - p1.y)*(p.x - p3.x) + (p1.x - p3.x)*(p.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+                let gamma = 1.0 - alpha - beta;
+
+                if alpha > 0.0 && beta > 0.0 && gamma > 0.0 {
+                    self.pixel(px, py, color);
+                }
+            }
+        }
+    }
+
     /// Draw multiple lines from point to point.
     pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
         if points.len() == 0 {
