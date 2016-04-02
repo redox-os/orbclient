@@ -135,6 +135,19 @@ impl Window {
         self.inner.draw_line(sdl2::rect::Point::new(argx1, argy1), sdl2::rect::Point::new(argx2, argy2));
     }
 
+    /// Draw multiple lines from point to point.
+    pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
+        if points.len() == 0 {
+            // when no points given, do nothing
+        } else if points.len() == 1 {
+            self.pixel(points[0][0], points[0][1], color);
+        } else {
+            for i in 0..points.len() - 1 {
+                self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
+            }
+        }
+    }
+
     /// Draw a triangle filled in with color
     pub fn filled_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32, color: Color) {
         struct Point { // (ca1ek): this should be built in into the library, makes more sense imo
@@ -174,19 +187,6 @@ impl Window {
                 if alpha > 0.0 && beta > 0.0 && gamma > 0.0 {
                     self.pixel(px, py, color);
                 }
-            }
-        }
-    }
-
-    /// Draw multiple lines from point to point.
-    pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
-        if points.len() == 0 {
-            // when no points given, do nothing
-        } else if points.len() == 1 {
-            self.pixel(points[0][0], points[0][1], color);
-        } else {
-            for i in 0..points.len() - 1 {
-                self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
             }
         }
     }
