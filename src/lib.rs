@@ -3,7 +3,6 @@
 #![feature(associated_consts)]
 #![feature(const_fn)]
 #![feature(box_syntax)]
-#![feature(deprecated)]
 
 #![deny(warnings)]
 
