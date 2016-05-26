@@ -211,31 +211,83 @@ impl Window {
             }
         }
     }
-    
+
     /// Display an image stored in a bmp::BmpFile
     pub fn image_bmp(&mut self, start_x: i32, start_y: i32, bmp: &super::bmp::BmpFile) {
         use std::ops::Deref;
-        
+
         let w = bmp.width() as u32;
         let h = bmp.height() as u32;
-        
+
         let data = bmp.deref();
-        
+
         self.image(start_x, start_y, w, h, data);
+    }
+
+    fn convert_char(&self, c: char) -> Option<(char, u8)> {
+        Some((c, match c {
+            'A' | 'a' => K_A,
+            'B' | 'b' => K_B,
+            'C' | 'c' => K_C,
+            'D' | 'd' => K_D,
+            'E' | 'e' => K_E,
+            'F' | 'f' => K_F,
+            'G' | 'g' => K_G,
+            'H' | 'h' => K_H,
+            'I' | 'i' => K_I,
+            'J' | 'j' => K_J,
+            'K' | 'k' => K_K,
+            'L' | 'l' => K_L,
+            'M' | 'm' => K_M,
+            'N' | 'n' => K_N,
+            'O' | 'o' => K_O,
+            'P' | 'p' => K_P,
+            'Q' | 'q' => K_Q,
+            'R' | 'r' => K_R,
+            'S' | 's' => K_S,
+            'T' | 't' => K_T,
+            'U' | 'u' => K_U,
+            'V' | 'v' => K_V,
+            'W' | 'w' => K_W,
+            'X' | 'x' => K_X,
+            'Y' | 'y' => K_Y,
+            'Z' | 'z' => K_Z,
+            '0' | ')' => K_0,
+            '1' | '!' => K_1,
+            '2' | '@' => K_2,
+            '3' | '#' => K_3,
+            '4' | '$' => K_4,
+            '5' | '%' => K_5,
+            '6' | '^' => K_6,
+            '7' | '&' => K_7,
+            '8' | '*' => K_8,
+            '9' | '(' => K_9,
+            '`' | '~' => K_TICK,
+            '-' | '_' => K_MINUS,
+            '=' | '+' => K_EQUALS,
+            '[' | '{' => K_BRACE_OPEN,
+            ']' | '}' => K_BRACE_CLOSE,
+            '\\' | '|' => K_BACKSLASH,
+            ';' | ':' => K_SEMICOLON,
+            '\'' | '"' => K_QUOTE,
+            ',' | '<' => K_COMMA,
+            '.' | '>' => K_PERIOD,
+            '/' | '?' => K_SLASH,
+            _ => 0
+        }))
     }
 
     fn convert_keycode(&self, keycode_option: Option<sdl2::keyboard::Keycode>) -> Option<(char, u8)> {
         if let Some(keycode) = keycode_option {
             match keycode {
-                sdl2::keyboard::Keycode::Return => Some(('\n', 0)),
-
-                sdl2::keyboard::Keycode::Escape => Some(('\x1B', K_ESC)),
                 sdl2::keyboard::Keycode::Backspace => Some(('\0', K_BKSP)),
                 sdl2::keyboard::Keycode::Tab => Some(('\t', K_TAB)),
                 sdl2::keyboard::Keycode::LCtrl => Some(('\0', K_CTRL)),
                 sdl2::keyboard::Keycode::RCtrl => Some(('\0', K_CTRL)),
                 sdl2::keyboard::Keycode::LAlt => Some(('\0', K_ALT)),
                 sdl2::keyboard::Keycode::RAlt => Some(('\0', K_ALT)),
+                sdl2::keyboard::Keycode::Return => Some(('\n', K_ENTER)),
+                sdl2::keyboard::Keycode::Escape => Some(('\x1B', K_ESC)),
                 sdl2::keyboard::Keycode::F1 => Some(('\0', K_F1)),
                 sdl2::keyboard::Keycode::F2 => Some(('\0', K_F2)),
                 sdl2::keyboard::Keycode::F3 => Some(('\0', K_F3)),
@@ -299,16 +351,18 @@ impl Window {
                 }.to_event());
             },
             sdl2::event::Event::TextInput { text, .. } => for c in text.chars() {
-                events.push(KeyEvent {
-                    character: c,
-                    scancode: 0,
-                    pressed: true
-                }.to_event());
-                events.push(KeyEvent {
-                    character: c,
-                    scancode: 0,
-                    pressed: false
-                }.to_event());
+                if let Some(code) = self.convert_char(c) {
+                    events.push(KeyEvent {
+                        character: code.0,
+                        scancode: code.1,
+                        pressed: true
+                    }.to_event());
+                    events.push(KeyEvent {
+                        character: code.0,
+                        scancode: code.1,
+                        pressed: false
+                    }.to_event());
+                }
             },
             sdl2::event::Event::Quit { .. } => events.push(QuitEvent.to_event()),
             _ => (),

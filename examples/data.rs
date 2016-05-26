@@ -2,8 +2,6 @@ extern crate orbclient;
 
 use orbclient::{Color, Window};
 
-use std::thread;
-
 fn main() {
 
     let width = 600;
