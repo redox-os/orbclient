@@ -35,15 +35,15 @@ pub struct Window {
 
 impl Window {
     /// Create a new window
-    pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Box<Self>> {
+    pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
         Window::new_flags(x, y, w, h, title, false)
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Box<Self>> {
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
         match File::open(&format!("orbital:{}/{}/{}/{}/{}/{}", if async { "a" } else { "" }, x, y, w, h, title)) {
             Ok(file) => {
-                Some(box Window {
+                Some(Window {
                     x: x,
                     y: y,
                     w: w,
@@ -252,18 +252,6 @@ impl Window {
         }
     }
     
-    /// Display an image stored in a bmp::BmpFile
-    pub fn image_bmp(&mut self, start_x: i32, start_y: i32, bmp: &super::bmp::BmpFile) {
-        use std::ops::Deref;
-        
-        let w = bmp.width() as u32;
-        let h = bmp.height() as u32;
-        
-        let data = bmp.deref();
-        
-        self.image(start_x, start_y, w, h, data);
-    }
-
     /// Blocking iterator over events
     pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {

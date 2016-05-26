@@ -32,12 +32,12 @@ pub struct Window {
 
 impl Window {
     /// Create a new window
-    pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Box<Self>> {
+    pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
         Window::new_flags(x, y, w, h, title, false)
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Box<Self>> {
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
         let ctx = sdl2::init().unwrap();
         let video_ctx = ctx.video().unwrap();
         let event_pump = ctx.event_pump().unwrap();
@@ -49,7 +49,7 @@ impl Window {
         }
 
         match builder.build() {
-            Ok(window) => Some(Box::new(Window {
+            Ok(window) => Some(Window {
                 x: x,
                 y: y,
                 w: w,
@@ -60,7 +60,7 @@ impl Window {
                 video_ctx: video_ctx,
                 event_pump: event_pump,
                 inner: window.renderer().software().build().unwrap(),
-            })),
+            }),
             Err(_) => None
         }
     }
