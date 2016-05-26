@@ -16,10 +16,6 @@ path = "src/lib.rs"
 name = "data"
 path = "examples/data.rs"
 
-[[bin]]
-name = "redox_icon_display"
-path = "examples/redox_icon_display.rs"
-
 [target.i686-unknown-linux-gnu.dependencies]
 sdl2 = "0.9"
 

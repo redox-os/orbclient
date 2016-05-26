@@ -1,6 +1,6 @@
 extern crate orbclient;
 
-use orbclient::{Color, Window};
+use orbclient::{Color, Window, EventOption};
 
 fn main() {
 
@@ -15,7 +15,17 @@ fn main() {
                          .unwrap();
 
     window.set(Color::rgb(255, 255, 255));
+    window.sync();
 
     println!("Data: {}", window.data().len());
     println!("Mut Data: {}", window.data_mut().len());
+
+    'events: loop {
+        for event in window.events() {
+            match event.to_option() {
+                EventOption::Quit(_quit_event) => break 'events,
+                event_option => println!("{:?}", event_option)
+            }
+        }
+    }
 }

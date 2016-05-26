@@ -212,18 +212,6 @@ impl Window {
         }
     }
 
-    /// Display an image stored in a bmp::BmpFile
-    pub fn image_bmp(&mut self, start_x: i32, start_y: i32, bmp: &super::bmp::BmpFile) {
-        use std::ops::Deref;
-
-        let w = bmp.width() as u32;
-        let h = bmp.height() as u32;
-
-        let data = bmp.deref();
-
-        self.image(start_x, start_y, w, h, data);
-    }
-
     fn convert_scancode(&self, scancode_option: Option<sdl2::keyboard::Scancode>, shift: bool) -> Option<(char, u8)> {
         if let Some(scancode) = scancode_option {
             match scancode {
