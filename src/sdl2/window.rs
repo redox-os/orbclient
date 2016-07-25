@@ -360,6 +360,9 @@ impl Window {
 
         if ! self.async {
             let event = self.event_pump.wait_event();
+            if let sdl2::event::Event::Window{..} = event {
+                self.sync_path();
+            }
             for converted_event in self.convert_event(event) {
                 if iter.count < iter.events.len() {
                     iter.events[iter.count] = converted_event;
@@ -371,6 +374,9 @@ impl Window {
         }
 
         while let Some(event) = self.event_pump.poll_event() {
+            if let sdl2::event::Event::Window{..} = event {
+                self.sync_path();
+            }
             for converted_event in self.convert_event(event) {
                 if iter.count < iter.events.len() {
                     iter.events[iter.count] = converted_event;
