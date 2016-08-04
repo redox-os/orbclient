@@ -15,6 +15,10 @@ pub use window::Window;
 pub mod color;
 pub mod event;
 
+//TODO replace this with a mod.rs file
+#[path="orbital/display.rs"]
+pub mod display;
+
 #[cfg(target_os = "redox")]
 #[path="orbital/window.rs"]
 pub mod window;
