@@ -13,8 +13,8 @@ name = "orbclient"
 path = "src/lib.rs"
 
 [[bin]]
-name = "data"
-path = "examples/data.rs"
+name = "simple"
+path = "examples/simple.rs"
 
 [target.'cfg(not(target_os = "redox"))'.dependencies]
 sdl2 = "0.9"

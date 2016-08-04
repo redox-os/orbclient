@@ -2,8 +2,9 @@ extern crate sdl2;
 
 use std::{mem, slice};
 
-use super::{FONT, Color};
-use super::event::*;
+use super::super::{FONT, Color};
+use super::super::event::*;
+use super::{init, SDL_CTX, VIDEO_CTX, EVENT_PUMP};
 
 /// A window
 #[allow(dead_code)]
@@ -20,12 +21,6 @@ pub struct Window {
     t: String,
     /// True if the window should not wait for events
     async: bool,
-    /// SDL2 Context
-    ctx: sdl2::Sdl,
-    /// Video Context
-    video_ctx: sdl2::VideoSubsystem,
-    /// Event Pump
-    event_pump: sdl2::EventPump,
     /// The inner renderer
     inner: sdl2::render::Renderer<'static>,
 }
@@ -38,11 +33,10 @@ impl Window {
 
     /// Create a new window with flags
     pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
-        let ctx = sdl2::init().unwrap();
-        let video_ctx = ctx.video().unwrap();
-        let event_pump = ctx.event_pump().unwrap();
+        //Insure that init has been called
+        unsafe { init() };
 
-        let mut builder = video_ctx.window(title, w, h);
+        let mut builder = unsafe { & *VIDEO_CTX }.window(title, w, h);
 
         if x >= 0 || y >= 0 {
             builder.position(x, y);
@@ -56,9 +50,6 @@ impl Window {
                 h: h,
                 t: title.to_string(),
                 async: async,
-                ctx: ctx,
-                video_ctx: video_ctx,
-                event_pump: event_pump,
                 inner: window.renderer().software().build().unwrap(),
             }),
             Err(_) => None
@@ -109,14 +100,14 @@ impl Window {
 
     pub fn data(&self) -> &[Color] {
         let window = self.inner.window().unwrap();
-        let surface = window.surface(&self.event_pump).unwrap();
+        let surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock().unwrap();
         unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
     }
 
     pub fn data_mut(&mut self) -> &mut [Color] {
         let window = self.inner.window_mut().unwrap();
-        let surface = window.surface_mut(&self.event_pump).unwrap();
+        let surface = window.surface_mut(unsafe { & *EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock_mut().unwrap();
         unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
     }
@@ -305,7 +296,7 @@ impl Window {
         let mut events = Vec::new();
 
         let mouse_event = || -> Event {
-            let mouse = self.ctx.mouse().mouse_state();
+            let mouse = unsafe { &mut *SDL_CTX }.mouse().mouse_state();
             MouseEvent {
                 x: mouse.1,
                 y: mouse.2,
@@ -315,7 +306,7 @@ impl Window {
             }.to_event()
         };
 
-        let mods = self.ctx.keyboard().mod_state();
+        let mods = unsafe { &mut *SDL_CTX }.keyboard().mod_state();
         let shift = if mods.contains(sdl2::keyboard::CAPSMOD)
                     || mods.contains(sdl2::keyboard::LSHIFTMOD)
                     || mods.contains(sdl2::keyboard::RSHIFTMOD)
@@ -359,7 +350,7 @@ impl Window {
         };
 
         if ! self.async {
-            let event = self.event_pump.wait_event();
+            let event = unsafe { &mut *EVENT_PUMP }.wait_event();
             if let sdl2::event::Event::Window{..} = event {
                 self.sync_path();
             }
@@ -373,7 +364,7 @@ impl Window {
             }
         }
 
-        while let Some(event) = self.event_pump.poll_event() {
+        while let Some(event) = unsafe { &mut *EVENT_PUMP }.poll_event() {
             if let sdl2::event::Event::Window{..} = event {
                 self.sync_path();
             }

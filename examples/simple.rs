@@ -3,22 +3,17 @@ extern crate orbclient;
 use orbclient::{Color, Window, EventOption};
 
 fn main() {
+    let (width, height) = orbclient::get_display_size().unwrap();
 
-    let width = 600;
-    let height = 600;
-
-    let mut window = Window::new(-1,
-                                 -1,
-                                 width,
-                                 height,
+    let mut window = Window::new((width as i32)/4,
+                                 (height as i32)/4,
+                                 width/2,
+                                 height/2,
                                  "TITLE")
                          .unwrap();
 
     window.set(Color::rgb(255, 255, 255));
     window.sync();
-
-    println!("Data: {}", window.data().len());
-    println!("Mut Data: {}", window.data_mut().len());
 
     'events: loop {
         for event in window.events() {

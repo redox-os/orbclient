@@ -10,19 +10,15 @@ pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 
 pub use color::Color;
 pub use event::*;
-pub use window::Window;
+pub use imp::*;
 
 pub mod color;
 pub mod event;
 
-//TODO replace this with a mod.rs file
-#[path="orbital/display.rs"]
-pub mod display;
-
 #[cfg(target_os = "redox")]
-#[path="orbital/window.rs"]
-pub mod window;
+#[path="orbital/mod.rs"]
+pub mod imp;
 
 #[cfg(not(target_os = "redox"))]
-#[path="sdl2/window.rs"]
-pub mod window;
+#[path="sdl2/mod.rs"]
+pub mod imp;

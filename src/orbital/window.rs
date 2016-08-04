@@ -1,5 +1,3 @@
-extern crate system;
-
 use std::cmp;
 use std::fs::File;
 use std::io::*;
@@ -7,11 +5,11 @@ use std::mem;
 use std::slice;
 use std::thread;
 
-use self::system::graphics::fast_set;
+use super::system::graphics::fast_set;
 
-use super::FONT;
-use super::Event;
-use super::Color;
+use super::super::FONT;
+use super::super::Event;
+use super::super::Color;
 
 /// A window
 pub struct Window {
@@ -251,7 +249,7 @@ impl Window {
             }
         }
     }
-    
+
     /// Blocking iterator over events
     pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
