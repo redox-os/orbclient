@@ -5,6 +5,7 @@ pub const EVENT_NONE: i64 = 0;
 pub const EVENT_MOUSE: i64 = 1;
 pub const EVENT_KEY: i64 = 2;
 pub const EVENT_QUIT: i64 = 3;
+pub const EVENT_FOCUS: i64 = 4;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -15,6 +16,8 @@ pub enum EventOption {
     Key(KeyEvent),
     /// A quit request event
     Quit(QuitEvent),
+    /// A focus event
+    Focus(FocusEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -50,6 +53,7 @@ impl Event {
             EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
+            EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -280,5 +284,29 @@ impl QuitEvent {
 
     pub fn from_event(_: Event) -> QuitEvent {
         QuitEvent
+    }
+}
+
+/// A focus event
+#[derive(Copy, Clone, Debug)]
+pub struct FocusEvent {
+    /// True if window has been focused, false if not
+    pub focused: bool
+}
+
+impl FocusEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_FOCUS,
+            a: self.focused as i64,
+            b: 0,
+            c: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> FocusEvent {
+        FocusEvent {
+            focused: event.a > 0
+        }
     }
 }
