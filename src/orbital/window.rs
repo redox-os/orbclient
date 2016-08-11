@@ -224,10 +224,10 @@ impl Window {
         let data = color.data;
 
         let start_y = cmp::max(0, cmp::min(self.h as i32 - 1, y));
-        let end_y = cmp::max(start_y, cmp::min(self.h as i32 - 1, y + h as i32));
+        let end_y = cmp::max(start_y, cmp::min(self.h as i32, y + h as i32));
 
         let start_x = cmp::max(0, cmp::min(self.w as i32 - 1, x));
-        let len = cmp::max(start_x, cmp::min(self.w as i32 - 1, x + w as i32)) - start_x;
+        let len = cmp::max(start_x, cmp::min(self.w as i32, x + w as i32)) - start_x;
 
         for y in start_y..end_y {
             unsafe {
