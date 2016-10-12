@@ -5,7 +5,29 @@ use std::mem;
 use std::slice;
 use std::thread;
 
-use super::system::graphics::fast_set;
+#[cfg(target_arch = "x86")]
+#[inline(always)]
+#[cold]
+pub unsafe fn fast_set32(dst: *mut u32, src: u32, len: usize) {
+    asm!("cld
+        rep stosd"
+        :
+        : "{edi}"(dst as usize), "{eax}"(src), "{ecx}"(len)
+        : "cc", "memory", "edi", "ecx"
+        : "intel", "volatile");
+}
+
+#[cfg(target_arch = "x86_64")]
+#[inline(always)]
+#[cold]
+pub unsafe fn fast_set32(dst: *mut u32, src: u32, len: usize) {
+    asm!("cld
+        rep stosd"
+        :
+        : "{rdi}"(dst as usize), "{eax}"(src), "{rcx}"(len)
+        : "cc", "memory", "rdi", "rcx"
+        : "intel", "volatile");
+}
 
 use super::super::FONT;
 use super::super::Event;
@@ -209,7 +231,7 @@ impl Window {
     #[allow(unused_variables)]
     pub fn set(&mut self, color: Color) {
         unsafe {
-            fast_set(self.data.as_mut_ptr() as *mut u32, color.data, self.data.len());
+            fast_set32(self.data.as_mut_ptr() as *mut u32, color.data, self.data.len());
         }
     }
 
@@ -231,7 +253,7 @@ impl Window {
 
         for y in start_y..end_y {
             unsafe {
-                fast_set(self.data.as_mut_ptr().offset((y * self.w as i32 + start_x) as isize) as *mut u32, data, len as usize);
+                fast_set32(self.data.as_mut_ptr().offset((y * self.w as i32 + start_x) as isize) as *mut u32, data, len as usize);
             }
         }
     }
