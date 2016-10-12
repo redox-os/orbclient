@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::File;
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
