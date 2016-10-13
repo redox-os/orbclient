@@ -2,6 +2,7 @@ use std::cmp;
 use std::fs::File;
 use std::io::*;
 use std::mem;
+use std::os::unix::io::{AdRawFd, RawFd};
 use std::slice;
 use std::thread;
 
@@ -306,6 +307,12 @@ impl Window {
         self.file.write(unsafe {
             slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * mem::size_of::<Color>())
         }).is_ok()
+    }
+}
+
+impl AsRawFd for Window {
+    fn as_raw_fd(&self) -> RawFd {
+        self.file.as_raw_fd()
     }
 }
 
