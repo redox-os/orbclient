@@ -20,4 +20,4 @@ path = "examples/simple.rs"
 sdl2 = "0.9"
 
 [target.'cfg(target_os = "redox")'.dependencies]
-syscall = { git = "https://github.com/redox-os/syscall.git" }
+redox_syscall = "0.1"
