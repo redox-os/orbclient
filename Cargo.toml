@@ -2,7 +2,7 @@
 name = "orbclient"
 description = "The Orbital Client Library"
 repository = "https://github.com/redox-os/orbclient"
-version = "0.1.18"
+version = "0.1.19"
 license-file = "LICENSE"
 readme = "README.md"
 keywords = ["orbital", "redox", "ui"]
@@ -18,3 +18,6 @@ path = "examples/simple.rs"
 
 [target.'cfg(not(target_os = "redox"))'.dependencies]
 sdl2 = "0.9"
+
+[target.'cfg(target_os = "redox")'.dependencies]
+syscall = { git = "https://github.com/redox-os/syscall.git" }

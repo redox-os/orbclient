@@ -1,8 +1,10 @@
+extern crate syscall;
+
 use std::cmp;
 use std::fs::File;
 use std::io::*;
 use std::mem;
-use std::os::unix::io::{AdRawFd, RawFd};
+use std::os::unix::io::{AsRawFd, RawFd};
 use std::slice;
 use std::thread;
 
@@ -51,7 +53,7 @@ pub struct Window {
     /// The input scheme
     file: File,
     /// Window data
-    data: Box<[Color]>,
+    data: &'static mut [Color],
 }
 
 impl Window {
@@ -62,8 +64,8 @@ impl Window {
 
     /// Create a new window with flags
     pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
-        match File::open(&format!("orbital:{}/{}/{}/{}/{}/{}", if async { "a" } else { "" }, x, y, w, h, title)) {
-            Ok(file) => {
+        if let Ok(file) = File::open(&format!("orbital:{}/{}/{}/{}/{}/{}", if async { "a" } else { "" }, x, y, w, h, title)) {
+            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) } {
                 Some(Window {
                     x: x,
                     y: y,
@@ -72,10 +74,13 @@ impl Window {
                     t: title.to_string(),
                     async: async,
                     file: file,
-                    data: vec![Color::rgb(0, 0, 0); (w * h * 4) as usize].into_boxed_slice(),
+                    data: unsafe { slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize) },
                 })
+            } else {
+                None
             }
-            Err(_) => None,
+        } else {
+            None
         }
     }
 
@@ -304,9 +309,13 @@ impl Window {
 
     /// Flip the window buffer
     pub fn sync(&mut self) -> bool {
-        self.file.write(unsafe {
-            slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * mem::size_of::<Color>())
-        }).is_ok()
+        self.file.sync_data().is_ok()
+    }
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        let _ = unsafe { syscall::funmap(self.data.as_ptr() as usize) };
     }
 }
 
