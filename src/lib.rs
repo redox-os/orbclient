@@ -1,6 +1,7 @@
 #![crate_name="orbclient"]
 #![crate_type="lib"]
 #![cfg_attr(target_os = "redox", feature(asm))]
+#![cfg_attr(target_os = "redox", feature(file_path))]
 #![feature(const_fn)]
 
 #![deny(warnings)]
