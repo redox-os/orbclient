@@ -1,12 +1,9 @@
-extern crate syscall;
-
-use std::cmp;
+use std::{cmp, mem, slice, thread};
 use std::fs::File;
-use std::io::*;
-use std::mem;
+use std::io::Read;
 use std::os::unix::io::{AsRawFd, RawFd};
-use std::slice;
-use std::thread;
+
+use super::syscall;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -86,22 +83,22 @@ impl Window {
 
     // TODO: Replace with smarter mechanism, maybe a move event?
     pub fn sync_path(&mut self) {
-        if let Ok(path) = self.file.path() {
+        let mut buf: [u8; 4096] = [0; 4096];
+        if let Ok(count) = syscall::fpath(self.file.as_raw_fd() as usize, &mut buf) {
+            let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
             // orbital:/x/y/w/h/t
-            if let Some(path_str) = path.to_str() {
-                let mut parts = path_str.split('/').skip(1);
-                if let Some(x) = parts.next() {
-                    self.x = x.parse::<i32>().unwrap_or(0);
-                }
-                if let Some(y) = parts.next() {
-                    self.y = y.parse::<i32>().unwrap_or(0);
-                }
-                if let Some(w) = parts.next() {
-                    self.w = w.parse::<u32>().unwrap_or(0);
-                }
-                if let Some(h) = parts.next() {
-                    self.h = h.parse::<u32>().unwrap_or(0);
-                }
+            let mut parts = path.split('/').skip(1);
+            if let Some(x) = parts.next() {
+                self.x = x.parse::<i32>().unwrap_or(0);
+            }
+            if let Some(y) = parts.next() {
+                self.y = y.parse::<i32>().unwrap_or(0);
+            }
+            if let Some(w) = parts.next() {
+                self.w = w.parse::<u32>().unwrap_or(0);
+            }
+            if let Some(h) = parts.next() {
+                self.h = h.parse::<u32>().unwrap_or(0);
             }
         }
     }
