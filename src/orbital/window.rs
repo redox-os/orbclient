@@ -170,6 +170,40 @@ impl Window {
         }
     }
 
+    /// Draw a circle. Negative radius will fill in the inside
+    pub fn circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
+        let mut x = radius.abs();
+        let mut y = 0;
+        let mut err = 0;
+
+        while x >= y {
+            if radius < 0 {
+                self.rect(x0 - x, y0 + y, x as u32 * 2, 1, color);
+                self.rect(x0 - y, y0 + x, y as u32 * 2, 1, color);
+                self.rect(x0 - x, y0 - y, x as u32 * 2, 1, color);
+                self.rect(x0 - y, y0 - x, y as u32 * 2, 1, color);
+            } else if radius == 0 {
+                self.pixel(x0, y0, color);
+            } else {
+                self.pixel(x0 - x, y0 + y, color);
+                self.pixel(x0 + x, y0 + y, color);
+                self.pixel(x0 - y, y0 + x, color);
+                self.pixel(x0 + y, y0 + x, color);
+                self.pixel(x0 - x, y0 - y, color);
+                self.pixel(x0 + x, y0 - y, color);
+                self.pixel(x0 - y, y0 - x, color);
+                self.pixel(x0 + y, y0 - x, color);
+            }
+
+            y += 1;
+            err += 1 + 2*y;
+            if 2*(err-x) + 1 > 0 {
+                x -= 1;
+                err += 1 - 2*x;
+            }
+        }
+    }
+
     /// Draw a line
     pub fn line(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32, color: Color) {
         let mut x1 = argx1;
