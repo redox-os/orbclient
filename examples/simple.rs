@@ -13,6 +13,9 @@ fn main() {
                          .unwrap();
 
     window.set(Color::rgb(255, 255, 255));
+    window.circle(100, 100, -24, Color::rgb(0, 0, 255));
+    window.line(0, 0, 200, 200, Color::rgb(255, 0, 0));
+    window.line(0, 200, 200, 0, Color::rgb(0, 255, 0));
     window.sync();
 
     'events: loop {
