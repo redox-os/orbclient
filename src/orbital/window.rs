@@ -169,7 +169,7 @@ impl Window {
             }
         }
     }
-    
+
     /// Draw a piece of an arc. Negative radius will fill in the inside
     pub fn arc(&mut self, x0: i32, y0: i32, radius: i32, parts: u8, color: Color) {
         let mut x = radius.abs();
@@ -179,13 +179,13 @@ impl Window {
         while x >= y {
             if radius < 0 {
                 if parts & 1 << 0 != 0 { self.rect(x0 - x, y0 + y, x as u32, 1, color); }
-                if parts & 1 << 1 != 0 { self.rect(x0, y0 + y, x as u32, 1, color); }
+                if parts & 1 << 1 != 0 { self.rect(x0, y0 + y, x as u32 + 1, 1, color); }
                 if parts & 1 << 2 != 0 { self.rect(x0 - y, y0 + x, y as u32, 1, color); }
-                if parts & 1 << 3 != 0 { self.rect(x0, y0 + x, y as u32, 1, color); }
+                if parts & 1 << 3 != 0 { self.rect(x0, y0 + x, y as u32 + 1, 1, color); }
                 if parts & 1 << 4 != 0 { self.rect(x0 - x, y0 - y, x as u32, 1, color); }
-                if parts & 1 << 5 != 0 { self.rect(x0, y0 - y, x as u32, 1, color); }
+                if parts & 1 << 5 != 0 { self.rect(x0, y0 - y, x as u32 + 1, 1, color); }
                 if parts & 1 << 6 != 0 { self.rect(x0 - y, y0 - x, y as u32, 1, color); }
-                if parts & 1 << 7 != 0 { self.rect(x0, y0 - x, y as u32, 1, color); }
+                if parts & 1 << 7 != 0 { self.rect(x0, y0 - x, y as u32 + 1, 1, color); }
             } else if radius == 0 {
                 self.pixel(x0, y0, color);
             } else {
@@ -216,10 +216,10 @@ impl Window {
 
         while x >= y {
             if radius < 0 {
-                self.rect(x0 - x, y0 + y, x as u32 * 2, 1, color);
-                self.rect(x0 - y, y0 + x, y as u32 * 2, 1, color);
-                self.rect(x0 - x, y0 - y, x as u32 * 2, 1, color);
-                self.rect(x0 - y, y0 - x, y as u32 * 2, 1, color);
+                self.rect(x0 - x, y0 + y, x as u32 * 2 + 1, 1, color);
+                self.rect(x0 - y, y0 + x, y as u32 * 2 + 1, 1, color);
+                self.rect(x0 - x, y0 - y, x as u32 * 2 + 1, 1, color);
+                self.rect(x0 - y, y0 - x, y as u32 * 2 + 1, 1, color);
             } else if radius == 0 {
                 self.pixel(x0, y0, color);
             } else {
