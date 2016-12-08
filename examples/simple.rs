@@ -13,10 +13,12 @@ fn main() {
                          .unwrap();
 
     window.set(Color::rgb(255, 255, 255));
-    window.arc(100, 100, -24, 1 << 0 | 1 << 2, Color::rgb(0, 0, 255));
-    window.arc(100, 100, -24, 1 << 1 | 1 << 3, Color::rgb(0, 255, 255));
-    window.arc(100, 100, -24, 1 << 4 | 1 << 6, Color::rgb(255, 0, 255));
-    window.arc(100, 100, -24, 1 << 5 | 1 << 7, Color::rgb(255, 255, 0));
+    window.arc(100, 100, -25, 1 << 0 | 1 << 2, Color::rgb(0, 0, 255));
+    window.arc(100, 100, -25, 1 << 1 | 1 << 3, Color::rgb(0, 255, 255));
+    window.arc(100, 100, -25, 1 << 4 | 1 << 6, Color::rgb(255, 0, 255));
+    window.arc(100, 100, -25, 1 << 5 | 1 << 7, Color::rgb(255, 255, 0));
+    window.circle(100, 100, 25, Color::rgb(0, 0, 0));
+    window.circle(100, 101, -25, Color::rgb(0, 255, 0));
     window.line(0, 0, 200, 200, Color::rgb(255, 0, 0));
     window.line(0, 200, 200, 0, Color::rgb(0, 255, 0));
     window.sync();
