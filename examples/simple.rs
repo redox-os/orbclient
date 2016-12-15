@@ -12,7 +12,7 @@ fn main() {
                                  "TITLE")
                          .unwrap();
 
-    window.set(Color::rgb(255, 255, 255));
+    window.linear_gradient(0, 0, width, height, 0, 0, width as i32, height as i32, Color::rgb(128,128,255), Color::rgb(255,255,255));
     window.arc(100, 100, -25, 1 << 0 | 1 << 2, Color::rgb(0, 0, 255));
     window.arc(100, 100, -25, 1 << 1 | 1 << 3, Color::rgb(0, 255, 255));
     window.arc(100, 100, -25, 1 << 4 | 1 << 6, Color::rgb(255, 0, 255));
