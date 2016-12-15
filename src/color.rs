@@ -35,4 +35,16 @@ impl Color {
     pub fn a(&self) -> u8 {
         ((self.data & 0xFF000000) >> 24) as u8
     }
+
+    /// Interpolate between two colors
+    pub fn interpolate(start_color: Color, end_color: Color, scale: f64) -> Color {
+        let r = Color::interp(start_color.r(), end_color.r(), scale);
+        let g = Color::interp(start_color.g(), end_color.g(), scale);
+        let b = Color::interp(start_color.b(), end_color.b(), scale);
+        Color::rgb(r, g, b)
+    }
+
+    fn interp(start_color: u8, end_color: u8, scale: f64) -> u8 {
+        ((end_color  as f64 - start_color as f64) * scale + start_color as f64) as u8
+    }
 }

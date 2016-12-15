@@ -347,10 +347,6 @@ impl Window {
         }
     }
 
-    /// Interpolate between two colors
-    fn interpolate(start_color: u8, end_color: u8, scale: f64) -> u8 {
-        ((end_color  as f64 - start_color as f64) * scale + start_color as f64) as u8
-    }
 
     /// Draw a linear gradient in a rectangular region
     pub fn linear_gradient(&mut self, rect_x: i32, rect_y: i32, rect_width: u32, rect_height:u32, start_x: i32, start_y: i32, end_x: i32, end_y: i32, start_color: Color, end_color: Color) {
@@ -363,10 +359,8 @@ impl Window {
                 for y2 in rect_y..(rect_y + rect_height as i32 +1) {
                     let dist = (y2 - rect_y) as f64;
                     let scale = if dist > dy { 1.0 } else { dist/dy };
-                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
-                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
-                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
-                    self.pixel(x2, y2, Color::rgb(r, g, b));
+                    let color = Color::interpolate(start_color, end_color, scale);
+                    self.pixel(x2, y2, color);
                 }
             }
         } else if dy == 0.0 {
@@ -374,10 +368,8 @@ impl Window {
                 for y2 in rect_y..(rect_y + rect_height as i32 +1) {
                     let dist = (x2 - rect_x) as f64;
                     let scale = if dist > dx { 1.0 } else { dist/dx };
-                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
-                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
-                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
-                    self.pixel(x2, y2, Color::rgb(r, g, b));
+                    let color = Color::interpolate(start_color, end_color, scale);
+                    self.pixel(x2, y2, color);
                 }
             }
         } else {
@@ -392,10 +384,8 @@ impl Window {
                     let y_int = m*x_int + b;
                     let len1 = ((x_int-start_x as f64) * (x_int-start_x as f64) + (y_int-start_y as f64)*(y_int-start_y as f64)).sqrt();
                     let scale = if len1 > len { 1.0 } else { len1/len };
-                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
-                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
-                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
-                    self.pixel(x2, y2, Color::rgb(r, g, b));
+                    let color = Color::interpolate(start_color, end_color, scale);
+                    self.pixel(x2, y2, color);
                 }
             }
         }
