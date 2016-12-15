@@ -286,29 +286,45 @@ impl Window {
         let dy = (end_y - start_y) as f64;
         let dx = (end_x - start_x) as f64;
 
-        let len = ((dx*dx + dy+dy) as f64).sqrt();
-        let m = dy/dx;
-        let b = start_y as f64 - m * start_x as f64;
-        let m2 = -m;
-        for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-            for y2 in rect_y..(rect_y + rect_height as i32 +1) {
-                let scale;
-                if dx == 0.0 {
-                    scale = y2 as f64/dy;
-                } else if dy == 0.0 {
-                    scale = x2 as f64/dx;
-                } else {
-                    let b2 = y2  as f64+ m * (x2 as f64); // m2 = -m
+        if dx == 0.0 {
+            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
+                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+                    let dist = (y2 - rect_y) as f64;
+                    let scale = if dist > dy { 1.0 } else { dist/dy };
+                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
+                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
+                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
+                    self.pixel(x2, y2, Color::rgb(r, g, b));
+                }
+            }
+        } else if dy == 0.0 {
+            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
+                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+                    let dist = (x2 - rect_x) as f64;
+                    let scale = if dist > dx { 1.0 } else { dist/dx };
+                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
+                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
+                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
+                    self.pixel(x2, y2, Color::rgb(r, g, b));
+                }
+            }
+        } else {
+            let len = ((dx*dx + dy+dy) as f64).sqrt();
+            let m = dy/dx;
+            let b = start_y as f64 - m * start_x as f64;
+            let m2 = -m;
+            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
+                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+                    let b2 = y2  as f64 - m2 * (x2 as f64);
                     let x_int = (b2 - b)/(m-m2);
                     let y_int = m*x_int + b;
                     let len1 = ((x_int-start_x as f64) * (x_int-start_x as f64) + (y_int-start_y as f64)*(y_int-start_y as f64)).sqrt();
-                    scale = len1/len;
+                    let scale = if len1 > len { 1.0 } else { len1/len };
+                    let r = Window::interpolate(start_color.r(), end_color.r(), scale);
+                    let g = Window::interpolate(start_color.g(), end_color.g(), scale);
+                    let b = Window::interpolate(start_color.b(), end_color.b(), scale);
+                    self.pixel(x2, y2, Color::rgb(r, g, b));
                 }
-                let r = Window::interpolate(start_color.r(), end_color.r(), scale);
-                let g = Window::interpolate(start_color.g(), end_color.g(), scale);
-                let b = Window::interpolate(start_color.b(), end_color.b(), scale);
-                self.pixel(x2, y2, Color::rgb(r, g, b));
-
             }
         }
     }
