@@ -292,4 +292,37 @@ pub trait Renderer {
             }
         }
     }
+
+    /// Draw a rect with rounded corners
+    fn rounded_rect(&mut self, x: i32, y: i32, w: u32, h: u32, radius: u32, filled: bool, color: Color) {
+        let w = w as i32;
+        let h = h as i32;
+        let r = radius as i32;
+
+
+        if filled {
+            //Draw inside corners
+            self.arc(x + r, y + r, -r, 1 << 4 | 1 << 6, color);
+            self.arc(x + w - 1 - r, y + r, -r, 1 << 5 | 1 << 7, color);
+            self.arc(x + r, y + h - 1 - r,- r, 1 << 0 | 1 << 2, color);
+            self.arc(x + w - 1 - r, y + h - 1 - r, -r, 1 << 1 | 1 << 3, color);
+
+            // Draw inside rectangles
+            self.rect(x + r, y, (w - 1 - r * 2) as u32, r as u32 + 1, color);
+            self.rect(x + r, y + h - 1 - r, (w - 1 - r * 2) as u32, r as u32 + 1, color);
+            self.rect(x, y + r + 1, w as u32, (h - 2 - r * 2) as u32, color);
+        } else {
+            //Draw outside corners
+            self.arc(x + r, y + r, r, 1 << 4 | 1 << 6, color);
+            self.arc(x + w - 1 - r, y + r, r, 1 << 5 | 1 << 7, color);
+            self.arc(x + r, y + h - 1 - r, r, 1 << 0 | 1 << 2, color);
+            self.arc(x + w - 1 - r, y + h - 1 - r, r, 1 << 1 | 1 << 3, color);
+
+            // Draw outside rectangles
+            self.rect(x + r + 1, y, (w - 2 - r * 2) as u32, 1, color);
+            self.rect(x + r + 1, y + h - 1, (w - 2 - r * 2) as u32, 1, color);
+            self.rect(x, y + r + 1, 1, (h - 2 - r * 2) as u32, color);
+            self.rect(x + w - 1, y + r + 1, 1, (h - 2 - r * 2) as u32, color);
+        }
+    }
 }
