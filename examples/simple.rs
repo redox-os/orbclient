@@ -1,6 +1,6 @@
 extern crate orbclient;
 
-use orbclient::{Color, Window, EventOption};
+use orbclient::{Color, Window, Renderer, EventOption};
 
 fn main() {
     let (width, height) = orbclient::get_display_size().unwrap();

@@ -1,6 +1,6 @@
 #![crate_name="orbclient"]
 #![crate_type="lib"]
-#![cfg_attr(target_os = "redox", feature(asm))]
+#![feature(asm)]
 #![feature(const_fn)]
 
 #![deny(warnings)]
@@ -12,9 +12,11 @@ pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 pub use color::Color;
 pub use event::*;
 pub use imp::*;
+pub use renderer::Renderer;
 
 pub mod color;
 pub mod event;
+pub mod renderer;
 
 #[cfg(target_os = "redox")]
 #[path="orbital/mod.rs"]

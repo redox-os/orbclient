@@ -2,9 +2,10 @@ extern crate sdl2;
 
 use std::{mem, slice};
 
-use super::super::{FONT, Color};
-use super::super::event::*;
+use color::Color;
+use event::*;
 use super::{init, SDL_CTX, VIDEO_CTX, EVENT_PUMP};
+use renderer::Renderer;
 
 /// A window
 #[allow(dead_code)]
@@ -23,6 +24,40 @@ pub struct Window {
     async: bool,
     /// The inner renderer
     inner: sdl2::render::Renderer<'static>,
+}
+
+impl Renderer for Window {
+    /// Get width
+    fn width(&self) -> u32 {
+        self.w
+    }
+
+    /// Get height
+    fn height(&self) -> u32 {
+        self.h
+    }
+
+    /// Access pixel buffer
+    fn data(&self) -> &[Color] {
+        let window = self.inner.window().unwrap();
+        let surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
+        let bytes = surface.without_lock().unwrap();
+        unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
+    }
+
+    /// Access pixel buffer mutably
+    fn data_mut(&mut self) -> &mut [Color] {
+        let window = self.inner.window_mut().unwrap();
+        let surface = window.surface_mut(unsafe { & *EVENT_PUMP }).unwrap();
+        let bytes = surface.without_lock_mut().unwrap();
+        unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
+    }
+
+    /// Flip the window buffer
+    fn sync(&mut self) -> bool {
+        self.inner.present();
+        true
+    }
 }
 
 impl Window {
@@ -78,16 +113,6 @@ impl Window {
         self.y
     }
 
-    /// Get width
-    pub fn width(&self) -> u32 {
-        self.w
-    }
-
-    /// Get height
-    pub fn height(&self) -> u32 {
-        self.h
-    }
-
     /// Get title
     pub fn title(&self) -> String {
         self.t.clone()
@@ -96,227 +121,6 @@ impl Window {
     /// Set title
     pub fn set_title(&mut self, _: &str) {
         // TODO
-    }
-
-    pub fn data(&self) -> &[Color] {
-        let window = self.inner.window().unwrap();
-        let surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
-        let bytes = surface.without_lock().unwrap();
-        unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
-    }
-
-    pub fn data_mut(&mut self) -> &mut [Color] {
-        let window = self.inner.window_mut().unwrap();
-        let surface = window.surface_mut(unsafe { & *EVENT_PUMP }).unwrap();
-        let bytes = surface.without_lock_mut().unwrap();
-        unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
-    }
-
-    /// Draw a pixel
-    pub fn pixel(&mut self, x: i32, y: i32, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-        self.inner.draw_point(sdl2::rect::Point::new(x, y));
-    }
-
-    /// Draw a piece of an arc. Negative radius will fill in the inside
-    pub fn arc(&mut self, x0: i32, y0: i32, radius: i32, parts: u8, color: Color) {
-        let mut x = radius.abs();
-        let mut y = 0;
-        let mut err = 0;
-
-        while x >= y {
-            if radius < 0 {
-                if parts & 1 << 0 != 0 { self.rect(x0 - x, y0 + y, x as u32, 1, color); }
-                if parts & 1 << 1 != 0 { self.rect(x0, y0 + y, x as u32 + 1, 1, color); }
-                if parts & 1 << 2 != 0 { self.rect(x0 - y, y0 + x, y as u32, 1, color); }
-                if parts & 1 << 3 != 0 { self.rect(x0, y0 + x, y as u32 + 1, 1, color); }
-                if parts & 1 << 4 != 0 { self.rect(x0 - x, y0 - y, x as u32, 1, color); }
-                if parts & 1 << 5 != 0 { self.rect(x0, y0 - y, x as u32 + 1, 1, color); }
-                if parts & 1 << 6 != 0 { self.rect(x0 - y, y0 - x, y as u32, 1, color); }
-                if parts & 1 << 7 != 0 { self.rect(x0, y0 - x, y as u32 + 1, 1, color); }
-            } else if radius == 0 {
-                self.pixel(x0, y0, color);
-            } else {
-                if parts & 1 << 0 != 0 { self.pixel(x0 - x, y0 + y, color); }
-                if parts & 1 << 1 != 0 { self.pixel(x0 + x, y0 + y, color); }
-                if parts & 1 << 2 != 0 { self.pixel(x0 - y, y0 + x, color); }
-                if parts & 1 << 3 != 0 { self.pixel(x0 + y, y0 + x, color); }
-                if parts & 1 << 4 != 0 { self.pixel(x0 - x, y0 - y, color); }
-                if parts & 1 << 5 != 0 { self.pixel(x0 + x, y0 - y, color); }
-                if parts & 1 << 6 != 0 { self.pixel(x0 - y, y0 - x, color); }
-                if parts & 1 << 7 != 0 { self.pixel(x0 + y, y0 - x, color); }
-            }
-
-            y += 1;
-            err += 1 + 2*y;
-            if 2*(err-x) + 1 > 0 {
-                x -= 1;
-                err += 1 - 2*x;
-            }
-        }
-    }
-
-    /// Draw a circle. Negative radius will fill in the inside
-    pub fn circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
-        let mut x = radius.abs();
-        let mut y = 0;
-        let mut err = 0;
-
-        while x >= y {
-            if radius < 0 {
-                self.rect(x0 - x, y0 + y, x as u32 * 2 + 1, 1, color);
-                self.rect(x0 - y, y0 + x, y as u32 * 2 + 1, 1, color);
-                self.rect(x0 - x, y0 - y, x as u32 * 2 + 1, 1, color);
-                self.rect(x0 - y, y0 - x, y as u32 * 2 + 1, 1, color);
-            } else if radius == 0 {
-                self.pixel(x0, y0, color);
-            } else {
-                self.pixel(x0 - x, y0 + y, color);
-                self.pixel(x0 + x, y0 + y, color);
-                self.pixel(x0 - y, y0 + x, color);
-                self.pixel(x0 + y, y0 + x, color);
-                self.pixel(x0 - x, y0 - y, color);
-                self.pixel(x0 + x, y0 - y, color);
-                self.pixel(x0 - y, y0 - x, color);
-                self.pixel(x0 + y, y0 - x, color);
-            }
-
-            y += 1;
-            err += 1 + 2*y;
-            if 2*(err-x) + 1 > 0 {
-                x -= 1;
-                err += 1 - 2*x;
-            }
-        }
-    }
-
-    /// Draw a line
-    pub fn line(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-        self.inner.draw_line(sdl2::rect::Point::new(argx1, argy1), sdl2::rect::Point::new(argx2, argy2));
-    }
-
-    /// Draw multiple lines from point to point.
-    pub fn lines(&mut self, points: &[[i32; 2]], color: Color) {
-        if points.len() == 0 {
-            // when no points given, do nothing
-        } else if points.len() == 1 {
-            self.pixel(points[0][0], points[0][1], color);
-        } else {
-            for i in 0..points.len() - 1 {
-                self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
-            }
-        }
-    }
-
-    /// Draw a character, using the loaded font
-    pub fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-
-        let mut offset = (c as usize) * 16;
-        for row in 0..16 {
-            let row_data;
-            if offset < FONT.len() {
-                row_data = FONT[offset];
-            } else {
-                row_data = 0;
-            }
-
-            for col in 0..8 {
-                let pixel = (row_data >> (7 - col)) & 1;
-                if pixel > 0 {
-                    self.inner.draw_point(sdl2::rect::Point::new(x + col as i32, y + row as i32));
-                }
-            }
-            offset += 1;
-        }
-    }
-
-    // TODO move, resize, set_title
-
-    /// Set entire window to a color
-    // TODO: Improve speed
-    #[allow(unused_variables)]
-    pub fn set(&mut self, color: Color) {
-        self.inner.set_blend_mode(sdl2::render::BlendMode::None);
-        self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-        self.inner.clear();
-    }
-
-    /// Sets the whole window to black
-    pub fn clear(&mut self) {
-        self.set(Color::rgb(0,0,0));
-    }
-
-    /// Draw rectangle
-    #[allow(unused_variables)]
-    pub fn rect(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, color: Color) {
-        if let Some(rect) = sdl2::rect::Rect::new(start_x, start_y, w, h).unwrap_or(None) {
-            self.inner.set_blend_mode(sdl2::render::BlendMode::Blend);
-            self.inner.set_draw_color(sdl2::pixels::Color::RGBA((color.data >> 16) as u8, (color.data >> 8) as u8, color.data as u8, (color.data >> 24) as u8));
-            self.inner.fill_rect(rect);
-        }
-    }
-
-    /// Display an image
-    // TODO: Improve speed
-    pub fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
-        let mut i = 0;
-        for y in start_y..start_y + h as i32 {
-            for x in start_x..start_x + w as i32 {
-                if i < data.len() {
-                    self.pixel(x, y, data[i])
-                }
-                i += 1;
-            }
-        }
-    }
-
-
-    /// Draw a linear gradient in a rectangular region
-    pub fn linear_gradient(&mut self, rect_x: i32, rect_y: i32, rect_width: u32, rect_height:u32, start_x: i32, start_y: i32, end_x: i32, end_y: i32, start_color: Color, end_color: Color) {
-        // calculate the slope of our gradient line
-        let dy = (end_y - start_y) as f64;
-        let dx = (end_x - start_x) as f64;
-
-        if dx == 0.0 {
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
-                    let dist = (y2 - rect_y) as f64;
-                    let scale = if dist > dy { 1.0 } else { dist/dy };
-                    let color = Color::interpolate(start_color, end_color, scale);
-                    self.pixel(x2, y2, color);
-                }
-            }
-        } else if dy == 0.0 {
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
-                    let dist = (x2 - rect_x) as f64;
-                    let scale = if dist > dx { 1.0 } else { dist/dx };
-                    let color = Color::interpolate(start_color, end_color, scale);
-                    self.pixel(x2, y2, color);
-                }
-            }
-        } else {
-            let len = ((dx*dx + dy+dy) as f64).sqrt();
-            let m = dy/dx;
-            let b = start_y as f64 - m * start_x as f64;
-            let m2 = -m;
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
-                    let b2 = y2  as f64 - m2 * (x2 as f64);
-                    let x_int = (b2 - b)/(m-m2);
-                    let y_int = m*x_int + b;
-                    let len1 = ((x_int-start_x as f64) * (x_int-start_x as f64) + (y_int-start_y as f64)*(y_int-start_y as f64)).sqrt();
-                    let scale = if len1 > len { 1.0 } else { len1/len };
-                    let color = Color::interpolate(start_color, end_color, scale);
-                    self.pixel(x2, y2, color);
-                }
-            }
-        }
     }
 
     fn convert_scancode(&self, scancode_option: Option<sdl2::keyboard::Scancode>, shift: bool) -> Option<(char, u8)> {
@@ -498,12 +302,6 @@ impl Window {
         }
 
         iter
-    }
-
-    /// Flip the window buffer
-    pub fn sync(&mut self) -> bool {
-        self.inner.present();
-        true
     }
 }
 
