@@ -77,6 +77,10 @@ impl Window {
             builder.position(x, y);
         }
 
+        if title.is_empty() {
+            builder.borderless();
+        }
+
         match builder.build() {
             Ok(window) => Some(Window {
                 x: x,
@@ -94,7 +98,7 @@ impl Window {
     pub fn sync_path(&mut self) {
         if let Some(window) = self.inner.window() {
             self.x = window.position().0;
-            self.x = window.position().1;
+            self.y = window.position().1;
             self.w = window.size().0;
             self.h = window.size().1;
             self.t = window.title().to_string();
