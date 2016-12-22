@@ -148,25 +148,27 @@ pub trait Renderer {
 
     /// Draw a line
     fn line(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32, color: Color) {
-        let mut x1 = argx1;
-        let mut y1 = argy1;
-        let mut x2 = argx2;
-        let mut y2 = argy2;
+        let mut x = argx1;
+        let mut y = argy1;
 
-        if x2 < x1 {
-            x1 = argx2;
-            y1 = argy2;
-            x2 = argx1;
-            y2 = argy1;
-        }
+        let dx = if argx1 > argx2 { argx1 - argx2 } else { argx2 - argx1 };
+        let dy = if argy1 > argy2 { argy1 - argy2 } else { argy2 - argy1 };
 
-        let dx = x2 - x1;
-        let dy = y2 - y1;
+        let sx = if argx1 < argx2 { 1 } else { -1 };
+        let sy = if argy1 < argy2 { 1 } else { -1 };
 
-        //let ratio = dy as f32 / dx as f32;
-        for x in x1..x2 {
-            let y = y1 + ((dy * (x - x1)) as f32 / dx as f32) as i32;
+        let mut err = if dx > dy { dx } else {-dy} / 2;
+        let mut err_tolerance;
+
+        loop {
             self.pixel(x, y, color);
+
+            if x == argx2 && y == argy2 { break };
+
+            err_tolerance = 2 * err;
+
+            if err_tolerance > -dx { err -= dy; x += sx; }
+            if err_tolerance < dy { err += dx; y += sy; }
         }
     }
 
