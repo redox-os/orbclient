@@ -13,10 +13,12 @@ pub use color::Color;
 pub use event::*;
 pub use imp::*;
 pub use renderer::Renderer;
+pub use graphicspath::GraphicsPath;
 
 pub mod color;
 pub mod event;
 pub mod renderer;
+pub mod graphicspath;
 
 #[cfg(target_os = "redox")]
 #[path="orbital/mod.rs"]
