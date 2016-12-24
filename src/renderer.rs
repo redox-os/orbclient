@@ -2,6 +2,8 @@ use std::cmp;
 
 use FONT;
 use color::Color;
+use graphicspath::GraphicsPath;
+use graphicspath::PointType;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -181,6 +183,21 @@ pub trait Renderer {
             for i in 0..points.len() - 1 {
                 self.line(points[i][0], points[i][1], points[i+1][0], points[i+1][1], color);
             }
+        }
+    }
+
+    /// Draw a path (GraphicsPath)
+    fn draw_path_stroke(&mut self, graphicspath: GraphicsPath, color: Color) {
+        let mut x: i32 = 0;
+        let mut y: i32 = 0;
+
+        for point in graphicspath.points {
+            match point.2 {
+                PointType::Connect => {self.line(x,y, point.0, point.1, color)},
+                _ => {},
+            }
+            x = point.0;
+            y = point.1;
         }
     }
 

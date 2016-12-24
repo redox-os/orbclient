@@ -1,6 +1,6 @@
 extern crate orbclient;
 
-use orbclient::{Color, Window, Renderer, EventOption};
+use orbclient::{Color, Window, Renderer, EventOption, GraphicsPath};
 
 fn main() {
     let (width, height) = orbclient::get_display_size().unwrap();
@@ -30,6 +30,29 @@ fn main() {
     // vertical and horizontal line test
     window.line(100, 0, 100, 200, Color::rgb(0, 0, 255));
     window.line(0, 100, 200, 100, Color::rgb(255, 255, 0));
+    
+    // path and bezier curve example draw a cloud
+    let mut cloud_path = GraphicsPath::new();
+    cloud_path.move_to(170, 80);
+    cloud_path.bezier_curve_to(130, 100, 130, 150, 230, 150);
+    cloud_path.bezier_curve_to(250, 180, 320, 180, 340, 150);
+    cloud_path.bezier_curve_to(420, 150, 420, 120, 390, 100);
+    cloud_path.bezier_curve_to(430, 40, 370, 30, 340, 50);
+    cloud_path.bezier_curve_to(320, 5, 250, 20, 250, 50);
+    cloud_path.bezier_curve_to(200, 5, 150, 20, 170, 80);
+    window.draw_path_stroke(cloud_path, Color::rgb(0, 0, 255));
+
+    // path and quadratic curve example draw a balloon
+    let mut balloon_path = GraphicsPath::new();
+    balloon_path.move_to(75,25);
+    balloon_path.quadratic_curve_to(25,25,25,62);
+    balloon_path.quadratic_curve_to(25,100,50,100);
+    balloon_path.quadratic_curve_to(50,120,30,125);
+    balloon_path.quadratic_curve_to(60,120,65,100);
+    balloon_path.quadratic_curve_to(125,100,125,62);
+    balloon_path.quadratic_curve_to(125,25,75,25);
+    window.draw_path_stroke(balloon_path, Color::rgb(0, 0, 255)); 
+
     window.sync();
 
     'events: loop {
