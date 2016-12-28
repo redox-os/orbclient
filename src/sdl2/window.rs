@@ -220,13 +220,13 @@ impl Window {
         let mut events = Vec::new();
 
         let mouse_event = || -> Event {
-            let mouse = unsafe { &mut *SDL_CTX }.mouse().mouse_state();
+            let mouse = unsafe { &mut *EVENT_PUMP }.mouse_state();
             MouseEvent {
-                x: mouse.1,
-                y: mouse.2,
-                left_button: mouse.0.left(),
-                middle_button: mouse.0.middle(),
-                right_button: mouse.0.right()
+                x: mouse.x(),
+                y: mouse.y(),
+                left_button: mouse.left(),
+                middle_button: mouse.middle(),
+                right_button: mouse.right()
             }.to_event()
         };
 

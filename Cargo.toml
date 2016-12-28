@@ -2,7 +2,7 @@
 name = "orbclient"
 description = "The Orbital Client Library"
 repository = "https://github.com/redox-os/orbclient"
-version = "0.2.7"
+version = "0.2.8"
 license-file = "LICENSE"
 readme = "README.md"
 keywords = ["orbital", "redox", "ui"]
@@ -13,7 +13,7 @@ name = "orbclient"
 path = "src/lib.rs"
 
 [target.'cfg(not(target_os = "redox"))'.dependencies]
-sdl2 = "0.9"
+sdl2 = "0.27"
 
 [target.'cfg(target_os = "redox")'.dependencies]
 redox_syscall = "0.1"
