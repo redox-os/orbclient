@@ -213,7 +213,7 @@ pub trait Renderer {
             }
 
             for col in 0..8 {
-                let pixel = (row_data >> (7 - col)) & 1;
+                let pixel = (row_data >> (8 - col)) & 1;
                 if pixel > 0 {
                     self.pixel(x + col as i32, y + row as i32, color);
                 }
