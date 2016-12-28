@@ -1,4 +1,4 @@
-use std::{cmp, mem, slice, thread};
+use std::{mem, slice, thread};
 use std::fs::File;
 use std::io::Read;
 use std::os::unix::io::{AsRawFd, RawFd};

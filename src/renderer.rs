@@ -239,7 +239,6 @@ pub trait Renderer {
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
         let self_w = self.width();
         let self_h = self.height();
-        let data = self.data_mut();
 
         let start_y = cmp::max(0, cmp::min(self_h as i32 - 1, y));
         let end_y = cmp::max(start_y, cmp::min(self_h as i32, y + h as i32));
@@ -247,9 +246,21 @@ pub trait Renderer {
         let start_x = cmp::max(0, cmp::min(self_w as i32 - 1, x));
         let len = cmp::max(start_x, cmp::min(self_w as i32, x + w as i32)) - start_x;
 
-        for y in start_y..end_y {
-            unsafe {
-                fast_set32(data.as_mut_ptr().offset((y * self_w as i32 + start_x) as isize) as *mut u32, color.data, len as usize);
+        let alpha = (color.data >> 24) & 0xFF;
+        if alpha > 0 {
+            if alpha >= 255 {
+                let data = self.data_mut();
+                for y in start_y..end_y {
+                    unsafe {
+                        fast_set32(data.as_mut_ptr().offset((y * self_w as i32 + start_x) as isize) as *mut u32, color.data, len as usize);
+                    }
+                }
+            } else {
+                for y in start_y..end_y {
+                    for x in start_x..start_x + len {
+                        self.pixel(x, y, color);
+                    }
+                }
             }
         }
     }
