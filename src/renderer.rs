@@ -287,8 +287,8 @@ pub trait Renderer {
         let dx = (end_x - start_x) as f64;
 
         if dx == 0.0 {
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+            for x2 in rect_x..(rect_x + rect_width as i32) {
+                for y2 in rect_y..(rect_y + rect_height as i32) {
                     let dist = (y2 - rect_y) as f64;
                     let scale = if dist > dy { 1.0 } else { dist/dy };
                     let color = Color::interpolate(start_color, end_color, scale);
@@ -296,8 +296,8 @@ pub trait Renderer {
                 }
             }
         } else if dy == 0.0 {
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+            for x2 in rect_x..(rect_x + rect_width as i32) {
+                for y2 in rect_y..(rect_y + rect_height as i32) {
                     let dist = (x2 - rect_x) as f64;
                     let scale = if dist > dx { 1.0 } else { dist/dx };
                     let color = Color::interpolate(start_color, end_color, scale);
@@ -309,8 +309,8 @@ pub trait Renderer {
             let m = dy/dx;
             let b = start_y as f64 - m * start_x as f64;
             let m2 = -m;
-            for x2 in rect_x..(rect_x + rect_width as i32 +1) {
-                for y2 in rect_y..(rect_y + rect_height as i32 +1) {
+            for x2 in rect_x..(rect_x + rect_width as i32) {
+                for y2 in rect_y..(rect_y + rect_height as i32) {
                     let b2 = y2  as f64 - m2 * (x2 as f64);
                     let x_int = (b2 - b)/(m-m2);
                     let y_int = m*x_int + b;
