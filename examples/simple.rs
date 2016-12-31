@@ -30,7 +30,7 @@ fn main() {
     // vertical and horizontal line test
     window.line(100, 0, 100, 200, Color::rgb(0, 0, 255));
     window.line(0, 100, 200, 100, Color::rgb(255, 255, 0));
-    
+
     // path and bezier curve example draw a cloud
     let mut cloud_path = GraphicsPath::new();
     cloud_path.move_to(170, 80);
@@ -51,7 +51,10 @@ fn main() {
     balloon_path.quadratic_curve_to(60,120,65,100);
     balloon_path.quadratic_curve_to(125,100,125,62);
     balloon_path.quadratic_curve_to(125,25,75,25);
-    window.draw_path_stroke(balloon_path, Color::rgb(0, 0, 255)); 
+    window.draw_path_stroke(balloon_path, Color::rgb(0, 0, 255));
+
+    window.char(200, 200, '═', Color::rgb(0, 0, 0));
+    window.char(208, 200, '═', Color::rgb(0, 0, 0));
 
     window.sync();
 
