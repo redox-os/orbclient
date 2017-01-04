@@ -212,7 +212,6 @@ pub trait Renderer {
                 row_data = 0;
             }
 
-            println!("{:X}", row_data);
             for col in 0..8 {
                 let pixel = (row_data >> (7 - col)) & 1;
                 if pixel > 0 {
