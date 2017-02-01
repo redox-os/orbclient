@@ -12,7 +12,25 @@ fn main() {
                                  "TITLE")
                          .unwrap();
 
-    let (win_w, win_h) = (width/2, height/2);
+    let (mut win_w, mut win_h) = (width/2, height/2);
+    draw_beautiful_things(&mut window, win_w, win_h);
+
+    'events: loop {
+        for event in window.events() {
+            match event.to_option() {
+                EventOption::Quit(_quit_event) => break 'events,
+                EventOption::Resized(resized_event) => {
+                    win_w = resized_event.width as u32;
+                    win_h = resized_event.height as u32;
+                    draw_beautiful_things(&mut window, win_w, win_h);
+                }
+                event_option => println!("{:?}", event_option)
+            }
+        }
+    }
+}
+
+fn draw_beautiful_things(window: &mut Window, win_w: u32, win_h: u32) {
     // top left -> bottom rigth
     window.linear_gradient(0, 0, win_w/3, win_h, 0, 0,  (win_w/3) as i32, (win_h/2) as i32, Color::rgb(128,128,128), Color::rgb(255,255,255));
     // horizontal gradient
@@ -57,13 +75,4 @@ fn main() {
     window.char(208, 200, '═', Color::rgb(0, 0, 0));
 
     window.sync();
-
-    'events: loop {
-        for event in window.events() {
-            match event.to_option() {
-                EventOption::Quit(_quit_event) => break 'events,
-                event_option => println!("{:?}", event_option)
-            }
-        }
-    }
 }

@@ -12,6 +12,14 @@ authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 name = "orbclient"
 path = "src/lib.rs"
 
+[[bin]]
+name = "simple"
+path = "examples/simple.rs"
+
+[[bin]]
+name = "window_event"
+path = "examples/window_event.rs"
+
 [target.'cfg(not(target_os = "redox"))'.dependencies]
 sdl2 = "0.27"
 
