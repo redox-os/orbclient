@@ -41,10 +41,11 @@ impl Color {
         let r = Color::interp(start_color.r(), end_color.r(), scale);
         let g = Color::interp(start_color.g(), end_color.g(), scale);
         let b = Color::interp(start_color.b(), end_color.b(), scale);
-        Color::rgb(r, g, b)
+        let a = Color::interp(start_color.a(), end_color.a(), scale);
+        Color::rgba(r, g, b, a)
     }
 
     fn interp(start_color: u8, end_color: u8, scale: f64) -> u8 {
-        ((end_color  as f64 - start_color as f64) * scale + start_color as f64) as u8
+        ((end_color as f64 - start_color as f64) * scale + start_color as f64) as u8
     }
 }
