@@ -6,6 +6,7 @@ pub const EVENT_MOUSE: i64 = 1;
 pub const EVENT_KEY: i64 = 2;
 pub const EVENT_QUIT: i64 = 3;
 pub const EVENT_FOCUS: i64 = 4;
+pub const EVENT_RESIZED: i64 = 5;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -18,6 +19,8 @@ pub enum EventOption {
     Quit(QuitEvent),
     /// A focus event
     Focus(FocusEvent),
+    /// A resized event
+    Resized(ResizedEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -54,6 +57,7 @@ impl Event {
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
             EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
+            EVENT_RESIZED => EventOption::Resized(ResizedEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -307,6 +311,33 @@ impl FocusEvent {
     pub fn from_event(event: Event) -> FocusEvent {
         FocusEvent {
             focused: event.a > 0
+        }
+    }
+}
+
+/// A resized event
+#[derive(Copy, Clone, Debug)]
+pub struct ResizedEvent {
+    /// The new width after the resizing
+    pub width: i32,
+    /// The new height after the resizing
+    pub height: i32,
+}
+
+impl ResizedEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_RESIZED,
+            a: self.width as i64,
+            b: self.height as i64,
+            c: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> ResizedEvent {
+        ResizedEvent {
+            width: event.a as i32,
+            height: event.b as i32,
         }
     }
 }

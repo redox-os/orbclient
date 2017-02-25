@@ -81,6 +81,8 @@ impl Window {
             builder.borderless();
         }
 
+        builder.resizable();
+
         match builder.build() {
             Ok(window) => Some(Window {
                 x: x,
@@ -282,6 +284,17 @@ impl Window {
                 }.to_event());
             },
             sdl2::event::Event::Quit { .. } => events.push(QuitEvent.to_event()),
+            sdl2::event::Event::Window { win_event, .. } => {
+                match win_event {
+                    sdl2::event::WindowEvent::Resized(width, height) => {
+                        events.push(ResizedEvent {
+                            width: width,
+                            height: height,
+                        }.to_event());
+                    }
+                    _ => (),
+                }
+            }
             _ => (),
         }
 
