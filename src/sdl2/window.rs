@@ -97,11 +97,14 @@ impl Window {
 
     pub fn sync_path(&mut self) {
         if let Some(window) = self.inner.window() {
-            self.x = window.position().0;
-            self.y = window.position().1;
-            self.w = window.size().0;
-            self.h = window.size().1;
-            self.t = window.title().to_string();
+            let pos = window.position();
+            let size = window.size();
+            let title = window.title();
+            self.x = pos.0;
+            self.y = pos.1;
+            self.w = size.0;
+            self.h = size.1;
+            self.t = title.to_string();
         }
     }
 
@@ -120,6 +123,23 @@ impl Window {
     /// Get title
     pub fn title(&self) -> String {
         self.t.clone()
+    }
+
+    // Set position
+    pub fn set_pos(&mut self, x: i32, y: i32) {
+        if let Some(mut window) = self.inner.window_mut() {
+            let _ = window.set_position(sdl2::video::WindowPos::Positioned(x),
+                                        sdl2::video::WindowPos::Positioned(y));
+        }
+        self.sync_path();
+    }
+
+    // Set size
+    pub fn set_size(&mut self, width: u32, height: u32) {
+        if let Some(mut window) = self.inner.window_mut() {
+            let _ = window.set_size(width, height);
+        }
+        self.sync_path();
     }
 
     /// Set title

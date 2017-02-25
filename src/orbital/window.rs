@@ -123,9 +123,29 @@ impl Window {
         self.t.clone()
     }
 
+    // Set position
+    pub fn set_pos(&mut self, x: i32, y: i32) {
+        let _ = self.file.write(&format!("P,{},{}", x, y).as_bytes());
+        self.sync_path();
+    }
+
+    // Set size
+    pub fn set_size(&mut self, width: u32, height: u32) {
+        //TODO: Improve safety and reliability
+        unsafe {
+            syscall::funmap(self.data.as_ptr() as usize).expect("orbclient: failed to unmap memory in resize");
+        }
+        let _ = self.file.write(&format!("S,{},{}", width, height).as_bytes());
+        self.sync_path();
+        unsafe {
+            let address = syscall::fmap(self.file.as_raw_fd(), 0, (self.w * self.h * 4) as usize).expect("orbclient: failed to map memory in resize");
+            self.data = slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
+        }
+    }
+
     /// Set title
     pub fn set_title(&mut self, title: &str) {
-        let _ = self.file.write(title.as_bytes());
+        let _ = self.file.write(&format!("T,{}", title).as_bytes());
         self.sync_path();
     }
 

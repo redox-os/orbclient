@@ -17,8 +17,8 @@ pub use graphicspath::GraphicsPath;
 
 pub mod color;
 pub mod event;
-pub mod renderer;
 pub mod graphicspath;
+pub mod renderer;
 
 #[cfg(target_os = "redox")]
 #[path="orbital/mod.rs"]
