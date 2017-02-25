@@ -123,8 +123,11 @@ impl Window {
     }
 
     /// Set title
-    pub fn set_title(&mut self, _: &str) {
-        // TODO
+    pub fn set_title(&mut self, title: &str) {
+        if let Some(mut window) = self.inner.window_mut() {
+            let _ = window.set_title(title);
+        }
+        self.sync_path();
     }
 
     fn convert_scancode(&self, scancode_option: Option<sdl2::keyboard::Scancode>, shift: bool) -> Option<(char, u8)> {
