@@ -264,6 +264,23 @@ impl Window {
         };
 
         match event {
+            sdl2::event::Event::Window { win_event, .. } => match win_event {
+                sdl2::event::WindowEvent::Moved(x, y) => events.push(MoveEvent {
+                    x: x,
+                    y: y
+                }.to_event()),
+                sdl2::event::WindowEvent::Resized(w, h) => events.push(ResizeEvent {
+                    width: w as u32,
+                    height: h as u32
+                }.to_event()),
+                sdl2::event::WindowEvent::FocusGained => events.push(FocusEvent {
+                    focused: true
+                }.to_event()),
+                sdl2::event::WindowEvent::FocusLost => events.push(FocusEvent {
+                    focused: false
+                }.to_event()),
+                _ => ()
+            },
             sdl2::event::Event::MouseMotion { .. } => events.push(mouse_event()),
             sdl2::event::Event::MouseButtonDown { .. } => events.push(mouse_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(mouse_event()),

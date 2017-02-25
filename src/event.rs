@@ -6,6 +6,8 @@ pub const EVENT_MOUSE: i64 = 1;
 pub const EVENT_KEY: i64 = 2;
 pub const EVENT_QUIT: i64 = 3;
 pub const EVENT_FOCUS: i64 = 4;
+pub const EVENT_MOVE: i64 = 5;
+pub const EVENT_RESIZE: i64 = 6;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -18,6 +20,10 @@ pub enum EventOption {
     Quit(QuitEvent),
     /// A focus event
     Focus(FocusEvent),
+    /// A move event
+    Move(MoveEvent),
+    /// A resize event
+    Resize(ResizeEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -54,6 +60,8 @@ impl Event {
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
             EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
+            EVENT_MOVE => EventOption::Move(MoveEvent::from_event(self)),
+            EVENT_RESIZE => EventOption::Resize(ResizeEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -307,6 +315,56 @@ impl FocusEvent {
     pub fn from_event(event: Event) -> FocusEvent {
         FocusEvent {
             focused: event.a > 0
+        }
+    }
+}
+
+/// A move event
+#[derive(Copy, Clone, Debug)]
+pub struct MoveEvent {
+    pub x: i32,
+    pub y: i32
+}
+
+impl MoveEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_MOVE,
+            a: self.x as i64,
+            b: self.y as i64,
+            c: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> MoveEvent {
+        MoveEvent {
+            x: event.a as i32,
+            y: event.b as i32
+        }
+    }
+}
+
+/// A resize event
+#[derive(Copy, Clone, Debug)]
+pub struct ResizeEvent {
+    pub width: u32,
+    pub height: u32
+}
+
+impl ResizeEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_RESIZE,
+            a: self.width as i64,
+            b: self.height as i64,
+            c: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> ResizeEvent {
+        ResizeEvent {
+            width: event.a as u32,
+            height: event.b as u32
         }
     }
 }
