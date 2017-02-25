@@ -1,6 +1,6 @@
 use std::{mem, slice, thread};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 
 use super::syscall;
@@ -124,8 +124,9 @@ impl Window {
     }
 
     /// Set title
-    pub fn set_title(&mut self, _: &str) {
-        // TODO
+    pub fn set_title(&mut self, title: &str) {
+        let _ = self.file.write(title.as_bytes());
+        self.sync_path();
     }
 
     /// Blocking iterator over events
