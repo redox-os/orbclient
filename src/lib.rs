@@ -11,19 +11,25 @@ pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 
 pub use color::Color;
 pub use event::*;
-pub use imp::*;
-pub use renderer::Renderer;
+pub use imp::{get_display_size, EventIter, Window};
 pub use graphicspath::GraphicsPath;
+pub use renderer::Renderer;
 
 pub mod color;
 pub mod event;
 pub mod graphicspath;
 pub mod renderer;
 
+#[derive(Clone, Copy, Debug)]
+pub enum WindowFlag {
+    Async,
+    Resizable
+}
+
 #[cfg(target_os = "redox")]
-#[path="orbital/mod.rs"]
-pub mod imp;
+#[path="imp/orbital.rs"]
+mod imp;
 
 #[cfg(not(target_os = "redox"))]
-#[path="sdl2/mod.rs"]
-pub mod imp;
+#[path="imp/sdl2.rs"]
+mod imp;

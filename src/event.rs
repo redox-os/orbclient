@@ -2,20 +2,23 @@ use core::{char, mem, slice};
 use core::ops::{Deref, DerefMut};
 
 pub const EVENT_NONE: i64 = 0;
-pub const EVENT_MOUSE: i64 = 1;
-pub const EVENT_KEY: i64 = 2;
-pub const EVENT_QUIT: i64 = 3;
-pub const EVENT_FOCUS: i64 = 4;
-pub const EVENT_MOVE: i64 = 5;
-pub const EVENT_RESIZE: i64 = 6;
+pub const EVENT_KEY: i64 = 1;
+pub const EVENT_MOUSE: i64 = 2;
+pub const EVENT_SCROLL: i64 = 3;
+pub const EVENT_QUIT: i64 = 4;
+pub const EVENT_FOCUS: i64 = 5;
+pub const EVENT_MOVE: i64 = 6;
+pub const EVENT_RESIZE: i64 = 7;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
 pub enum EventOption {
-    /// A mouse event
-    Mouse(MouseEvent),
     /// A key event
     Key(KeyEvent),
+    /// A mouse event
+    Mouse(MouseEvent),
+    /// A scroll event
+    Scroll(ScrollEvent),
     /// A quit request event
     Quit(QuitEvent),
     /// A focus event
@@ -56,8 +59,9 @@ impl Event {
     pub fn to_option(self) -> EventOption {
         match self.code {
             EVENT_NONE => EventOption::None,
-            EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
+            EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
+            EVENT_SCROLL => EventOption::Scroll(ScrollEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
             EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
             EVENT_MOVE => EventOption::Move(MoveEvent::from_event(self)),
@@ -80,45 +84,6 @@ impl DerefMut for Event {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
             slice::from_raw_parts_mut(self as *mut Event as *mut u8, mem::size_of::<Event>()) as &mut [u8]
-        }
-    }
-}
-
-/// A event related to the mouse
-#[derive(Copy, Clone, Debug)]
-pub struct MouseEvent {
-    /// The x coordinate of the mouse
-    pub x: i32,
-    /// The y coordinate of the mouse
-    pub y: i32,
-    /// Was the left button pressed?
-    pub left_button: bool,
-    /// Was the middle button pressed?
-    pub middle_button: bool,
-    /// Was the right button pressed?
-    pub right_button: bool,
-}
-
-impl MouseEvent {
-    /// Convert to an `Event`
-    pub fn to_event(&self) -> Event {
-        Event {
-            code: EVENT_MOUSE,
-            a: self.x as i64,
-            b: self.y as i64,
-            c: self.left_button as i64 | (self.middle_button as i64) << 1 |
-               (self.right_button as i64) << 2,
-        }
-    }
-
-    /// Convert an `Event` to a `MouseEvent`
-    pub fn from_event(event: Event) -> MouseEvent {
-        MouseEvent {
-            x: event.a as i32,
-            y: event.b as i32,
-            left_button: event.c & 1 == 1,
-            middle_button: event.c & 2 == 2,
-            right_button: event.c & 4 == 4,
         }
     }
 }
@@ -273,6 +238,74 @@ impl KeyEvent {
             character: char::from_u32(event.a as u32).unwrap_or('\0'),
             scancode: event.b as u8,
             pressed: event.c > 0,
+        }
+    }
+}
+
+/// A event related to the mouse
+#[derive(Copy, Clone, Debug)]
+pub struct MouseEvent {
+    /// The x coordinate of the mouse
+    pub x: i32,
+    /// The y coordinate of the mouse
+    pub y: i32,
+    /// Was the left button pressed?
+    pub left_button: bool,
+    /// Was the middle button pressed?
+    pub middle_button: bool,
+    /// Was the right button pressed?
+    pub right_button: bool,
+}
+
+impl MouseEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_MOUSE,
+            a: self.x as i64,
+            b: self.y as i64,
+            c: self.left_button as i64 | (self.middle_button as i64) << 1 |
+               (self.right_button as i64) << 2,
+        }
+    }
+
+    /// Convert an `Event` to a `MouseEvent`
+    pub fn from_event(event: Event) -> MouseEvent {
+        MouseEvent {
+            x: event.a as i32,
+            y: event.b as i32,
+            left_button: event.c & 1 == 1,
+            middle_button: event.c & 2 == 2,
+            right_button: event.c & 4 == 4,
+        }
+    }
+}
+
+/// A event for scrolling the mouse
+#[derive(Copy, Clone, Debug)]
+pub struct ScrollEvent {
+    /// The x distance of the scroll
+    pub x: i32,
+    /// The y distance of the scroll
+    pub y: i32,
+}
+
+impl ScrollEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_SCROLL,
+            a: self.x as i64,
+            b: self.y as i64,
+            c: 0,
+        }
+    }
+
+    /// Convert an `Event` to a `ScrollEvent`
+    pub fn from_event(event: Event) -> ScrollEvent {
+        ScrollEvent {
+            x: event.a as i32,
+            y: event.b as i32,
         }
     }
 }

@@ -1,11 +1,37 @@
 extern crate sdl2;
 
-use std::{mem, slice};
+use std::{mem, ptr, slice};
+use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 
 use color::Color;
 use event::*;
-use super::{init, SDL_CTX, VIDEO_CTX, EVENT_PUMP};
 use renderer::Renderer;
+use WindowFlag;
+
+static SDL_USAGES: AtomicUsize = ATOMIC_USIZE_INIT;
+/// SDL2 Context
+static mut SDL_CTX: *mut sdl2::Sdl = ptr::null_mut();
+/// Video Context
+static mut VIDEO_CTX: *mut sdl2::VideoSubsystem = ptr::null_mut();
+/// Event Pump
+static mut EVENT_PUMP: *mut sdl2::EventPump = ptr::null_mut();
+
+//Call this when the CTX needs to be used is created
+#[inline]
+unsafe fn init() {
+    if SDL_USAGES.fetch_add(1, Ordering::Relaxed) == 0 {
+        SDL_CTX = Box::into_raw(Box::new(sdl2::init().unwrap()));
+        VIDEO_CTX = Box::into_raw(Box::new((&mut *SDL_CTX).video().unwrap()));
+        EVENT_PUMP = Box::into_raw(Box::new((&mut *SDL_CTX).event_pump().unwrap()));
+    }
+}
+
+pub fn get_display_size() -> Result<(u32, u32), String> {
+    unsafe { init() };
+    unsafe { & *VIDEO_CTX }.display_bounds(0)
+        .map(|rect| (rect.width(), rect.height()))
+        .map_err(|err| format!("{}", err))
+}
 
 /// A window
 #[allow(dead_code)]
@@ -63,15 +89,28 @@ impl Renderer for Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
-        Window::new_flags(x, y, w, h, title, false)
+        Window::new_flags(x, y, w, h, title, &[])
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, flags: &[WindowFlag]) -> Option<Self> {
         //Insure that init has been called
         unsafe { init() };
 
+        let mut async = false;
+        let mut resizable = false;
+        for &flag in flags.iter() {
+            match flag {
+                WindowFlag::Async => async = true,
+                WindowFlag::Resizable => resizable = true,
+            }
+        }
+
         let mut builder = unsafe { & *VIDEO_CTX }.window(title, w, h);
+
+        if resizable {
+            builder.resizable();
+        }
 
         if x >= 0 || y >= 0 {
             builder.position(x, y);
@@ -284,6 +323,10 @@ impl Window {
             sdl2::event::Event::MouseMotion { .. } => events.push(mouse_event()),
             sdl2::event::Event::MouseButtonDown { .. } => events.push(mouse_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(mouse_event()),
+            sdl2::event::Event::MouseWheel { x, y, .. } => events.push(ScrollEvent {
+                x: x,
+                y: y
+            }.to_event()),
             sdl2::event::Event::KeyDown { scancode, .. } => if let Some(code) = self.convert_scancode(scancode, shift) {
                 events.push(KeyEvent {
                     character: code.0,

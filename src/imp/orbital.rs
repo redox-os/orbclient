@@ -1,13 +1,30 @@
-use std::{mem, slice, thread};
+extern crate syscall;
+
+use std::{env, mem, slice, thread};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 
-use super::syscall;
-
 use color::Color;
-use event::Event;
+use event::{Event, EVENT_RESIZE};
 use renderer::Renderer;
+use WindowFlag;
+
+pub fn get_display_size() -> Result<(u32, u32), String> {
+    let display_path = try!(env::var("DISPLAY").or(Err("DISPLAY not set")));
+    match File::open(&display_path) {
+        Ok(display) => {
+            let mut buf: [u8; 4096] = [0; 4096];
+            let count = syscall::fpath(display.as_raw_fd() as usize, &mut buf).map_err(|err| format!("{}", err))?;
+            let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
+            let res = path.split(":").nth(1).unwrap_or("");
+            let width = res.split("/").nth(1).unwrap_or("").parse::<u32>().unwrap_or(0);
+            let height = res.split("/").nth(2).unwrap_or("").parse::<u32>().unwrap_or(0);
+            Ok((width, height))
+        },
+        Err(err) => Err(format!("{}", err))
+    }
+}
 
 /// A window
 pub struct Window {
@@ -23,6 +40,8 @@ pub struct Window {
     t: String,
     /// True if the window should not wait for events
     async: bool,
+    /// True if the window can be resized
+    resizable: bool,
     /// The input scheme
     file: File,
     /// Window data
@@ -59,12 +78,26 @@ impl Renderer for Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
-        Window::new_flags(x, y, w, h, title, false)
+        Window::new_flags(x, y, w, h, title, &[])
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, async: bool) -> Option<Self> {
-        if let Ok(file) = File::open(&format!("orbital:{}/{}/{}/{}/{}/{}", if async { "a" } else { "" }, x, y, w, h, title)) {
+    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, flags: &[WindowFlag]) -> Option<Self> {
+        let mut async = false;
+        let mut resizable = false;
+        for &flag in flags.iter() {
+            match flag {
+                WindowFlag::Async => async = true,
+                WindowFlag::Resizable => resizable = true,
+            }
+        }
+
+        if let Ok(file) = File::open(&format!(
+            "orbital:{}{}/{}/{}/{}/{}/{}",
+            if async { "a" } else { "" },
+            if resizable { "r" } else { "" },
+            x, y, w, h, title
+        )) {
             if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) } {
                 Some(Window {
                     x: x,
@@ -73,6 +106,7 @@ impl Window {
                     h: h,
                     t: title.to_string(),
                     async: async,
+                    resizable: resizable,
                     file: file,
                     data: unsafe { slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize) },
                 })
@@ -169,6 +203,18 @@ impl Window {
                 },
                 Ok(count) => {
                     iter.count = count/mem::size_of::<Event>();
+                    if self.resizable {
+                        let mut resize = None;
+                        for i in 0..iter.count {
+                            let event = &iter.events[i];
+                            if event.code == EVENT_RESIZE {
+                                resize = Some((event.a as u32, event.b as u32));
+                            }
+                        }
+                        if let Some((w, h)) = resize {
+                            self.set_size(w, h);
+                        }
+                    }
                     break 'blocking;
                 },
                 Err(_) => break 'blocking,
