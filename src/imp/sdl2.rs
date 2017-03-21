@@ -281,14 +281,12 @@ impl Window {
     fn convert_event(&self, event: sdl2::event::Event) -> Vec<Event> {
         let mut events = Vec::new();
 
-        let mouse_event = || -> Event {
+        let button_event = || -> Event {
             let mouse = unsafe { &mut *EVENT_PUMP }.mouse_state();
-            MouseEvent {
-                x: mouse.x(),
-                y: mouse.y(),
-                left_button: mouse.left(),
-                middle_button: mouse.middle(),
-                right_button: mouse.right()
+            ButtonEvent {
+                left: mouse.left(),
+                middle: mouse.middle(),
+                right: mouse.right()
             }.to_event()
         };
 
@@ -320,9 +318,12 @@ impl Window {
                 }.to_event()),
                 _ => ()
             },
-            sdl2::event::Event::MouseMotion { .. } => events.push(mouse_event()),
-            sdl2::event::Event::MouseButtonDown { .. } => events.push(mouse_event()),
-            sdl2::event::Event::MouseButtonUp { .. } => events.push(mouse_event()),
+            sdl2::event::Event::MouseMotion { x, y, .. } => events.push(MouseEvent {
+                x: x,
+                y: y
+            }.to_event()),
+            sdl2::event::Event::MouseButtonDown { .. } => events.push(button_event()),
+            sdl2::event::Event::MouseButtonUp { .. } => events.push(button_event()),
             sdl2::event::Event::MouseWheel { x, y, .. } => events.push(ScrollEvent {
                 x: x,
                 y: y
