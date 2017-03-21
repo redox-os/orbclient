@@ -4,11 +4,12 @@ use core::ops::{Deref, DerefMut};
 pub const EVENT_NONE: i64 = 0;
 pub const EVENT_KEY: i64 = 1;
 pub const EVENT_MOUSE: i64 = 2;
-pub const EVENT_SCROLL: i64 = 3;
-pub const EVENT_QUIT: i64 = 4;
-pub const EVENT_FOCUS: i64 = 5;
-pub const EVENT_MOVE: i64 = 6;
-pub const EVENT_RESIZE: i64 = 7;
+pub const EVENT_BUTTON: i64 = 3;
+pub const EVENT_SCROLL: i64 = 4;
+pub const EVENT_QUIT: i64 = 5;
+pub const EVENT_FOCUS: i64 = 6;
+pub const EVENT_MOVE: i64 = 7;
+pub const EVENT_RESIZE: i64 = 8;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -17,7 +18,9 @@ pub enum EventOption {
     Key(KeyEvent),
     /// A mouse event
     Mouse(MouseEvent),
-    /// A scroll event
+    /// A mouse button event
+    Button(ButtonEvent),
+    /// A mouse scroll event
     Scroll(ScrollEvent),
     /// A quit request event
     Quit(QuitEvent),
@@ -40,7 +43,6 @@ pub struct Event {
     pub code: i64,
     pub a: i64,
     pub b: i64,
-    pub c: i64,
 }
 
 impl Event {
@@ -50,7 +52,6 @@ impl Event {
             code: 0,
             a: 0,
             b: 0,
-            c: 0,
         }
     }
 
@@ -61,6 +62,7 @@ impl Event {
             EVENT_NONE => EventOption::None,
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
+            EVENT_BUTTON => EventOption::Button(ButtonEvent::from_event(self)),
             EVENT_SCROLL => EventOption::Scroll(ScrollEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
             EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
@@ -227,8 +229,7 @@ impl KeyEvent {
         Event {
             code: EVENT_KEY,
             a: self.character as i64,
-            b: self.scancode as i64,
-            c: self.pressed as i64,
+            b: self.scancode as i64 | (self.pressed as i64) << 8,
         }
     }
 
@@ -237,7 +238,7 @@ impl KeyEvent {
         KeyEvent {
             character: char::from_u32(event.a as u32).unwrap_or('\0'),
             scancode: event.b as u8,
-            pressed: event.c > 0,
+            pressed: event.b & 1 << 8 == 1 << 8,
         }
     }
 }
@@ -249,12 +250,6 @@ pub struct MouseEvent {
     pub x: i32,
     /// The y coordinate of the mouse
     pub y: i32,
-    /// Was the left button pressed?
-    pub left_button: bool,
-    /// Was the middle button pressed?
-    pub middle_button: bool,
-    /// Was the right button pressed?
-    pub right_button: bool,
 }
 
 impl MouseEvent {
@@ -264,8 +259,6 @@ impl MouseEvent {
             code: EVENT_MOUSE,
             a: self.x as i64,
             b: self.y as i64,
-            c: self.left_button as i64 | (self.middle_button as i64) << 1 |
-               (self.right_button as i64) << 2,
         }
     }
 
@@ -274,9 +267,38 @@ impl MouseEvent {
         MouseEvent {
             x: event.a as i32,
             y: event.b as i32,
-            left_button: event.c & 1 == 1,
-            middle_button: event.c & 2 == 2,
-            right_button: event.c & 4 == 4,
+        }
+    }
+}
+
+/// A event for clicking the mouse
+#[derive(Copy, Clone, Debug)]
+pub struct ButtonEvent {
+    /// Was the left button pressed?
+    pub left: bool,
+    /// Was the middle button pressed?
+    pub middle: bool,
+    /// Was the right button pressed?
+    pub right: bool,
+}
+
+impl ButtonEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_BUTTON,
+            a: self.left as i64 | (self.middle as i64) << 1 |
+               (self.right as i64) << 2,
+            b: 0,
+        }
+    }
+
+    /// Convert an `Event` to a `ButtonEvent`
+    pub fn from_event(event: Event) -> ButtonEvent {
+        ButtonEvent {
+            left: event.a & 1 == 1,
+            middle: event.a & 2 == 2,
+            right: event.a & 4 == 4,
         }
     }
 }
@@ -297,7 +319,6 @@ impl ScrollEvent {
             code: EVENT_SCROLL,
             a: self.x as i64,
             b: self.y as i64,
-            c: 0,
         }
     }
 
@@ -319,7 +340,6 @@ impl QuitEvent {
             code: EVENT_QUIT,
             a: 0,
             b: 0,
-            c: 0,
         }
     }
 
@@ -341,7 +361,6 @@ impl FocusEvent {
             code: EVENT_FOCUS,
             a: self.focused as i64,
             b: 0,
-            c: 0,
         }
     }
 
@@ -365,7 +384,6 @@ impl MoveEvent {
             code: EVENT_MOVE,
             a: self.x as i64,
             b: self.y as i64,
-            c: 0,
         }
     }
 
@@ -390,7 +408,6 @@ impl ResizeEvent {
             code: EVENT_RESIZE,
             a: self.width as i64,
             b: self.height as i64,
-            c: 0,
         }
     }
 
