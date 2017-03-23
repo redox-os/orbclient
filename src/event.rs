@@ -10,6 +10,7 @@ pub const EVENT_QUIT: i64 = 5;
 pub const EVENT_FOCUS: i64 = 6;
 pub const EVENT_MOVE: i64 = 7;
 pub const EVENT_RESIZE: i64 = 8;
+pub const EVENT_SCREEN: i64 = 9;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -30,6 +31,8 @@ pub enum EventOption {
     Move(MoveEvent),
     /// A resize event
     Resize(ResizeEvent),
+    /// A screen report event
+    Screen(ScreenEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -68,6 +71,7 @@ impl Event {
             EVENT_FOCUS => EventOption::Focus(FocusEvent::from_event(self)),
             EVENT_MOVE => EventOption::Move(MoveEvent::from_event(self)),
             EVENT_RESIZE => EventOption::Resize(ResizeEvent::from_event(self)),
+            EVENT_SCREEN => EventOption::Screen(ScreenEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -413,6 +417,30 @@ impl ResizeEvent {
 
     pub fn from_event(event: Event) -> ResizeEvent {
         ResizeEvent {
+            width: event.a as u32,
+            height: event.b as u32
+        }
+    }
+}
+
+/// A screen report event
+#[derive(Copy, Clone, Debug)]
+pub struct ScreenEvent {
+    pub width: u32,
+    pub height: u32
+}
+
+impl ScreenEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_SCREEN,
+            a: self.width as i64,
+            b: self.height as i64,
+        }
+    }
+
+    pub fn from_event(event: Event) -> ScreenEvent {
+        ScreenEvent {
             width: event.a as u32,
             height: event.b as u32
         }
