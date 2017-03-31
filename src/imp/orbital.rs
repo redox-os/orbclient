@@ -85,17 +85,20 @@ impl Window {
     pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, flags: &[WindowFlag]) -> Option<Self> {
         let mut async = false;
         let mut resizable = false;
+        let mut exit = true;
         for &flag in flags.iter() {
             match flag {
                 WindowFlag::Async => async = true,
                 WindowFlag::Resizable => resizable = true,
+                WindowFlag::Exit => exit = false
             }
         }
 
         if let Ok(file) = File::open(&format!(
-            "orbital:{}{}/{}/{}/{}/{}/{}",
+            "orbital:{}{}{}/{}/{}/{}/{}/{}",
             if async { "a" } else { "" },
             if resizable { "r" } else { "" },
+            if exit == false { "e" } else { "" },
             x, y, w, h, title
         )) {
             if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) } {

@@ -99,10 +99,12 @@ impl Window {
 
         let mut async = false;
         let mut resizable = false;
+        let mut exit = true;
         for &flag in flags.iter() {
             match flag {
                 WindowFlag::Async => async = true,
                 WindowFlag::Resizable => resizable = true,
+                WindowFlag::Exit => exit = false,
             }
         }
 
