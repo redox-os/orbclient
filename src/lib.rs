@@ -23,7 +23,8 @@ pub mod renderer;
 #[derive(Clone, Copy, Debug)]
 pub enum WindowFlag {
     Async,
-    Resizable
+    Resizable,
+    Unclosable
 }
 
 #[cfg(target_os = "redox")]
