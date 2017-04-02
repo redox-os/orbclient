@@ -99,12 +99,13 @@ impl Window {
 
         let mut async = false;
         let mut resizable = false;
-        let mut unclosable = false;
+        //TODO: Hide exit button
+        let mut _unclosable = false;
         for &flag in flags.iter() {
             match flag {
                 WindowFlag::Async => async = true,
                 WindowFlag::Resizable => resizable = true,
-                WindowFlag::Unclosable => unclosable = true,
+                WindowFlag::Unclosable => _unclosable = true,
             }
         }
 
