@@ -5,6 +5,7 @@ use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 
 use color::Color;
 use event::*;
+use input::scancode::*;
 use renderer::Renderer;
 use WindowFlag;
 
@@ -195,85 +196,85 @@ impl Window {
     fn convert_scancode(&self, scancode_option: Option<sdl2::keyboard::Scancode>, shift: bool) -> Option<(char, u8)> {
         if let Some(scancode) = scancode_option {
             match scancode {
-                sdl2::keyboard::Scancode::A => Some((if shift { 'A' } else { 'a' }, K_A)),
-                sdl2::keyboard::Scancode::B => Some((if shift { 'B' } else { 'b' }, K_B)),
-                sdl2::keyboard::Scancode::C => Some((if shift { 'C' } else { 'c' }, K_C)),
-                sdl2::keyboard::Scancode::D => Some((if shift { 'D' } else { 'd' }, K_D)),
-                sdl2::keyboard::Scancode::E => Some((if shift { 'E' } else { 'e' }, K_E)),
-                sdl2::keyboard::Scancode::F => Some((if shift { 'F' } else { 'f' }, K_F)),
-                sdl2::keyboard::Scancode::G => Some((if shift { 'G' } else { 'g' }, K_G)),
-                sdl2::keyboard::Scancode::H => Some((if shift { 'H' } else { 'h' }, K_H)),
-                sdl2::keyboard::Scancode::I => Some((if shift { 'I' } else { 'i' }, K_I)),
-                sdl2::keyboard::Scancode::J => Some((if shift { 'J' } else { 'j' }, K_J)),
-                sdl2::keyboard::Scancode::K => Some((if shift { 'K' } else { 'k' }, K_K)),
-                sdl2::keyboard::Scancode::L => Some((if shift { 'L' } else { 'l' }, K_L)),
-                sdl2::keyboard::Scancode::M => Some((if shift { 'M' } else { 'm' }, K_M)),
-                sdl2::keyboard::Scancode::N => Some((if shift { 'N' } else { 'n' }, K_N)),
-                sdl2::keyboard::Scancode::O => Some((if shift { 'O' } else { 'o' }, K_O)),
-                sdl2::keyboard::Scancode::P => Some((if shift { 'P' } else { 'p' }, K_P)),
-                sdl2::keyboard::Scancode::Q => Some((if shift { 'Q' } else { 'q' }, K_Q)),
-                sdl2::keyboard::Scancode::R => Some((if shift { 'R' } else { 'r' }, K_R)),
-                sdl2::keyboard::Scancode::S => Some((if shift { 'S' } else { 's' }, K_S)),
-                sdl2::keyboard::Scancode::T => Some((if shift { 'T' } else { 't' }, K_T)),
-                sdl2::keyboard::Scancode::U => Some((if shift { 'U' } else { 'u' }, K_U)),
-                sdl2::keyboard::Scancode::V => Some((if shift { 'V' } else { 'v' }, K_V)),
-                sdl2::keyboard::Scancode::W => Some((if shift { 'W' } else { 'w' }, K_W)),
-                sdl2::keyboard::Scancode::X => Some((if shift { 'X' } else { 'x' }, K_X)),
-                sdl2::keyboard::Scancode::Y => Some((if shift { 'Y' } else { 'y' }, K_Y)),
-                sdl2::keyboard::Scancode::Z => Some((if shift { 'Z' } else { 'z' }, K_Z)),
-                sdl2::keyboard::Scancode::Num0 => Some((if shift { ')' } else { '0' }, K_0)),
-                sdl2::keyboard::Scancode::Num1 => Some((if shift { '!' } else { '1' }, K_1)),
-                sdl2::keyboard::Scancode::Num2 => Some((if shift { '@' } else { '2' }, K_2)),
-                sdl2::keyboard::Scancode::Num3 => Some((if shift { '#' } else { '3' }, K_3)),
-                sdl2::keyboard::Scancode::Num4 => Some((if shift { '$' } else { '4' }, K_4)),
-                sdl2::keyboard::Scancode::Num5 => Some((if shift { '%' } else { '5' }, K_5)),
-                sdl2::keyboard::Scancode::Num6 => Some((if shift { '^' } else { '6' }, K_6)),
-                sdl2::keyboard::Scancode::Num7 => Some((if shift { '&' } else { '7' }, K_7)),
-                sdl2::keyboard::Scancode::Num8 => Some((if shift { '*' } else { '8' }, K_8)),
-                sdl2::keyboard::Scancode::Num9 => Some((if shift { '(' } else { '9' }, K_9)),
-                sdl2::keyboard::Scancode::Grave => Some((if shift { '~' } else { '`' }, K_TICK)),
-                sdl2::keyboard::Scancode::Minus => Some((if shift { '_' } else { '-' }, K_MINUS)),
-                sdl2::keyboard::Scancode::Equals => Some((if shift { '+' } else { '=' }, K_EQUALS)),
-                sdl2::keyboard::Scancode::LeftBracket => Some((if shift { '{' } else { '[' }, K_BRACE_OPEN)),
-                sdl2::keyboard::Scancode::RightBracket => Some((if shift { '}' } else { ']' }, K_BRACE_CLOSE)),
-                sdl2::keyboard::Scancode::Backslash => Some((if shift { '|' } else { '\\' }, K_BACKSLASH)),
-                sdl2::keyboard::Scancode::Semicolon => Some((if shift { ':' } else { ';' }, K_SEMICOLON)),
-                sdl2::keyboard::Scancode::Apostrophe => Some((if shift { '"' } else { '\'' }, K_QUOTE)),
-                sdl2::keyboard::Scancode::Comma => Some((if shift { '<' } else { ',' }, K_COMMA)),
-                sdl2::keyboard::Scancode::Period => Some((if shift { '>' } else { '.' }, K_PERIOD)),
-                sdl2::keyboard::Scancode::Slash => Some((if shift { '?' } else { '/' }, K_SLASH)),
-                sdl2::keyboard::Scancode::Space => Some((' ', K_SPACE)),
-                sdl2::keyboard::Scancode::Backspace => Some(('\0', K_BKSP)),
-                sdl2::keyboard::Scancode::Tab => Some(('\t', K_TAB)),
-                sdl2::keyboard::Scancode::LCtrl => Some(('\0', K_CTRL)),
-                sdl2::keyboard::Scancode::RCtrl => Some(('\0', K_CTRL)),
-                sdl2::keyboard::Scancode::LAlt => Some(('\0', K_ALT)),
-                sdl2::keyboard::Scancode::RAlt => Some(('\0', K_ALT)),
-                sdl2::keyboard::Scancode::Return => Some(('\n', K_ENTER)),
-                sdl2::keyboard::Scancode::Escape => Some(('\x1B', K_ESC)),
-                sdl2::keyboard::Scancode::F1 => Some(('\0', K_F1)),
-                sdl2::keyboard::Scancode::F2 => Some(('\0', K_F2)),
-                sdl2::keyboard::Scancode::F3 => Some(('\0', K_F3)),
-                sdl2::keyboard::Scancode::F4 => Some(('\0', K_F4)),
-                sdl2::keyboard::Scancode::F5 => Some(('\0', K_F5)),
-                sdl2::keyboard::Scancode::F6 => Some(('\0', K_F6)),
-                sdl2::keyboard::Scancode::F7 => Some(('\0', K_F7)),
-                sdl2::keyboard::Scancode::F8 => Some(('\0', K_F8)),
-                sdl2::keyboard::Scancode::F9 => Some(('\0', K_F9)),
-                sdl2::keyboard::Scancode::F10 => Some(('\0', K_F10)),
-                sdl2::keyboard::Scancode::Home => Some(('\0', K_HOME)),
-                sdl2::keyboard::Scancode::Up => Some(('\0', K_UP)),
-                sdl2::keyboard::Scancode::PageUp => Some(('\0', K_PGUP)),
-                sdl2::keyboard::Scancode::Left => Some(('\0', K_LEFT)),
-                sdl2::keyboard::Scancode::Right => Some(('\0', K_RIGHT)),
-                sdl2::keyboard::Scancode::End => Some(('\0', K_END)),
-                sdl2::keyboard::Scancode::Down => Some(('\0', K_DOWN)),
-                sdl2::keyboard::Scancode::PageDown => Some(('\0', K_PGDN)),
-                sdl2::keyboard::Scancode::Delete => Some(('\0', K_DEL)),
-                sdl2::keyboard::Scancode::F11 => Some(('\0', K_F11)),
-                sdl2::keyboard::Scancode::F12 => Some(('\0', K_F12)),
-                sdl2::keyboard::Scancode::LShift => Some(('\0', K_LEFT_SHIFT)),
-                sdl2::keyboard::Scancode::RShift => Some(('\0', K_RIGHT_SHIFT)),
+                sdl2::keyboard::Scancode::A => Some((if shift { 'A' } else { 'a' }, SC_A)),
+                sdl2::keyboard::Scancode::B => Some((if shift { 'B' } else { 'b' }, SC_B)),
+                sdl2::keyboard::Scancode::C => Some((if shift { 'C' } else { 'c' }, SC_C)),
+                sdl2::keyboard::Scancode::D => Some((if shift { 'D' } else { 'd' }, SC_D)),
+                sdl2::keyboard::Scancode::E => Some((if shift { 'E' } else { 'e' }, SC_E)),
+                sdl2::keyboard::Scancode::F => Some((if shift { 'F' } else { 'f' }, SC_F)),
+                sdl2::keyboard::Scancode::G => Some((if shift { 'G' } else { 'g' }, SC_G)),
+                sdl2::keyboard::Scancode::H => Some((if shift { 'H' } else { 'h' }, SC_H)),
+                sdl2::keyboard::Scancode::I => Some((if shift { 'I' } else { 'i' }, SC_I)),
+                sdl2::keyboard::Scancode::J => Some((if shift { 'J' } else { 'j' }, SC_J)),
+                sdl2::keyboard::Scancode::K => Some((if shift { 'K' } else { 'k' }, SC_K)),
+                sdl2::keyboard::Scancode::L => Some((if shift { 'L' } else { 'l' }, SC_L)),
+                sdl2::keyboard::Scancode::M => Some((if shift { 'M' } else { 'm' }, SC_M)),
+                sdl2::keyboard::Scancode::N => Some((if shift { 'N' } else { 'n' }, SC_N)),
+                sdl2::keyboard::Scancode::O => Some((if shift { 'O' } else { 'o' }, SC_O)),
+                sdl2::keyboard::Scancode::P => Some((if shift { 'P' } else { 'p' }, SC_P)),
+                sdl2::keyboard::Scancode::Q => Some((if shift { 'Q' } else { 'q' }, SC_Q)),
+                sdl2::keyboard::Scancode::R => Some((if shift { 'R' } else { 'r' }, SC_R)),
+                sdl2::keyboard::Scancode::S => Some((if shift { 'S' } else { 's' }, SC_S)),
+                sdl2::keyboard::Scancode::T => Some((if shift { 'T' } else { 't' }, SC_T)),
+                sdl2::keyboard::Scancode::U => Some((if shift { 'U' } else { 'u' }, SC_U)),
+                sdl2::keyboard::Scancode::V => Some((if shift { 'V' } else { 'v' }, SC_V)),
+                sdl2::keyboard::Scancode::W => Some((if shift { 'W' } else { 'w' }, SC_W)),
+                sdl2::keyboard::Scancode::X => Some((if shift { 'X' } else { 'x' }, SC_X)),
+                sdl2::keyboard::Scancode::Y => Some((if shift { 'Y' } else { 'y' }, SC_Y)),
+                sdl2::keyboard::Scancode::Z => Some((if shift { 'Z' } else { 'z' }, SC_Z)),
+                sdl2::keyboard::Scancode::Num0 => Some((if shift { ')' } else { '0' }, SC_0)),
+                sdl2::keyboard::Scancode::Num1 => Some((if shift { '!' } else { '1' }, SC_1)),
+                sdl2::keyboard::Scancode::Num2 => Some((if shift { '@' } else { '2' }, SC_2)),
+                sdl2::keyboard::Scancode::Num3 => Some((if shift { '#' } else { '3' }, SC_3)),
+                sdl2::keyboard::Scancode::Num4 => Some((if shift { '$' } else { '4' }, SC_4)),
+                sdl2::keyboard::Scancode::Num5 => Some((if shift { '%' } else { '5' }, SC_5)),
+                sdl2::keyboard::Scancode::Num6 => Some((if shift { '^' } else { '6' }, SC_6)),
+                sdl2::keyboard::Scancode::Num7 => Some((if shift { '&' } else { '7' }, SC_7)),
+                sdl2::keyboard::Scancode::Num8 => Some((if shift { '*' } else { '8' }, SC_8)),
+                sdl2::keyboard::Scancode::Num9 => Some((if shift { '(' } else { '9' }, SC_9)),
+                sdl2::keyboard::Scancode::Grave => Some((if shift { '~' } else { '`' }, SC_TICK)),
+                sdl2::keyboard::Scancode::Minus => Some((if shift { '_' } else { '-' }, SC_MINUS)),
+                sdl2::keyboard::Scancode::Equals => Some((if shift { '+' } else { '=' }, SC_EQUALS)),
+                sdl2::keyboard::Scancode::LeftBracket => Some((if shift { '{' } else { '[' }, SC_BRACE_OPEN)),
+                sdl2::keyboard::Scancode::RightBracket => Some((if shift { '}' } else { ']' }, SC_BRACE_CLOSE)),
+                sdl2::keyboard::Scancode::Backslash => Some((if shift { '|' } else { '\\' }, SC_BACKSLASH)),
+                sdl2::keyboard::Scancode::Semicolon => Some((if shift { ':' } else { ';' }, SC_SEMICOLON)),
+                sdl2::keyboard::Scancode::Apostrophe => Some((if shift { '"' } else { '\'' }, SC_QUOTE)),
+                sdl2::keyboard::Scancode::Comma => Some((if shift { '<' } else { ',' }, SC_COMMA)),
+                sdl2::keyboard::Scancode::Period => Some((if shift { '>' } else { '.' }, SC_PERIOD)),
+                sdl2::keyboard::Scancode::Slash => Some((if shift { '?' } else { '/' }, SC_SLASH)),
+                sdl2::keyboard::Scancode::Space => Some((' ', SC_SPACE)),
+                sdl2::keyboard::Scancode::Backspace => Some(('\0', SC_BKSP)),
+                sdl2::keyboard::Scancode::Tab => Some(('\t', SC_TAB)),
+                sdl2::keyboard::Scancode::LCtrl => Some(('\0', SC_CTRL)),
+                sdl2::keyboard::Scancode::RCtrl => Some(('\0', SC_CTRL)),
+                sdl2::keyboard::Scancode::LAlt => Some(('\0', SC_ALT)),
+                sdl2::keyboard::Scancode::RAlt => Some(('\0', SC_ALT)),
+                sdl2::keyboard::Scancode::Return => Some(('\n', SC_ENTER)),
+                sdl2::keyboard::Scancode::Escape => Some(('\x1B', SC_ESC)),
+                sdl2::keyboard::Scancode::F1 => Some(('\0', SC_F1)),
+                sdl2::keyboard::Scancode::F2 => Some(('\0', SC_F2)),
+                sdl2::keyboard::Scancode::F3 => Some(('\0', SC_F3)),
+                sdl2::keyboard::Scancode::F4 => Some(('\0', SC_F4)),
+                sdl2::keyboard::Scancode::F5 => Some(('\0', SC_F5)),
+                sdl2::keyboard::Scancode::F6 => Some(('\0', SC_F6)),
+                sdl2::keyboard::Scancode::F7 => Some(('\0', SC_F7)),
+                sdl2::keyboard::Scancode::F8 => Some(('\0', SC_F8)),
+                sdl2::keyboard::Scancode::F9 => Some(('\0', SC_F9)),
+                sdl2::keyboard::Scancode::F10 => Some(('\0', SC_F10)),
+                sdl2::keyboard::Scancode::Home => Some(('\0', SC_HOME)),
+                sdl2::keyboard::Scancode::Up => Some(('\0', SC_UP)),
+                sdl2::keyboard::Scancode::PageUp => Some(('\0', SC_PGUP)),
+                sdl2::keyboard::Scancode::Left => Some(('\0', SC_LEFT)),
+                sdl2::keyboard::Scancode::Right => Some(('\0', SC_RIGHT)),
+                sdl2::keyboard::Scancode::End => Some(('\0', SC_END)),
+                sdl2::keyboard::Scancode::Down => Some(('\0', SC_DOWN)),
+                sdl2::keyboard::Scancode::PageDown => Some(('\0', SC_PGDN)),
+                sdl2::keyboard::Scancode::Delete => Some(('\0', SC_DEL)),
+                sdl2::keyboard::Scancode::F11 => Some(('\0', SC_F11)),
+                sdl2::keyboard::Scancode::F12 => Some(('\0', SC_F12)),
+                sdl2::keyboard::Scancode::LShift => Some(('\0', SC_LEFT_SHIFT)),
+                sdl2::keyboard::Scancode::RShift => Some(('\0', SC_RIGHT_SHIFT)),
                 _ => None
             }
         } else {
@@ -306,45 +307,49 @@ impl Window {
         match event {
             sdl2::event::Event::Window { win_event, .. } => match win_event {
                 sdl2::event::WindowEvent::Moved(x, y) => events.push(MoveEvent {
-                    x: x,
-                    y: y
-                }.to_event()),
+                        x: x,
+                        y: y
+                    }.to_event()),
                 sdl2::event::WindowEvent::Resized(w, h) => events.push(ResizeEvent {
-                    width: w as u32,
-                    height: h as u32
-                }.to_event()),
+                        width: w as u32,
+                        height: h as u32
+                    }.to_event()),
                 sdl2::event::WindowEvent::FocusGained => events.push(FocusEvent {
-                    focused: true
-                }.to_event()),
+                        focused: true
+                    }.to_event()),
                 sdl2::event::WindowEvent::FocusLost => events.push(FocusEvent {
-                    focused: false
-                }.to_event()),
+                        focused: false
+                    }.to_event()),
                 _ => ()
             },
             sdl2::event::Event::MouseMotion { x, y, .. } => events.push(MouseEvent {
-                x: x,
-                y: y
-            }.to_event()),
+                    x: x,
+                    y: y
+                }.to_event()),
             sdl2::event::Event::MouseButtonDown { .. } => events.push(button_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(button_event()),
             sdl2::event::Event::MouseWheel { x, y, .. } => events.push(ScrollEvent {
-                x: x,
-                y: y
-            }.to_event()),
+                    x: x,
+                    y: y
+                }.to_event()),
             sdl2::event::Event::KeyDown { scancode, .. } => if let Some(code) = self.convert_scancode(scancode, shift) {
-                events.push(KeyEvent {
-                    character: code.0,
-                    scancode: code.1,
-                    pressed: true
-                }.to_event());
-            },
+                    /* TODO - figure out what to do with `keycode` (which atm is scancode) and `modifiers` */
+                    events.push(KeyEvent {
+                        character: code.0,
+                        keycode: code.1,
+                        pressed: true,
+                        modifiers: ModKeys::empty(),
+                    }.to_event());
+                },
             sdl2::event::Event::KeyUp { scancode, .. } => if let Some(code) = self.convert_scancode(scancode, shift) {
-                events.push(KeyEvent {
-                    character: code.0,
-                    scancode: code.1,
-                    pressed: false
-                }.to_event());
-            },
+                    /* TODO - figure out what to do with `keycode` and `modifiers` */
+                    events.push(KeyEvent {
+                        character: code.0,
+                        keycode: code.1,
+                        pressed: false,
+                        modifiers: ModKeys::empty(),
+                    }.to_event());
+                },
             sdl2::event::Event::Quit { .. } => events.push(QuitEvent.to_event()),
             _ => (),
         }

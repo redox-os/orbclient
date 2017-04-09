@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 
 use color::Color;
-use event::{Event, EVENT_RESIZE};
+use input::{Event, EVENT_RESIZE};
 use renderer::Renderer;
 use WindowFlag;
 
