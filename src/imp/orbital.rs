@@ -189,7 +189,7 @@ impl Window {
     /// Blocking iterator over events
     pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
-            events: [Event::new(); 128],
+            events: [Event::new(); 16],
             i: 0,
             count: 0,
         };
@@ -242,7 +242,7 @@ impl AsRawFd for Window {
 
 /// Event iterator
 pub struct EventIter {
-    events: [Event; 128],
+    events: [Event; 16],
     i: usize,
     count: usize,
 }
