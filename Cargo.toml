@@ -2,7 +2,7 @@
 name = "orbclient"
 description = "The Orbital Client Library"
 repository = "https://github.com/redox-os/orbclient"
-version = "0.3.3"
+version = "0.3.4"
 license-file = "LICENSE"
 readme = "README.md"
 keywords = ["orbital", "redox", "ui"]
