@@ -6,17 +6,21 @@
 #![deny(warnings)]
 
 extern crate core;
+extern crate syscall;
+
+#[macro_use]
+extern crate bitflags;
 
 pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 
 pub use color::Color;
-pub use event::*;
 pub use imp::{get_display_size, EventIter, Window};
+pub use input::*;
 pub use graphicspath::GraphicsPath;
 pub use renderer::Renderer;
 
 pub mod color;
-pub mod event;
+pub mod input;
 pub mod graphicspath;
 pub mod renderer;
 
