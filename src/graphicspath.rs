@@ -1,3 +1,4 @@
+use collections::Vec;
 
 /// point type (is the point a new position or a connection point)
 pub enum PointType {
@@ -9,7 +10,7 @@ pub enum PointType {
 /// graphic path with similar functions like html canvas
 pub struct GraphicsPath {
     x: i32,
-    y: i32, 
+    y: i32,
     pub points: Vec<(i32, i32, PointType)>,
 }
 
@@ -19,7 +20,7 @@ impl GraphicsPath {
         GraphicsPath {
             x : 0,
             y : 0,
-            points: vec![],
+            points: Vec::new(),
         }
     }
 
@@ -37,7 +38,7 @@ impl GraphicsPath {
         self.y = y;
     }
 
-    /// quadratic bezier curve 
+    /// quadratic bezier curve
     pub fn quadratic_curve_to(&mut self, argx1: i32, argy1: i32, argx2: i32, argy2: i32){
         let mut t:f32 = 0.0;
         let mut u:f32;
@@ -54,7 +55,7 @@ impl GraphicsPath {
             x = (self.x as f32) * uu;
             y = (self.y as f32) * uu;
 
-            x +=  2.0 * u * t * (argx1 as f32); 
+            x +=  2.0 * u * t * (argx1 as f32);
             y +=  2.0 * u * t * (argy1 as f32);
 
             x += tt * (argx2 as f32);
@@ -104,5 +105,5 @@ impl GraphicsPath {
 
         self.x = argx3;
         self.y = argy3;
-    }  
+    }
 }

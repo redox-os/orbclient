@@ -1,4 +1,4 @@
-use std::cmp;
+use core::cmp;
 
 use FONT;
 use color::Color;
@@ -281,6 +281,7 @@ pub trait Renderer {
 
 
     /// Draw a linear gradient in a rectangular region
+    #[cfg(not(feature="no_std"))]
     fn linear_gradient(&mut self, rect_x: i32, rect_y: i32, rect_width: u32, rect_height:u32, start_x: i32, start_y: i32, end_x: i32, end_y: i32, start_color: Color, end_color: Color) {
         if (start_x == end_x) && (start_y == end_y) {
             // Degenerate gradient
