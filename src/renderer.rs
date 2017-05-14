@@ -307,7 +307,7 @@ pub trait Renderer {
             // Gradient vector
             let grad_x = end_x as f64 - start_x as f64;
             let grad_y = end_y as f64 - start_y as f64;
-            let grad_len = (grad_x.powf(2.0) + grad_y.powf(2.0)).sqrt();
+            let grad_len = grad_x * grad_x + grad_y * grad_y;
 
             for y in rect_y..(rect_y + rect_height as i32) {
                 for x in rect_x..(rect_x + rect_width as i32) {
@@ -315,7 +315,7 @@ pub trait Renderer {
                     let pix_x = x as f64 - start_x as f64;
                     let pix_y = y as f64 - start_y as f64;
                     // Scalar projection
-                    let proj = (pix_x * grad_x + pix_y * grad_y) / grad_len.powf(2.0);
+                    let proj = (pix_x * grad_x + pix_y * grad_y) / grad_len;
                     // Saturation
                     let scale = if proj < 0.0 { 0.0 } else if proj > 1.0 { 1.0 } else { proj };
                     // Interpolation
