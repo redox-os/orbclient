@@ -106,6 +106,8 @@ impl Window {
                 WindowFlag::Async => async = true,
                 WindowFlag::Resizable => resizable = true,
                 WindowFlag::Unclosable => _unclosable = true,
+                //TODO: Handle front and back zorder
+                _ => ()
             }
         }
 

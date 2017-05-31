@@ -28,6 +28,8 @@ pub mod renderer;
 #[derive(Clone, Copy, Debug)]
 pub enum WindowFlag {
     Async,
+    Back,
+    Front,
     Resizable,
     Unclosable
 }
