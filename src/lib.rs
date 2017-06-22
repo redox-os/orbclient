@@ -1,15 +1,15 @@
 #![crate_name="orbclient"]
 #![crate_type="lib"]
+#![feature(alloc)]
 #![feature(asm)]
-#![feature(collections)]
 #![feature(const_fn)]
 #![cfg_attr(feature="no_std", no_std)]
 
 #![deny(warnings)]
 
+extern crate alloc;
 #[cfg(not(feature="no_std"))]
 extern crate core;
-extern crate collections;
 
 pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 

@@ -1,4 +1,4 @@
-use collections::Vec;
+use alloc::Vec;
 
 /// point type (is the point a new position or a connection point)
 pub enum PointType {
