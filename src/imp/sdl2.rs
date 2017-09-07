@@ -171,7 +171,7 @@ impl Window {
 
     // Set position
     pub fn set_pos(&mut self, x: i32, y: i32) {
-        if let Some(mut window) = self.inner.window_mut() {
+        if let Some(window) = self.inner.window_mut() {
             let _ = window.set_position(sdl2::video::WindowPos::Positioned(x),
                                         sdl2::video::WindowPos::Positioned(y));
         }
@@ -180,7 +180,7 @@ impl Window {
 
     // Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
-        if let Some(mut window) = self.inner.window_mut() {
+        if let Some(window) = self.inner.window_mut() {
             let _ = window.set_size(width, height);
         }
         self.sync_path();
@@ -188,7 +188,7 @@ impl Window {
 
     /// Set title
     pub fn set_title(&mut self, title: &str) {
-        if let Some(mut window) = self.inner.window_mut() {
+        if let Some(window) = self.inner.window_mut() {
             let _ = window.set_title(title);
         }
         self.sync_path();

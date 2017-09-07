@@ -118,33 +118,61 @@ pub trait Renderer {
     fn circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
         let mut x = radius.abs();
         let mut y = 0;
-        let mut err = 0;
+        let mut err = -radius.abs();
+        
+        match radius {
+            radius if radius > 0 => {
+                err = 0;
+                while x >= y {
+                    self.pixel(x0 - x, y0 + y, color);
+                    self.pixel(x0 + x, y0 + y, color);
+                    self.pixel(x0 - y, y0 + x, color);
+                    self.pixel(x0 + y, y0 + x, color);
+                    self.pixel(x0 - x, y0 - y, color);
+                    self.pixel(x0 + x, y0 - y, color);
+                    self.pixel(x0 - y, y0 - x, color);
+                    self.pixel(x0 + y, y0 - x, color);
+                
+                    y += 1;
+                    err += 1 + 2*y;
+                    if 2*(err-x) + 1 > 0 {
+                        x -= 1;
+                        err += 1 - 2*x;
+                    }
+                }      
+            },
+            
+            radius if radius < 0 => {
+                while x >= y {
+                    let lasty = y;
+                    err +=y;
+                    y +=1;
+                    err += y;
+                    self.line4points(x0,y0,x,lasty,color);
+                    if err >=0 {
+                        if x != lasty{
+                           self.line4points(x0,y0,lasty,x,color);
+                        }
+                        err -= x;
+                        x -= 1;
+                        err -= x;
+                    }
+                }
 
-        while x >= y {
-            if radius < 0 {
-                self.rect(x0 - x, y0 + y, x as u32 * 2 + 1, 1, color);
-                self.rect(x0 - y, y0 + x, y as u32 * 2 + 1, 1, color);
-                self.rect(x0 - x, y0 - y, x as u32 * 2 + 1, 1, color);
-                self.rect(x0 - y, y0 - x, y as u32 * 2 + 1, 1, color);
-            } else if radius == 0 {
-                self.pixel(x0, y0, color);
-            } else {
-                self.pixel(x0 - x, y0 + y, color);
-                self.pixel(x0 + x, y0 + y, color);
-                self.pixel(x0 - y, y0 + x, color);
-                self.pixel(x0 + y, y0 + x, color);
-                self.pixel(x0 - x, y0 - y, color);
-                self.pixel(x0 + x, y0 - y, color);
-                self.pixel(x0 - y, y0 - x, color);
-                self.pixel(x0 + y, y0 - x, color);
-            }
-
-            y += 1;
-            err += 1 + 2*y;
-            if 2*(err-x) + 1 > 0 {
-                x -= 1;
-                err += 1 - 2*x;
-            }
+                },
+                     _ => {
+                            self.pixel(x0, y0, color);
+                            
+                        },
+        }
+    }
+    
+    fn line4points(&mut self, x0: i32, y0: i32, x: i32, y: i32, color: Color){
+        //self.line(x0 - x, y0 + y, (x+x0), y0 + y, color);
+        self.rect(x0 - x, y0 + y, x as u32 * 2 + 1, 1, color);
+        if y != 0 {
+            //self.line(x0 - x, y0 - y, (x+x0), y0-y , color);
+            self.rect(x0 - x, y0 - y, x as u32 * 2 + 1, 1, color);
         }
     }
 
