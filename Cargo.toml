@@ -1,16 +1,17 @@
 [package]
+name = "orbclient"
+version = "0.3.11"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 description = "The Orbital Client Library"
+documentation = "https://docs.rs/orbclient"
+repository = "https://github.com/redox-os/orbclient"
+readme = "README.md"
+license = "MIT"
 keywords = [
     "orbital",
     "redox",
     "ui",
 ]
-license-file = "LICENSE"
-name = "orbclient"
-readme = "README.md"
-repository = "https://github.com/redox-os/orbclient"
-version = "0.3.10"
 
 [features]
 default = []
