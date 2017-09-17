@@ -1,23 +1,25 @@
 [package]
-name = "orbclient"
-description = "The Orbital Client Library"
-repository = "https://github.com/redox-os/orbclient"
-version = "0.3.8"
-license-file = "LICENSE"
-readme = "README.md"
-keywords = ["orbital", "redox", "ui"]
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
-
-[lib]
+description = "The Orbital Client Library"
+keywords = [
+    "orbital",
+    "redox",
+    "ui",
+]
+license-file = "LICENSE"
 name = "orbclient"
-path = "src/lib.rs"
+readme = "README.md"
+repository = "https://github.com/redox-os/orbclient"
+version = "0.3.9"
 
 [features]
 default = []
 no_std = []
 
-[target.'cfg(all(not(feature="no_std"), target_os = "redox"))'.dependencies]
-redox_syscall = "0.1"
-
-[target.'cfg(all(not(feature="no_std"), not(target_os = "redox")))'.dependencies]
-sdl2 = "0.29"
+[lib]
+name = "orbclient"
+path = "src/lib.rs"
+[target.'cfg(all(not(feature="no_std"), not(target_os="redox")))'.dependencies]
+sdl2 = "0.30.0"
+[target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
+redox_syscall = "0.1.31"

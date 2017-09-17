@@ -49,7 +49,7 @@ pub struct Window {
     /// True if the window should not wait for events
     async: bool,
     /// The inner renderer
-    inner: sdl2::render::Renderer<'static>,
+    inner: sdl2::render::WindowCanvas,
 }
 
 impl Renderer for Window {
@@ -65,7 +65,7 @@ impl Renderer for Window {
 
     /// Access pixel buffer
     fn data(&self) -> &[Color] {
-        let window = self.inner.window().unwrap();
+        let window = self.inner.window();
         let surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock().unwrap();
         unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
@@ -73,8 +73,8 @@ impl Renderer for Window {
 
     /// Access pixel buffer mutably
     fn data_mut(&mut self) -> &mut [Color] {
-        let window = self.inner.window_mut().unwrap();
-        let surface = window.surface_mut(unsafe { & *EVENT_PUMP }).unwrap();
+        let window = self.inner.window_mut();
+        let mut surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock_mut().unwrap();
         unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
     }
@@ -133,23 +133,22 @@ impl Window {
                 h: h,
                 t: title.to_string(),
                 async: async,
-                inner: window.renderer().software().build().unwrap(),
+                inner: window.into_canvas().software().build().unwrap(),
             }),
             Err(_) => None
         }
     }
 
     pub fn sync_path(&mut self) {
-        if let Some(window) = self.inner.window() {
-            let pos = window.position();
-            let size = window.size();
-            let title = window.title();
-            self.x = pos.0;
-            self.y = pos.1;
-            self.w = size.0;
-            self.h = size.1;
-            self.t = title.to_string();
-        }
+        let window = self.inner.window();
+        let pos = window.position();
+        let size = window.size();
+        let title = window.title();
+        self.x = pos.0;
+        self.y = pos.1;
+        self.w = size.0;
+        self.h = size.1;
+        self.t = title.to_string();
     }
 
     /// Get x
@@ -171,26 +170,22 @@ impl Window {
 
     // Set position
     pub fn set_pos(&mut self, x: i32, y: i32) {
-        if let Some(mut window) = self.inner.window_mut() {
-            let _ = window.set_position(sdl2::video::WindowPos::Positioned(x),
-                                        sdl2::video::WindowPos::Positioned(y));
-        }
+        self.inner.window_mut().set_position(
+            sdl2::video::WindowPos::Positioned(x),
+            sdl2::video::WindowPos::Positioned(y)
+        );
         self.sync_path();
     }
 
     // Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
-        if let Some(mut window) = self.inner.window_mut() {
-            let _ = window.set_size(width, height);
-        }
+        let _ = self.inner.window_mut().set_size(width, height);
         self.sync_path();
     }
 
     /// Set title
     pub fn set_title(&mut self, title: &str) {
-        if let Some(mut window) = self.inner.window_mut() {
-            let _ = window.set_title(title);
-        }
+        let _ = self.inner.window_mut().set_title(title);
         self.sync_path();
     }
 

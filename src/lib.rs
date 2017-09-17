@@ -16,7 +16,7 @@ pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
 pub use color::Color;
 pub use event::*;
 #[cfg(not(feature="no_std"))]
-pub use imp::{get_display_size, EventIter, Window};
+pub use sys::{get_display_size, EventIter, Window};
 pub use graphicspath::GraphicsPath;
 pub use renderer::Renderer;
 
@@ -35,9 +35,9 @@ pub enum WindowFlag {
 }
 
 #[cfg(all(not(feature="no_std"), target_os = "redox"))]
-#[path="imp/orbital.rs"]
-mod imp;
+#[path="sys/orbital.rs"]
+mod sys;
 
 #[cfg(all(not(feature="no_std"), not(target_os = "redox")))]
-#[path="imp/sdl2.rs"]
-mod imp;
+#[path="sys/sdl2.rs"]
+mod sys;
