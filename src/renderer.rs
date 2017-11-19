@@ -386,4 +386,138 @@ pub trait Renderer {
             self.rect(x + w - 1, y + r + 1, 1, (h - 2 - r * 2) as u32, color);
         }
     }
+
+    /// draws antialiased line
+    fn wu_line (&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) {
+        //adapted from https://rosettacode.org/wiki/Xiaolin_Wu's_line_algorithm#C.23
+        let mut x0 = x0 as f64;
+        let mut y0 = y0 as f64;
+        let mut x1 = x1 as f64;
+        let mut y1 = y1 as f64;
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
+        let a = color.a() as f64;
+        
+        fn ipart (x: f64) -> i32 {
+            x.trunc() as i32
+        }
+
+        fn fpart (x: f64) -> f64 {
+            if x <0.0 { return 1.0-(x-x.floor());}
+            x-x.floor() 
+        }
+        
+        fn rfpart(x: f64) -> f64 {
+            1.0-fpart(x)
+        }
+        
+        fn chkalpha (mut alpha :f64) -> u8 {
+             if alpha > 255.0 { alpha = 255.0};
+             if alpha < 0.0 {alpha = 0.0};
+             alpha as u8
+        }
+        
+        let steep :bool = (y1-y0).abs() > (x1-x0).abs();
+        let mut temp;
+        if steep {
+            temp = x0; x0 = y0; y0 = temp;
+            temp = x1; x1 = y1; y1 = temp;
+        }
+        if x0 > x1 {
+            temp = x0; x0 = x1; x1 = temp;
+            temp = y0; y0 = y1; y1 = temp;
+        }
+        let dx = x1 -x0;
+        let dy = y1- y0;
+        let gradient = dy/dx;
+        
+        let mut xend: f64 = (x0 as f64).round() ;
+        let mut yend: f64 = y0 + gradient * (xend - x0);
+        let mut xgap: f64 = rfpart(x0+0.5);
+        let xpixel1 = xend as i32;
+        let ypixel1 = (ipart (yend)) as i32;
+        
+        if steep {
+            self.pixel(ypixel1, xpixel1, Color::rgba(r,g,b,chkalpha(rfpart(yend)*xgap*a)));
+            self.pixel(ypixel1+1, xpixel1, Color::rgba(r,g,b,chkalpha(fpart(yend)*xgap*a)));
+        }else{
+            self.pixel(xpixel1, ypixel1, Color::rgba(r,g,b,chkalpha(rfpart(yend)*xgap*a)));
+            self.pixel(xpixel1+1, ypixel1, Color::rgba(r,g,b,chkalpha(fpart(yend)*xgap*a)));
+        }
+        let mut intery :f64 = yend + gradient;
+        xend = x1.round();
+        yend = y1 + gradient * (xend-x1);
+        xgap = fpart(x1 + 0.5);
+        let xpixel2 = xend as i32;
+        let ypixel2 = ipart(yend) as i32;
+        if steep {
+            self.pixel(ypixel2, xpixel2, Color::rgba(r,g,b,chkalpha(rfpart(yend)*xgap*a)));
+            self.pixel(ypixel2+1, xpixel2, Color::rgba(r,g,b,chkalpha(fpart(yend)*xgap*a)));
+        }else{
+            self.pixel(xpixel2, ypixel2, Color::rgba(r,g,b,chkalpha(rfpart(yend)*xgap*a)));
+            self.pixel(xpixel2+1, ypixel2, Color::rgba(r,g,b,chkalpha(fpart(yend)*xgap*a)));
+        }
+        if steep {
+            for x in (xpixel1+1)..(xpixel2) {
+                self.pixel(ipart(intery) as i32 , x, Color::rgba(r,g,b,chkalpha(a*rfpart(intery))));
+                self.pixel(ipart(intery) as i32 + 1, x, Color::rgba(r,g,b,chkalpha(a*fpart(intery))));
+                intery += gradient;
+            }
+        }else{
+            for x in (xpixel1+1)..(xpixel2) {
+                self.pixel(x, ipart(intery) as i32, Color::rgba(r,g,b,chkalpha(a*rfpart(intery))));
+                self.pixel(x, ipart(intery) as i32 + 1, Color::rgba(r,g,b,chkalpha(a*fpart(intery))));
+                intery += gradient;
+            } 
+        }           
+    }
+
+    ///Draws antialiased circle
+    fn wu_circle (&mut self, x0: i32, y0: i32, radius: i32, color: Color){
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
+        let a = color.a();
+        let mut y =0;
+        let mut x = radius;
+        let mut d =0_f64;
+        
+        self.pixel (x0+x,y0+y,color);
+        self.pixel (x0-x,y0-y,color);
+        self.pixel (x0+y,y0-x,color);
+        self.pixel (x0-y,y0+x,color);
+        
+        while x > y {
+            let di = dist(radius,y);
+            if di < d { x -= 1;}
+            let col = Color::rgba(r,g,b,(a as f64*(1.0-di)) as u8);
+            let col2 = Color::rgba(r,g,b,(a as f64*di) as u8);
+            
+            self.pixel(x0+x, y0+y, col);
+            self.pixel(x0+x-1, y0+y, col2);//-
+            self.pixel(x0-x, y0+y, col);
+            self.pixel(x0-x+1, y0+y, col2);//+
+            self.pixel(x0+x, y0-y, col);
+            self.pixel(x0+x-1, y0-y, col2);//-
+            self.pixel(x0-x, y0-y, col);
+            self.pixel(x0-x+1, y0-y, col2);//+
+            
+            self.pixel(x0+y, y0+x, col);
+            self.pixel(x0+y, y0+x-1, col2);
+            self.pixel(x0-y, y0+x, col);
+            self.pixel(x0-y, y0+x-1, col2);
+            self.pixel(x0+y, y0-x, col);
+            self.pixel(x0+y, y0-x+1, col2);
+            self.pixel(x0-y, y0-x, col);
+            self.pixel(x0-y, y0-x+1, col2);
+            d = di;
+            y += 1;
+        }
+        
+        fn dist(r: i32, y: i32) -> f64{
+            let x :f64 = ((r*r-y*y)as f64).sqrt();
+            x.ceil()-x
+        }
+    }
 }

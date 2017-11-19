@@ -26,11 +26,14 @@ fn main() {
     window.circle(100, 100, 25, Color::rgb(0, 0, 0));
     window.circle(100, 101, -25, Color::rgb(0, 255, 0));
     window.circle(220, 220, -100, Color::rgba(128, 128,128,80));
+    window.wu_circle(150, 220, 100, Color::rgba(255,0,0,255));
     window.line(0, 0, 200, 200, Color::rgb(255, 0, 0));
     window.line(0, 200, 200, 0, Color::rgb(128, 255, 0));
     // vertical and horizontal line test
     window.line(100, 0, 100, 200, Color::rgb(0, 0, 255));
     window.line(0, 100, 200, 100, Color::rgb(255, 255, 0));
+    window.wu_line(100, 220, 400, 250, Color::rgba(255,0,0,255));
+    window.line(100, 230, 400, 260, Color::rgba(255,0,0,255));
 
     // path and bezier curve example draw a cloud
     let mut cloud_path = GraphicsPath::new();
