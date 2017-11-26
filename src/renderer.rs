@@ -387,8 +387,8 @@ pub trait Renderer {
         }
     }
 
-    /// draws antialiased line
-    fn wu_line (&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) {
+    /// Draws antialiased line
+    fn wu_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) {
         //adapted from https://rosettacode.org/wiki/Xiaolin_Wu's_line_algorithm#C.23
         let mut x0 = x0 as f64;
         let mut y0 = y0 as f64;
@@ -474,14 +474,14 @@ pub trait Renderer {
     }
 
     ///Draws antialiased circle
-    fn wu_circle (&mut self, x0: i32, y0: i32, radius: i32, color: Color){
+    fn wu_circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
         let r = color.r();
         let g = color.g();
         let b = color.b();
         let a = color.a();
-        let mut y =0;
+        let mut y = 0;
         let mut x = radius;
-        let mut d =0_f64;
+        let mut d = 0_f64;
         
         self.pixel (x0+x,y0+y,color);
         self.pixel (x0-x,y0-y,color);
@@ -515,9 +515,18 @@ pub trait Renderer {
             y += 1;
         }
         
-        fn dist(r: i32, y: i32) -> f64{
+        fn dist(r: i32, y: i32) -> f64 {
             let x :f64 = ((r*r-y*y)as f64).sqrt();
             x.ceil()-x
         }
+    }
+
+    ///Gets pixel color at x,y position
+    fn getpixel(&self, x:i32, y:i32) -> Color {
+        let p = (self.width()as i32 * y + x) as usize;
+        if p > self.data().len() {
+            return Color::rgba(0,0,0,0) 
+        }
+        self.data()[p]
     }
 }
