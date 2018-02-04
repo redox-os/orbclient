@@ -53,9 +53,18 @@ impl Color {
     }
 }
 
+/// Compare two colors (Do not take care of alpha)
+impl PartialEq for Color{
+    fn eq(&self, other: &Color) -> bool {
+        self.r() == other.r() &&
+        self.g() == other.g() &&
+        self.b() == other.b()
+    }
+}
+
 #[cfg(not(feature="no_std"))]
 impl fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:#010X}", self.data)
+        write!(f, "{:#010X}", {self.data})
     }
 }

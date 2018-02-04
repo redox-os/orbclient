@@ -56,7 +56,7 @@ pub trait Renderer {
 
             let alpha = (new >> 24) & 0xFF;
             if alpha > 0 {
-                let old = &mut data[y as usize * w as usize + x as usize].data;
+                let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
                 if alpha >= 255 {
                     *old = new;
                 } else {

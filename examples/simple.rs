@@ -63,6 +63,12 @@ fn main() {
     // testing for non existent x,y position : does not panic but returns Color(0,0,0,0)
     let _non_existent_pixel = window.getpixel(width as i32 +10,height as i32 +10);
     
+    // testing PartialEq for Color
+    if Color::rgb(11,2,3) == Color::rgba(1,2,3,100) {
+        println!("Testing colors: they are the same!")
+    }else{
+        println!("Testing colors: they are NOT the same!")
+    }
 
     window.sync();
 
