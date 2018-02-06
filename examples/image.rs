@@ -1,7 +1,9 @@
 extern crate orbclient;
 extern crate time;
 
-use orbclient::{Color, Window, Renderer, EventOption, GraphicsPath};
+use orbclient::{Color, Window, Renderer, EventOption};
+
+const TIMES:i32 = 10;
 
 fn main() {
     let (width, height) = orbclient::get_display_size().unwrap();
@@ -10,33 +12,41 @@ fn main() {
                                  (height as i32)/4,
                                  width/2,
                                  height/2,
-                                 "TITLE")
+                                 "IMAGE BENCHMARK")
                          .unwrap();
 
-    let (win_w, win_h) = (width/2, height/2);
+    window.set(Color::rgb(255,255,255));
     
     //create image data : a green square
-    let data = vec![Color::rgb(100,200,10);360000];
+    let data = vec![Color::rgba(100,200,10,2);200000];
+    let data2 = vec![Color::rgba(200,100,10,2);200000];
 
     //draw image sequentially
     let mut t = time::now();
-    for i in 1..100 {
-        window.image(10,10,600,600, &data[..]);
+    for _i in 1..TIMES {
+        window.image(10,10,500,400, &data[..]);
     }
-    println!("{:?}", time::now()-t);
+    println!("image {:?}", time::now()-t);
     //draw image parallelizing
     t = time::now();
-    for i in 1..100 {
-        window.image_par(30,30,600,600, &data[..]);
+    for _i in 1..TIMES {
+        window.image_par(20,20,500,400, &data[..]);
     }
-    println!("{:?}", time::now()-t);
+    println!("image_par {:?}", time::now()-t);
     
     t = time::now();
-    for i in 1..100 {
-        window.image_blit(30,30,600,600, &data[..]);
+    for _i in 1..TIMES {
+        window.image_fast(30,30,500,400, &data[..]);
     }
-    println!("{:?}", time::now()-t);
+    println!("image_fast {:?}", time::now()-t);
     
+    t = time::now();
+    
+    for _i in 1..TIMES {
+        window.image_veryfast(40,40,500,400, &data2[..]);
+    }
+    println!("image_veryfast{:?}", time::now()-t);
+
     window.sync();
 
     'events: loop {
