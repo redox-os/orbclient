@@ -310,22 +310,27 @@ pub trait Renderer {
         }
     }
 
-    fn image_par(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+    //VERY SLOW parallel implementation !
+    fn image_par(&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
+        let window_w = self.width() as usize;
+        let window_len = self.data().len();
         let data = Arc::new(Mutex::new(self.data_mut()));
         let w = w as usize;
-        let h = h as usize;
+
         (0..image_data.len())
         .into_par_iter()
         .map(|i| {
-            let y = i/w + start_y as usize ;
-            let x = i-(h*y) + start_x as usize;
-            println!("i{}  x{} y{}",i,x,y);
-            {
+            
+            let y0 = i/w;
+            let y = y0 + start_y as usize ;
+            let x = start_x as usize + i-(y0*w) ;
+            let window_index = y * window_w + x;
+            if window_index <= window_len {
                 let new = image_data[i].data;
 
                 let alpha = (new >> 24) & 0xFF;
                 if alpha > 0 {
-                    let old = unsafe{ &mut data.lock().unwrap()[y * w + x].data};
+                    let old = unsafe{ &mut data.lock().unwrap()[window_index].data};
                     if alpha >= 255 {
                         *old = new;
                     } else {
@@ -342,10 +347,17 @@ pub trait Renderer {
                         *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
                     }
                 }
-            
             }
+            
         })
         .count();
+    }
+
+    
+    fn image_blit (&mut self, _start_x: i32, _start_y: i32, _w: u32, _h: u32, _image_data: &[Color]) {
+        //let window_data = self.data_mut();
+        //    *window_data = image_data[..];
+        return
     }
 
     /// Draw a linear gradient in a rectangular region

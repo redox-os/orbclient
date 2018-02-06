@@ -60,6 +60,8 @@ fn main() {
     window.char(200, 200, '═', Color::rgb(0, 0, 0));
     window.char(208, 200, '═', Color::rgb(0, 0, 0));
     
+
+    
     // testing for non existent x,y position : does not panic but returns Color(0,0,0,0)
     let _non_existent_pixel = window.getpixel(width as i32 +10,height as i32 +10);
     
