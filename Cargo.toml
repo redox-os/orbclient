@@ -24,6 +24,6 @@ no_std = []
 name = "orbclient"
 path = "src/lib.rs"
 [target.'cfg(all(not(feature="no_std"), not(target_os="redox")))'.dependencies]
-sdl2 = "0.31.0"
+sdl2 = "0.30.0"
 [target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
 redox_syscall = "0.1.31"
