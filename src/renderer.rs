@@ -1,9 +1,12 @@
 use core::cmp;
+use rayon::prelude::*;
 
 use FONT;
 use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
+
+use std::sync::{Arc, Mutex};
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -307,6 +310,43 @@ pub trait Renderer {
         }
     }
 
+    fn image_par(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+        let data = Arc::new(Mutex::new(self.data_mut()));
+        let w = w as usize;
+        let h = h as usize;
+        (0..image_data.len())
+        .into_par_iter()
+        .map(|i| {
+            let y = i/w + start_y as usize ;
+            let x = i-(h*y) + start_x as usize;
+            println!("i{}  x{} y{}",i,x,y);
+            {
+                let new = image_data[i].data;
+
+                let alpha = (new >> 24) & 0xFF;
+                if alpha > 0 {
+                    let old = unsafe{ &mut data.lock().unwrap()[y * w + x].data};
+                    if alpha >= 255 {
+                        *old = new;
+                    } else {
+                        let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
+                        let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
+                        let n_b = ((new & 0xFF) * alpha) >> 8;
+
+                        let n_alpha = 255 - alpha;
+                        let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
+                        let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
+                        let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
+                        let o_b = ((*old & 0xFF) * n_alpha) >> 8;
+
+                        *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
+                    }
+                }
+            
+            }
+        })
+        .count();
+    }
 
     /// Draw a linear gradient in a rectangular region
     #[cfg(not(feature="no_std"))]

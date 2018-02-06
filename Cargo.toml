@@ -13,6 +13,9 @@ keywords = [
     "ui",
 ]
 
+[dependencies]
+rayon = "0.9"
+
 [features]
 default = []
 no_std = []
