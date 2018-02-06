@@ -18,35 +18,30 @@ fn main() {
     window.set(Color::rgb(255,255,255));
     
     //create image data : a green square
-    let data = vec![Color::rgba(100,200,10,2);200000];
-    let data2 = vec![Color::rgba(200,100,10,2);200000];
+    let data = vec![Color::rgba(100,200,10,20);200000];
+    let data2 = vec![Color::rgba(200,100,10,20);200000];
 
-    //draw image sequentially
+    //draw image benchmarking 
+    println!("Benchmarking implementations to draw an image on window:");
     let mut t = time::now();
-    for _i in 1..TIMES {
+    
+    for _i in 0..TIMES {
         window.image(10,10,500,400, &data[..]);
     }
-    println!("image {:?}", time::now()-t);
-    //draw image parallelizing
-    t = time::now();
-    for _i in 1..TIMES {
-        window.image_par(20,20,500,400, &data[..]);
-    }
-    println!("image_par {:?}", time::now()-t);
-    
-    t = time::now();
-    for _i in 1..TIMES {
-        window.image_fast(30,30,500,400, &data[..]);
-    }
-    println!("image_fast {:?}", time::now()-t);
-    
-    t = time::now();
-    
-    for _i in 1..TIMES {
-        window.image_veryfast(40,40,500,400, &data2[..]);
-    }
-    println!("image_veryfast{:?}", time::now()-t);
+    let mut t2 = time::now();
+    let dt = (t2-t)/TIMES;
+    println!("     image {:?}",dt );
 
+    t = time::now();
+    
+    for _i in 0..TIMES {
+        window.image_fast(40,40,500,400, &data2[..]);
+    }
+    t2 = time::now();
+    let dt2 = (t2-t)/TIMES;
+    println!("image_fast {:?}",dt2);
+    println!("-------------------------");
+    println!("difference {:?}", dt-dt2);
     window.sync();
 
     'events: loop {

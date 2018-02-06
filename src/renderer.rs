@@ -1,12 +1,9 @@
 use core::cmp;
-use rayon::prelude::*;
 
 use FONT;
 use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
-
-use std::sync::{Arc, Mutex};
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -310,92 +307,7 @@ pub trait Renderer {
         }
     }
 
-    //VERY SLOW parallel implementation !
-    fn image_par(&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
-        let window_w = self.width() as usize;
-        let window_len = self.data().len();
-        let data = Arc::new(Mutex::new(self.data_mut()));
-        let w = w as usize;
-
-        (0..image_data.len())
-        .into_par_iter()
-        .map(|i| {
-            
-            let y0 = i/w;
-            let y = y0 + start_y as usize ;
-            let x = start_x as usize + i-(y0*w) ;
-            let window_index = y * window_w + x;
-            if window_index <= window_len {
-                let new = image_data[i].data;
-
-                let alpha = (new >> 24) & 0xFF;
-                if alpha > 0 {
-                    let old = unsafe{ &mut data.lock().unwrap()[window_index].data};
-                    if alpha >= 255 {
-                        *old = new;
-                    } else {
-                        let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
-                        let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
-                        let n_b = ((new & 0xFF) * alpha) >> 8;
-
-                        let n_alpha = 255 - alpha;
-                        let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
-                        let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
-                        let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
-                        let o_b = ((*old & 0xFF) * n_alpha) >> 8;
-
-                        *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
-                    }
-                }
-            }
-            
-        })
-        .count();
-    }
-
-    
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
-        let window_w = self.width() as usize;
-        let window_len = self.data().len();
-        let data = self.data_mut();
-        let w = w as usize;
-
-        (0..image_data.len())
-        .map(|i| {
-            
-            let y0 = i/w;
-            let y = y0 + start_y as usize ;
-            let x = start_x as usize + i-(y0*w) ;
-            let window_index = y * window_w + x;
-            if window_index <= window_len {
-                let new = image_data[i].data;
-
-                let alpha = (new >> 24) & 0xFF;
-                if alpha > 0 {
-                    let old = unsafe{ &mut data[window_index].data};
-                    if alpha >= 255 {
-                        *old = new;
-                    } else {
-                        let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
-                        let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
-                        let n_b = ((new & 0xFF) * alpha) >> 8;
-
-                        let n_alpha = 255 - alpha;
-                        let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
-                        let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
-                        let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
-                        let o_b = ((*old & 0xFF) * n_alpha) >> 8;
-
-                        *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
-                    }
-                }
-            }
-            
-        })
-        .count();
-    }
-
-    fn image_veryfast (&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
         let window_len = self.data().len();
         let data = self.data_mut();

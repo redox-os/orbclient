@@ -14,8 +14,8 @@ keywords = [
 ]
 
 [dependencies]
-rayon = "0.9"
 time = "*"
+
 [features]
 default = []
 no_std = []
