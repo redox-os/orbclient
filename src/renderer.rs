@@ -307,6 +307,7 @@ pub trait Renderer {
         }
     }
 
+    // Speed improved, but image has to be all inside of window boundary
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
         let window_len = self.data().len();
@@ -320,7 +321,7 @@ pub trait Renderer {
             let y = y0 + start_y;
             let x = start_x + i-(y0*w) ;
             let window_index = y * window_w + x;
-            if window_index <= window_len {
+            if window_index < window_len {
                 let new = image_data[i].data;
                 let alpha = (new >> 24) & 0xFF;
                 if alpha > 0 {
