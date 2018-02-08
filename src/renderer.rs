@@ -296,7 +296,7 @@ pub trait Renderer {
     /// Display an image
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         //check if image is inside window 
-        if (w + start_x as u32) > self.width() && h > 100 {
+        if (w + start_x as u32) > self.width() || h < 100 {
             self.image_legacy(start_x, start_y, w, h, data);
         }else{
             self.image_fast(start_x, start_y, w, h, data);
