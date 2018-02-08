@@ -36,7 +36,7 @@ fn main() {
     t = time::now();
     
     for _i in 0..TIMES {
-        window.image_fast(40,40,750,550, &data2[..]);
+        window.image_fast(140,240,750,550, &data2[..]);
     }
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;

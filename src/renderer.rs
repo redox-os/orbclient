@@ -325,12 +325,12 @@ pub trait Renderer {
         let start_x = start_x as usize;
         let start_y = start_y as usize;
 
-        for i in 0..w * h as usize {
+        for i in 0..(w * h as usize) {
             let y0 = i / w;
             let y = y0 + start_y;
             let x = start_x + i - (y0 * w);
             let window_index = y * window_w + x;
-            if window_index < window_len {
+            if window_index < window_len && i < image_data.len(){
                 let new = image_data[i].data;
                 let alpha = (new >> 24) & 0xFF;
                 if alpha > 0 {
