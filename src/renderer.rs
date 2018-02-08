@@ -294,8 +294,17 @@ pub trait Renderer {
     }
 
     /// Display an image
-    // TODO: Improve speed
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
+        //check if image is inside window 
+        if (w + start_x as u32) > self.width() {
+            self.image_legacy(start_x, start_y, w, h, data);
+        }else{
+            self.image_fast(start_x, start_y, w, h, data);
+        }
+    }
+
+    // TODO: Improve speed
+    fn image_legacy(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         let mut i = 0;
         for y in start_y..start_y + h as i32 {
             for x in start_x..start_x + w as i32 {
@@ -308,7 +317,7 @@ pub trait Renderer {
     }
 
     // Speed improved, but image has to be all inside of window boundary
-    fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, _h: u32, image_data: &[Color]) {
+    fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
         let window_len = self.data().len();
         let data = self.data_mut();
@@ -316,10 +325,10 @@ pub trait Renderer {
         let start_x = start_x as usize;
         let start_y = start_y as usize;
 
-        for i in 0..image_data.len() {
-            let y0 = i/w;
+        for i in 0..w * h as usize {
+            let y0 = i / w;
             let y = y0 + start_y;
-            let x = start_x + i-(y0*w) ;
+            let x = start_x + i - (y0 * w);
             let window_index = y * window_w + x;
             if window_index < window_len {
                 let new = image_data[i].data;

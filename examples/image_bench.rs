@@ -3,7 +3,7 @@ extern crate time;
 
 use orbclient::{Color, Window, Renderer, EventOption};
 
-const TIMES:i32 = 10;
+const TIMES:i32 = 100;
 
 fn main() {
     //let (width, height) = orbclient::get_display_size().unwrap();
@@ -20,17 +20,18 @@ fn main() {
     //create image data : a green square
     let data = vec![Color::rgba(100,200,10,20);412500];
     let data2 = vec![Color::rgba(200,100,10,20);412500];
+    let data3 = vec![Color::rgba(10,100,200,20);800];
 
     //draw image benchmarking 
     println!("Benchmarking implementations to draw an image on window:");
     let mut t = time::now();
     
     for _i in 0..TIMES {
-        window.image(10,10,750,550, &data[..]);
+        window.image_legacy(10,10,750,550, &data[..]);
     }
     let mut t2 = time::now();
     let dt = (t2-t)/TIMES;
-    println!("     image {:?}",dt );
+    println!("image_legacy {:?}",dt );
 
     t = time::now();
     
@@ -42,6 +43,17 @@ fn main() {
     println!("image_fast {:?}",dt2);
     println!("-------------------------");
     println!("difference {:?}", dt-dt2);
+    
+    
+    t = time::now();
+    
+    for _i in 0..TIMES {
+        window.image(0,0,800,1, &data3[..]);
+    }
+    t2 = time::now();
+    let dt3 = (t2-t)/TIMES;
+    println!("image wrapper {:?}",dt3);
+    
     window.sync();
 
     'events: loop {
