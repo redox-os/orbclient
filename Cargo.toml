@@ -13,6 +13,9 @@ keywords = [
     "ui",
 ]
 
+[dependencies]
+time = "*"
+
 [features]
 default = []
 no_std = []
