@@ -294,8 +294,18 @@ pub trait Renderer {
     }
 
     /// Display an image
-    // TODO: Improve speed
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
+        //check if image is inside window 
+        if (w + start_x as u32) > self.width() && h > 100 {
+            self.image_legacy(start_x, start_y, w, h, data);
+        }else{
+            self.image_fast(start_x, start_y, w, h, data);
+        }
+    }
+
+
+    // TODO: Improve speed
+    fn image_legacy(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         let mut i = 0;
         for y in start_y..start_y + h as i32 {
             for x in start_x..start_x + w as i32 {

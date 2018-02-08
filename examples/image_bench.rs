@@ -26,7 +26,7 @@ fn main() {
     let mut t = time::now();
     
     for _i in 0..TIMES {
-        window.image(10,10,750,550, &data[..]);
+        window.image_legacy(10,10,750,550, &data[..]);
     }
     let mut t2 = time::now();
     let dt = (t2-t)/TIMES;
