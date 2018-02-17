@@ -316,6 +316,16 @@ pub trait Renderer {
         }
     }
 
+    ///Display an image overwriting a portion of window starting at given line : very quick!!
+    fn image_over (&mut self, start: i32, image_data: &[Color]) {
+        let start = start as usize * self.width() as usize;
+        let stop = start + image_data.len();
+        let window_data = self.data_mut();
+        if image_data.len() + start > window_data.len() {return};
+        
+        window_data[start..stop].copy_from_slice(image_data);
+    }
+
     // Speed improved, but image has to be all inside of window boundary
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;

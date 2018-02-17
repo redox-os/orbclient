@@ -3,7 +3,7 @@ extern crate time;
 
 use orbclient::{Color, Window, Renderer, EventOption};
 
-const TIMES:i32 = 100;
+const TIMES:i32 = 10;
 
 fn main() {
     //let (width, height) = orbclient::get_display_size().unwrap();
@@ -21,6 +21,7 @@ fn main() {
     let data = vec![Color::rgba(100,200,10,20);412500];
     let data2 = vec![Color::rgba(200,100,10,20);412500];
     let data3 = vec![Color::rgba(10,100,200,20);800];
+    let data4 = vec![Color::rgba(10,100,200,20);480000];
 
     //draw image benchmarking 
     println!("Benchmarking implementations to draw an image on window:");
@@ -36,7 +37,7 @@ fn main() {
     t = time::now();
     
     for _i in 0..TIMES {
-        window.image_fast(140,240,750,550, &data2[..]);
+        window.image_fast(40,40,750,550, &data2[..]);
     }
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;
@@ -48,11 +49,21 @@ fn main() {
     t = time::now();
     
     for _i in 0..TIMES {
-        window.image(0,0,800,1, &data3[..]);
+        window.image(0,0,800,10, &data3[..]);
     }
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
     println!("image wrapper {:?}",dt3);
+    
+    println!("Overwrite window!");
+    
+    t = time::now();
+    for _i in 0..TIMES {
+        window.image_over(80, &data4[..380000]);
+    }
+    t2 = time::now();
+    let dt4 = (t2-t)/TIMES;
+    println!("window blit {:?}",dt4);
     
     window.sync();
 
