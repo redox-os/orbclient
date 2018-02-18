@@ -300,10 +300,8 @@ pub trait Renderer {
         //check if image is inside window 
         if (w + start_x as u32) > self.width() {
             self.image_legacy(start_x, start_y, w, h, data);
-        }else if w * h < 120000 {
+        } else {
             self.image_fast(start_x, start_y, w, h, data);
-        }else{
-            self.image_parallel(start_x, start_y, w, h, data);
         }
     }
 
@@ -372,6 +370,7 @@ pub trait Renderer {
     }
 
     ///Render an image using parallel threads if possible
+    //Works in Linux but not in Redox !
     fn image_parallel(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let start_x = start_x as usize;
         let start_y = start_y as usize;
