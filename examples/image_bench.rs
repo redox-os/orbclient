@@ -20,50 +20,48 @@ fn main() {
     //create image data : a green square
     let data = vec![Color::rgba(100,200,10,20);412500];
     let data2 = vec![Color::rgba(200,100,10,20);412500];
-    let data3 = vec![Color::rgba(10,100,200,20);800];
+    let data3 = vec![Color::rgba(10,100,100,20);412500];
     let data4 = vec![Color::rgba(10,100,200,20);480000];
 
     //draw image benchmarking 
     println!("Benchmarking implementations to draw an image on window:");
     let mut t = time::now();
-    
+
     for _i in 0..TIMES {
-        window.image_legacy(10,10,750,550, &data[..]);
+        window.image_over(50, &data4[..360000]);
     }
     let mut t2 = time::now();
-    let dt = (t2-t)/TIMES;
-    println!("image_legacy {:?}",dt );
+    let dt4 = (t2-t)/TIMES;
+    println!("image_over     {:?}",dt4);
 
     t = time::now();
     
     for _i in 0..TIMES {
-        window.image_fast(40,40,750,550, &data2[..]);
+        window.image_legacy(10,10,750,550, &data[..]);
+    }
+    t2 = time::now();
+    let dt = (t2-t)/TIMES;
+    println!("image_legacy   {:?}",dt );
+
+    t = time::now();
+    
+    for _i in 0..TIMES {
+        window.image_fast(20,20,750,550, &data2[..]);
     }
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;
-    println!("image_fast {:?}",dt2);
-    println!("-------------------------");
-    println!("difference {:?}", dt-dt2);
-    
-    
+    println!("image_fast     {:?}",dt2);
+
     t = time::now();
-    
     for _i in 0..TIMES {
-        window.image(0,0,800,10, &data3[..]);
+        window.image(30,30,750,550, &data3[..]);
     }
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
-    println!("image wrapper {:?}",dt3);
+    println!("image_parallel {:?}",dt3);
     
-    println!("Overwrite window!");
-    
-    t = time::now();
-    for _i in 0..TIMES {
-        window.image_over(80, &data4[..380000]);
-    }
-    t2 = time::now();
-    let dt4 = (t2-t)/TIMES;
-    println!("window blit {:?}",dt4);
+    //println!("difference {:?}", dt-dt3);
+    println!("-------------------------");
     
     window.sync();
 

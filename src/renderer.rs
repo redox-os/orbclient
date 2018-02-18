@@ -1,3 +1,5 @@
+extern crate rayon;
+
 use core::cmp;
 
 use FONT;
@@ -298,8 +300,10 @@ pub trait Renderer {
         //check if image is inside window 
         if (w + start_x as u32) > self.width() {
             self.image_legacy(start_x, start_y, w, h, data);
-        }else{
+        }else if w * h < 120000 {
             self.image_fast(start_x, start_y, w, h, data);
+        }else{
+            self.image_parallel(start_x, start_y, w, h, data);
         }
     }
 
@@ -318,12 +322,13 @@ pub trait Renderer {
 
     ///Display an image overwriting a portion of window starting at given line : very quick!!
     fn image_over (&mut self, start: i32, image_data: &[Color]) {
-        let start = start as usize * self.width() as usize;
-        let stop = start + image_data.len();
-        let window_data = self.data_mut();
-        if image_data.len() + start > window_data.len() {return};
         
-        window_data[start..stop].copy_from_slice(image_data);
+        let start = start as usize * self.width() as usize;
+        let window_data = self.data_mut();
+        let stop = cmp::min(start + image_data.len(), window_data.len());
+        let end = cmp::min(image_data.len(), window_data.len() - start);
+        
+        window_data[start..stop].copy_from_slice(&image_data[..end]);
     }
 
     // Speed improved, but image has to be all inside of window boundary
@@ -363,6 +368,69 @@ pub trait Renderer {
                 }
             }
             
+        }
+    }
+
+    ///Render an image using parallel threads if possible
+    fn image_parallel(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+        let start_x = start_x as usize;
+        let start_y = start_y as usize;
+        let h_hi = (h / 2) as usize;
+        let h_lo = h as usize - h_hi;
+        let w = w as usize;
+        let mid = image_data.len() / 2;
+        let width = self.width() as usize;
+        let window_data = self.data_mut();
+
+        let hi_start = start_x + start_y * width;
+        let hi_stop = width * (h_hi + start_y);
+        let lo_start = hi_stop + start_x;
+        let lo_stop = cmp::min(width * (start_y + h_lo + h_hi), window_data.len());
+
+        let mut window_lo = vec![Color::rgba(0,0,0,0); lo_stop - lo_start];
+
+        {
+            window_lo.copy_from_slice(&window_data[lo_start..lo_stop]);
+            let window_hi = &mut window_data[hi_start..hi_stop];
+
+            rayon::join(|| blit(width, window_hi, w, h_hi, &image_data[..mid]),
+                        || blit(width, &mut window_lo, w, h_lo, &image_data[mid..]),
+                        );
+        }
+
+        window_data[lo_start..lo_stop].copy_from_slice(&window_lo);
+
+        fn blit(window_w: usize, window_data: &mut[Color], w: usize, h: usize, image_data: &[Color]){
+            let window_len = window_data.len();
+            for i in 0..(w * h) {
+                let y= i / w;
+                let x = i - (y * w);
+                let window_index = y * window_w + x;
+                
+                if window_index < window_len && i < image_data.len(){
+                    let new = image_data[i].data;
+                    let alpha = (new >> 24) & 0xFF;
+                    if alpha > 0 {
+                        let old = unsafe{ &mut window_data[window_index].data};
+                        if alpha >= 255 {
+                            *old = new;
+                        } else {
+                            let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
+                            let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
+                            let n_b = ((new & 0xFF) * alpha) >> 8;
+
+                            let n_alpha = 255 - alpha;
+                            let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
+                            let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
+                            let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
+                            let o_b = ((*old & 0xFF) * n_alpha) >> 8;
+
+                            *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
+                        }
+                    }
+                }
+                
+            }
         }
     }
 
