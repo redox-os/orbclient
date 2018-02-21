@@ -54,7 +54,7 @@ fn main() {
 
     t = time::now();
     for _i in 0..TIMES {
-        window.image(30,30,750,550, &data3[..]);
+        window.image_parallel(30,30,750,550, &data3[..]);
     }
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
