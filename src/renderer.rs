@@ -329,6 +329,16 @@ pub trait Renderer {
         window_data[start..stop].copy_from_slice(&image_data[..end]);
     }
 
+    fn image_line (&mut self, start_x: i32, start_y: i32, width: u32, image_data: &[Color]) {
+        
+        let start = start_y as usize * self.width() as usize + start_x as usize;
+        let window_data = self.data_mut();
+        let stop = start + width as usize;
+        let end = width as usize;
+        
+        window_data[start..stop].copy_from_slice(&image_data[..end]);
+    }
+
     // Speed improved, but image has to be all inside of window boundary
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
