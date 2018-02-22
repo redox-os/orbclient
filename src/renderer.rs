@@ -320,7 +320,7 @@ pub trait Renderer {
 
     ///Display an image overwriting a portion of window starting at given line : very quick!!
     fn image_over (&mut self, start: i32, image_data: &[Color]) {
-        
+
         let start = start as usize * self.width() as usize;
         let window_data = self.data_mut();
         let stop = cmp::min(start + image_data.len(), window_data.len());
@@ -329,14 +329,34 @@ pub trait Renderer {
         window_data[start..stop].copy_from_slice(&image_data[..end]);
     }
 
-    fn image_line (&mut self, start_x: i32, start_y: i32, width: u32, image_data: &[Color]) {
-        
-        let start = start_y as usize * self.width() as usize + start_x as usize;
+    ///Display an image using non transparent method 
+    fn image_opaque (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+        let w = w as usize;
+        let mut h = h as usize;
+        let width = self.width() as usize;
+        let height = self.height() as usize;
+        let start_x = start_x as usize;
+        let start_y =start_y as usize;
+        //check boundaries 
+        if h + start_y > height {
+            h = height - start_y;
+        }
         let window_data = self.data_mut();
-        let stop = start + width as usize;
-        let end = width as usize;
-        
-        window_data[start..stop].copy_from_slice(&image_data[..end]);
+        let offset = start_y * width + start_x;
+        //copy image slices to window line by line
+        for l in 0..h {
+            let start = offset + l * width;
+            let mut stop = offset + l * width + w;
+            let begin = l * w;
+            let mut end = l * w + w;
+            //check boundaries
+            if start_x + w > width {
+                stop = (start_y + l +1) * width - 1;
+                end = begin + stop - start;
+            }
+            window_data[start..stop]
+            .copy_from_slice(&image_data[begin..end]);
+        } 
     }
 
     // Speed improved, but image has to be all inside of window boundary

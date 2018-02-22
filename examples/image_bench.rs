@@ -59,6 +59,14 @@ fn main() {
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
     println!("image_parallel {:?}",dt3);
+
+    t = time::now();
+    for _i in 0..TIMES {
+        window.image_opaque(40,40,750,550, &data4[..]);
+    }
+    t2 = time::now();
+    let dt3 = (t2-t)/TIMES;
+    println!("image_opaque   {:?}",dt3);
     
     //println!("difference {:?}", dt-dt3);
     println!("-------------------------");
