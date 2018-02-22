@@ -346,9 +346,9 @@ pub trait Renderer {
         //copy image slices to window line by line
         for l in 0..h {
             let start = offset + l * width;
-            let mut stop = offset + l * width + w;
+            let mut stop = start + w;
             let begin = l * w;
-            let mut end = l * w + w;
+            let mut end = begin + w;
             //check boundaries
             if start_x + w > width {
                 stop = (start_y + l +1) * width - 1;
