@@ -47,8 +47,18 @@ pub trait Renderer {
     /// Flip the buffer
     fn sync(&mut self) -> bool;
 
-    /// Draw a pixel
+    /// Draw a pixel (compositing)
     fn pixel(&mut self, x: i32, y: i32, color: Color) {
+        self.pixel_(x, y, color, false);
+    }
+
+    /// Draw a pixel (replacing)
+    fn pixel_opaque(&mut self, x: i32, y: i32, color: Color) {
+        self.pixel_(x, y, color, true);
+    }
+
+    //Draw a pixel replacing or compositing depending on 'replace' boolean 
+    fn pixel_(&mut self, x: i32, y: i32, color: Color, replace: bool) {
         let w = self.width();
         let h = self.height();
         let data = self.data_mut();
@@ -57,11 +67,11 @@ pub trait Renderer {
             let new = color.data;
 
             let alpha = (new >> 24) & 0xFF;
-            if alpha > 0 {
+            //if alpha > 0 {
                 let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
-                if alpha >= 255 {
+                if alpha >= 255 || replace {
                     *old = new;
-                } else {
+                } else if alpha >0 {
                     let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
                     let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
                     let n_b = ((new & 0xFF) * alpha) >> 8;
@@ -74,7 +84,7 @@ pub trait Renderer {
 
                     *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
                 }
-            }
+            //}
         }
     }
 
@@ -265,8 +275,17 @@ pub trait Renderer {
         self.set(Color::rgb(0,0,0));
     }
 
-    /// Draw rectangle
+    /// Draw rectangle (compositing)
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
+        self.rect_(x, y, w, h, color, false);
+    }
+
+    /// Draw rectangle (replacing)
+    fn rect_opaque(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
+        self.rect_(x, y, w, h, color, true);
+    }
+
+    fn rect_(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color, replace: bool) {
         let self_w = self.width();
         let self_h = self.height();
 
@@ -277,8 +296,8 @@ pub trait Renderer {
         let len = cmp::max(start_x, cmp::min(self_w as i32, x + w as i32)) - start_x;
 
         let alpha = (color.data >> 24) & 0xFF;
-        if alpha > 0 {
-            if alpha >= 255 {
+        //if alpha > 0 {
+            if alpha >= 255 || replace {
                 let data = self.data_mut();
                 for y in start_y..end_y {
                     unsafe {
@@ -288,11 +307,11 @@ pub trait Renderer {
             } else {
                 for y in start_y..end_y {
                     for x in start_x..start_x + len {
-                        self.pixel(x, y, color);
+                        self.pixel_(x, y, color, false);
                     }
                 }
             }
-        }
+        //}
     }
 
     /// Display an image

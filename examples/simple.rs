@@ -70,6 +70,16 @@ fn main() {
         println!("Testing colors: they are NOT the same!")
     }
 
+    //Draw a transparent rectangle over window content 
+    window.rect(250, 200, 80, 80, Color::rgba(100,100,100,100));
+    
+    //Draw an opaque rectangle replacing window 
+    window.rect_opaque(300, 220, 80, 80, Color::rgb(100,100,100));
+    
+    //Draw a hole in the window replacing also alpha channel !!
+    window.rect_(300, 100, 80, 80, Color::rgba(10,10,10,255), true);
+    
+
     window.sync();
 
     'events: loop {
