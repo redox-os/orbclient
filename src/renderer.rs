@@ -1,11 +1,13 @@
 extern crate rayon;
 
 use core::cmp;
+use std::cell::Cell;
 
 use FONT;
 use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
+use Mode;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -47,18 +49,15 @@ pub trait Renderer {
     /// Flip the buffer
     fn sync(&mut self) -> bool;
 
-    /// Draw a pixel (compositing)
+    /// Set/get drawing mode
+    fn mode(&self) -> &Cell<Mode>;
+
+    ///Draw a pixel 
     fn pixel(&mut self, x: i32, y: i32, color: Color) {
-        self.pixel_(x, y, color, false);
-    }
-
-    /// Draw a pixel (replacing)
-    fn pixel_opaque(&mut self, x: i32, y: i32, color: Color) {
-        self.pixel_(x, y, color, true);
-    }
-
-    //Draw a pixel replacing or compositing depending on 'replace' boolean 
-    fn pixel_(&mut self, x: i32, y: i32, color: Color, replace: bool) {
+        let replace = match self.mode().get() {
+            Mode::Blend => false,
+            Mode::Overwrite => true,
+        };
         let w = self.width();
         let h = self.height();
         let data = self.data_mut();
@@ -275,17 +274,11 @@ pub trait Renderer {
         self.set(Color::rgb(0,0,0));
     }
 
-    /// Draw rectangle (compositing)
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
-        self.rect_(x, y, w, h, color, false);
-    }
-
-    /// Draw rectangle (replacing)
-    fn rect_opaque(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
-        self.rect_(x, y, w, h, color, true);
-    }
-
-    fn rect_(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color, replace: bool) {
+        let replace = match self.mode().get() {
+            Mode::Blend => false,
+            Mode::Overwrite => true,
+        };
         let self_w = self.width();
         let self_h = self.height();
 
@@ -307,7 +300,7 @@ pub trait Renderer {
             } else {
                 for y in start_y..end_y {
                     for x in start_x..start_x + len {
-                        self.pixel_(x, y, color, false);
+                        self.pixel(x, y, color);
                     }
                 }
             }
@@ -316,15 +309,20 @@ pub trait Renderer {
 
     /// Display an image
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
-        //check if image is inside window 
-        if (w + start_x as u32) > self.width() {
-            self.image_legacy(start_x, start_y, w, h, data);
-        } else {
-            self.image_fast(start_x, start_y, w, h, data);
+        match self.mode().get() {
+            Mode::Blend => if (w + start_x as u32) > self.width() {
+                                    self.image_legacy(start_x, start_y, w, h, data)
+                                  } else {
+                                    self.image_fast(start_x, start_y, w, h, data);
+                                    },
+            Mode::Overwrite => self.image_opaque(start_x, start_y, w, h, data),
+            //and so on with many more modes and implementations....
         }
+    
     }
 
     // TODO: Improve speed
+    #[inline(always)]
     fn image_legacy(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         let mut i = 0;
         for y in start_y..start_y + h as i32 {
@@ -349,6 +347,7 @@ pub trait Renderer {
     }
 
     ///Display an image using non transparent method 
+    #[inline(always)]
     fn image_opaque (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let w = w as usize;
         let mut h = h as usize;
@@ -379,6 +378,7 @@ pub trait Renderer {
     }
 
     // Speed improved, but image has to be all inside of window boundary
+    #[inline(always)]
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
         let window_len = self.data().len();

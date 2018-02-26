@@ -4,11 +4,13 @@ use std::{env, mem, slice, thread};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
+use std::cell::Cell;
 
 use color::Color;
 use event::{Event, EVENT_RESIZE};
 use renderer::Renderer;
 use WindowFlag;
+use Mode;
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = try!(env::var("DISPLAY").or(Err("DISPLAY not set")));
@@ -42,6 +44,8 @@ pub struct Window {
     async: bool,
     /// True if the window can be resized
     resizable: bool,
+    /// Drawing mode
+    mode: Cell<Mode>,
     /// The input scheme
     file: File,
     /// Window data
@@ -72,6 +76,11 @@ impl Renderer for Window {
     /// Flip the buffer
     fn sync(&mut self) -> bool {
         self.file.sync_data().is_ok()
+    }
+
+    /// Set/get mode
+    fn mode(&self) -> &Cell<Mode> {
+        &self.mode
     }
 }
 
@@ -116,6 +125,7 @@ impl Window {
                     t: title.to_string(),
                     async: async,
                     resizable: resizable,
+                    mode: Cell::new(Mode::Blend),
                     file: file,
                     data: unsafe { slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize) },
                 })
