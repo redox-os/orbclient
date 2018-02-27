@@ -14,7 +14,7 @@ keywords = [
 ]
 
 [dependencies]
-time = "*"
+time = "0.1"
 rayon = "0.8"
 
 [features]
