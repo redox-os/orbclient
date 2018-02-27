@@ -1,6 +1,7 @@
 extern crate orbclient;
 
-use orbclient::{Color, Window, Renderer, EventOption, GraphicsPath};
+use orbclient::{Color, Window, Renderer, EventOption, GraphicsPath, Mode};
+
 
 fn main() {
     let (width, height) = orbclient::get_display_size().unwrap();
@@ -69,6 +70,21 @@ fn main() {
     }else{
         println!("Testing colors: they are NOT the same!")
     }
+
+    //Draw a transparent rectangle over window content
+    // default mode is Blend 
+    window.rect(250, 200, 80, 80, Color::rgba(100,100,100,100));
+    
+    //Draw an opaque rectangle replacing window content
+    window.mode().set(Mode::Overwrite); // set window drawing mode to Overwrite from now on 
+    window.rect(300, 220, 80, 80, Color::rgb(100,100,100));
+    
+    //Possibly draw a hole in the window replacing alpha channel ?? (Only in Orbital, not in SDL2)
+    window.rect(300, 100, 80, 80, Color::rgba(10,10,10,1));
+
+    //Draw a transparent rectangle over window content
+    window.mode().set(Mode::Blend); //set mode to Blend fron now on
+    window.rect(200, 230, 80, 80, Color::rgba(100,100,100,100));
 
     window.sync();
 

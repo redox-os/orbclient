@@ -35,6 +35,12 @@ pub enum WindowFlag {
     Unclosable
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Mode {
+    Blend,      //Composite
+    Overwrite   //Replace 
+}
+
 #[cfg(all(not(feature="no_std"), target_os = "redox"))]
 #[path="sys/orbital.rs"]
 mod sys;

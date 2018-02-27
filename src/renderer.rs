@@ -1,11 +1,13 @@
 extern crate rayon;
 
 use core::cmp;
+use std::cell::Cell;
 
 use FONT;
 use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
+use Mode;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -47,8 +49,15 @@ pub trait Renderer {
     /// Flip the buffer
     fn sync(&mut self) -> bool;
 
-    /// Draw a pixel
+    /// Set/get drawing mode
+    fn mode(&self) -> &Cell<Mode>;
+
+    ///Draw a pixel 
     fn pixel(&mut self, x: i32, y: i32, color: Color) {
+        let replace = match self.mode().get() {
+            Mode::Blend => false,
+            Mode::Overwrite => true,
+        };
         let w = self.width();
         let h = self.height();
         let data = self.data_mut();
@@ -57,11 +66,11 @@ pub trait Renderer {
             let new = color.data;
 
             let alpha = (new >> 24) & 0xFF;
-            if alpha > 0 {
+            //if alpha > 0 {
                 let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
-                if alpha >= 255 {
+                if alpha >= 255 || replace {
                     *old = new;
-                } else {
+                } else if alpha >0 {
                     let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
                     let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
                     let n_b = ((new & 0xFF) * alpha) >> 8;
@@ -74,7 +83,7 @@ pub trait Renderer {
 
                     *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
                 }
-            }
+            //}
         }
     }
 
@@ -265,8 +274,11 @@ pub trait Renderer {
         self.set(Color::rgb(0,0,0));
     }
 
-    /// Draw rectangle
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
+        let replace = match self.mode().get() {
+            Mode::Blend => false,
+            Mode::Overwrite => true,
+        };
         let self_w = self.width();
         let self_h = self.height();
 
@@ -277,8 +289,8 @@ pub trait Renderer {
         let len = cmp::max(start_x, cmp::min(self_w as i32, x + w as i32)) - start_x;
 
         let alpha = (color.data >> 24) & 0xFF;
-        if alpha > 0 {
-            if alpha >= 255 {
+        //if alpha > 0 {
+            if alpha >= 255 || replace {
                 let data = self.data_mut();
                 for y in start_y..end_y {
                     unsafe {
@@ -292,20 +304,25 @@ pub trait Renderer {
                     }
                 }
             }
-        }
+        //}
     }
 
     /// Display an image
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
-        //check if image is inside window 
-        if (w + start_x as u32) > self.width() {
-            self.image_legacy(start_x, start_y, w, h, data);
-        } else {
-            self.image_fast(start_x, start_y, w, h, data);
+        match self.mode().get() {
+            Mode::Blend => if (w + start_x as u32) > self.width() {
+                                    self.image_legacy(start_x, start_y, w, h, data)
+                                  } else {
+                                    self.image_fast(start_x, start_y, w, h, data);
+                                    },
+            Mode::Overwrite => self.image_opaque(start_x, start_y, w, h, data),
+            //and so on with many more modes and implementations....
         }
+    
     }
 
     // TODO: Improve speed
+    #[inline(always)]
     fn image_legacy(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         let mut i = 0;
         for y in start_y..start_y + h as i32 {
@@ -330,6 +347,7 @@ pub trait Renderer {
     }
 
     ///Display an image using non transparent method 
+    #[inline(always)]
     fn image_opaque (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let w = w as usize;
         let mut h = h as usize;
@@ -360,6 +378,7 @@ pub trait Renderer {
     }
 
     // Speed improved, but image has to be all inside of window boundary
+    #[inline(always)]
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
         let window_len = self.data().len();

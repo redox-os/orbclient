@@ -2,11 +2,13 @@ extern crate sdl2;
 
 use std::{mem, ptr, slice};
 use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+use std::cell::Cell;
 
 use color::Color;
 use event::*;
 use renderer::Renderer;
 use WindowFlag;
+use Mode;
 
 static SDL_USAGES: AtomicUsize = ATOMIC_USIZE_INIT;
 /// SDL2 Context
@@ -48,6 +50,8 @@ pub struct Window {
     t: String,
     /// True if the window should not wait for events
     async: bool,
+    /// Drawing mode
+    mode: Cell<Mode>,
     /// The inner renderer
     inner: sdl2::render::WindowCanvas,
 }
@@ -83,6 +87,11 @@ impl Renderer for Window {
     fn sync(&mut self) -> bool {
         self.inner.present();
         true
+    }
+
+    /// Set/get mode
+    fn mode(&self) -> &Cell<Mode> {
+        &self.mode
     }
 }
 
@@ -133,6 +142,7 @@ impl Window {
                 h: h,
                 t: title.to_string(),
                 async: async,
+                mode: Cell::new(Mode::Blend),
                 inner: window.into_canvas().software().build().unwrap(),
             }),
             Err(_) => None
