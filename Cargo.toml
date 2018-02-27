@@ -1,6 +1,6 @@
 [package]
 name = "orbclient"
-version = "0.3.12"
+version = "0.3.13"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 description = "The Orbital Client Library"
 documentation = "https://docs.rs/orbclient"
