@@ -15,7 +15,7 @@ keywords = [
 
 [dependencies]
 time = "*"
-rayon = "1.0"
+rayon = "0.8"
 
 [features]
 default = []
