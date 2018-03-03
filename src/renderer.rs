@@ -54,10 +54,14 @@ pub trait Renderer {
 
     ///Draw a pixel 
     fn pixel(&mut self, x: i32, y: i32, color: Color) {
-        let replace = match self.mode().get() {
-            Mode::Blend => false,
-            Mode::Overwrite => true,
+        match self.mode().get() {
+            Mode::Blend => self.pixel_fast(x, y, color),
+            Mode::Overwrite => self.pixel_legacy(x, y, color, true),
         };
+    }
+    
+    #[inline(always)]
+    fn pixel_legacy(&mut self, x: i32, y: i32, color: Color, replace: bool) {
         let w = self.width();
         let h = self.height();
         let data = self.data_mut();
@@ -84,6 +88,31 @@ pub trait Renderer {
                     *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
                 }
             //}
+        }
+    }
+    
+    //faster pixel implementation (multiplexing)
+    #[inline(always)]
+    fn pixel_fast(&mut self, x: i32, y: i32, color: Color) {
+        let w = self.width();
+        let h = self.height();
+        let data = self.data_mut();
+
+        if x >= 0 && y >= 0 && x < w as i32 && y < h as i32 {
+            let new = color.data;
+
+            let alpha = (new >> 24) & 0xFF;
+            
+            let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
+            
+            let n_alpha = 255 - alpha;
+            let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
+                    (alpha * (new & 0x00FF00FF))) >> 8;
+            let ag = (n_alpha * ((*old & 0xFF00FF00)) >> 8) +
+                    ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+
+            *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
+
         }
     }
 
@@ -378,6 +407,7 @@ pub trait Renderer {
     }
 
     // Speed improved, but image has to be all inside of window boundary
+/*
     #[inline(always)]
     fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let window_w = self.width() as usize;
@@ -411,6 +441,43 @@ pub trait Renderer {
                         let o_b = ((*old & 0xFF) * n_alpha) >> 8;
 
                         *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
+                    }
+                }
+            }
+            
+        }
+    }
+*/
+
+    #[inline(always)]
+    fn image_fast(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+        let window_w = self.width() as usize;
+        let window_len = self.data().len();
+        let data = self.data_mut();
+        let w = w as usize;
+        let start_x = start_x as usize;
+        let start_y = start_y as usize;
+
+        for i in 0..(w * h as usize) {
+            let y0 = i / w;
+            let y = y0 + start_y;
+            let x = start_x + i - (y0 * w);
+            let window_index = y * window_w + x;
+            if window_index < window_len && i < image_data.len(){
+                let new = image_data[i].data;
+                let alpha = (new >> 24) & 0xFF;
+                if alpha > 0 {
+                    let old = unsafe{ &mut data[window_index].data};
+                    if alpha >= 255 {
+                        *old = new;
+                    } else {
+                        let n_alpha = 255 - alpha;
+                        let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
+                                (alpha * (new & 0x00FF00FF))) >> 8;
+                        let ag = (n_alpha * ((*old & 0xFF00FF00)) >> 8) +
+                                ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+
+                        *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
                     }
                 }
             }
@@ -463,17 +530,13 @@ pub trait Renderer {
                         if alpha >= 255 {
                             *old = new;
                         } else {
-                            let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
-                            let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
-                            let n_b = ((new & 0xFF) * alpha) >> 8;
-
                             let n_alpha = 255 - alpha;
-                            let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
-                            let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
-                            let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
-                            let o_b = ((*old & 0xFF) * n_alpha) >> 8;
+                            let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
+                                (alpha * (new & 0x00FF00FF))) >> 8;
+                            let ag = (n_alpha * ((*old & 0xFF00FF00)) >> 8) +
+                                ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
 
-                            *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
+                            *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
                         }
                     }
                 }

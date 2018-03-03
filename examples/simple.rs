@@ -14,6 +14,7 @@ fn main() {
                          .unwrap();
 
     let (win_w, win_h) = (width/2, height/2);
+
     // top left -> bottom rigth
     window.linear_gradient(0, 0, win_w/3, win_h, 0, 0,  (win_w/3) as i32, (win_h/2) as i32, Color::rgb(128,128,128), Color::rgb(255,255,255));
     // horizontal gradient
@@ -79,7 +80,7 @@ fn main() {
     window.mode().set(Mode::Overwrite); // set window drawing mode to Overwrite from now on 
     window.rect(300, 220, 80, 80, Color::rgb(100,100,100));
     
-    //Possibly draw a hole in the window replacing alpha channel ?? (Only in Orbital, not in SDL2)
+    //Draw a hole in the window replacing alpha channel (Only in Orbital, not in SDL2)
     window.rect(300, 100, 80, 80, Color::rgba(10,10,10,1));
 
     //Draw a transparent rectangle over window content
