@@ -41,7 +41,7 @@ fn main() {
     }
     t2 = time::now();
     let dt = (t2-t)/TIMES;
-    println!("image_legacy   {:?}",dt );
+    println!("image_legacy (pixel_fast)    {:?}",dt );
 
     t = time::now();
     
