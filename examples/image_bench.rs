@@ -1,7 +1,7 @@
 extern crate orbclient;
 extern crate time;
 
-use orbclient::{Color, Window, Renderer, EventOption};
+use orbclient::{Color, Window, Renderer, EventOption, Mode};
 
 const TIMES:i32 = 10;
 
@@ -32,7 +32,9 @@ fn main() {
     }
     let mut t2 = time::now();
     let dt4 = (t2-t)/TIMES;
-    println!("image_over     {:?}",dt4);
+    println!("image_over                  {:?}",dt4);
+
+    window.mode().set(Mode::Legacy);
 
     t = time::now();
     
@@ -41,7 +43,18 @@ fn main() {
     }
     t2 = time::now();
     let dt = (t2-t)/TIMES;
-    println!("image_legacy (pixel_fast)    {:?}",dt );
+    println!("image_legacy (pixel_legacy) {:?}",dt );
+
+    window.mode().set(Mode::Blend);
+
+    t = time::now();
+    
+    for _i in 0..TIMES {
+        window.image_legacy(15,15,750,550, &data[..]);
+    }
+    t2 = time::now();
+    let dt = (t2-t)/TIMES;
+    println!("image_legacy (pixel_fast)   {:?}",dt );
 
     t = time::now();
     
@@ -50,7 +63,16 @@ fn main() {
     }
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;
-    println!("image_fast     {:?}",dt2);
+    println!("image_fast                  {:?}",dt2);
+
+    t = time::now();
+    
+    for _i in 0..TIMES {
+        window.image_fast2(40,40,750,550, &data3[..]);
+    }
+    t2 = time::now();
+    let dt2 = (t2-t)/TIMES;
+    println!("image_fast2                 {:?}",dt2);
 
     t = time::now();
     for _i in 0..TIMES {
@@ -58,18 +80,18 @@ fn main() {
     }
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
-    println!("image_parallel {:?}",dt3);
+    println!("image_parallel              {:?}",dt3);
 
     t = time::now();
     for _i in 0..TIMES {
-        window.image_opaque(40,40,750,550, &data4[..]);
+        window.image_opaque(50,50,750,550, &data4[..]);
     }
     t2 = time::now();
     let dt3 = (t2-t)/TIMES;
-    println!("image_opaque   {:?}",dt3);
-    
+    println!("image_opaque                {:?}",dt3);
+
     //println!("difference {:?}", dt-dt3);
-    println!("-------------------------");
+    println!("------------------------------------------------");
     
     window.sync();
 

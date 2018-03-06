@@ -38,7 +38,8 @@ pub enum WindowFlag {
 #[derive(Clone, Copy, Debug)]
 pub enum Mode {
     Blend,      //Composite  
-    Overwrite   //Replace
+    Overwrite,  //Replace
+    Legacy
 }
 
 #[cfg(all(not(feature="no_std"), target_os = "redox"))]
