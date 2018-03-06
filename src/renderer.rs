@@ -410,18 +410,20 @@ pub trait Renderer {
     // Speed improved, but image has to be all inside of window boundary
     #[inline(always)]
     fn image_fast(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
-        let window_w = self.width() as usize;
+        let width = self.width() as usize;
         let window_len = self.data().len();
-        let data = self.data_mut();
         let w = w as usize;
         let start_x = start_x as usize;
         let start_y = start_y as usize;
+        //simply return if image is outside of window
+        if start_x >= width || start_y >= self.height() as usize { return }
 
+        let data = self.data_mut();
         for i in 0..(w * h as usize) {
             let y0 = i / w;
             let y = y0 + start_y;
             let x = start_x + i - (y0 * w);
-            let window_index = y * window_w + x;
+            let window_index = y * width + x;
             if window_index < window_len && i < image_data.len(){
                 let new = image_data[i].data;
                 let alpha = (new >> 24) & 0xFF;
@@ -451,6 +453,9 @@ pub trait Renderer {
         let width = self.width() as usize;
         let start_x = start_x as usize;
         let start_y =start_y as usize;
+        //simply return if image is outside of window
+        if start_x >= width || start_y >= self.height() as usize { return }
+
         let window_data = self.data_mut();
         let offset = start_y * width + start_x;
         //copy image slices to window line by line
