@@ -112,7 +112,7 @@ pub trait Renderer {
             } else if alpha >0 {
                 let n_alpha = 255 - alpha;
                 let rb = ((n_alpha * ( *old & 0x00FF00FF)) + (alpha * (new & 0x00FF00FF))) >> 8;
-                let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) + ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+                let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) + ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                 *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
             }
@@ -436,7 +436,7 @@ pub trait Renderer {
                         let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
                                 (alpha * (new & 0x00FF00FF))) >> 8;
                         let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) +
-                                ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+                                ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                         *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
                     }
@@ -477,7 +477,7 @@ pub trait Renderer {
                             let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
                                     (alpha * (new & 0x00FF00FF))) >> 8;
                             let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) +
-                                    ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+                                    ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                             *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
                         }
@@ -537,7 +537,7 @@ pub trait Renderer {
                             let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
                                 (alpha * (new & 0x00FF00FF))) >> 8;
                             let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) +
-                                ( alpha * (0x01000000 | ((new & 0xFF00FF00) >>8)));
+                                ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                             *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
                         }
