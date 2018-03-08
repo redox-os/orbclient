@@ -1,7 +1,7 @@
 extern crate orbclient;
 extern crate time;
 
-use orbclient::{Color, Window, Renderer, EventOption, Mode};
+use orbclient::{Color, Window, Renderer, EventOption};
 
 const TIMES:i32 = 10;
 
@@ -34,19 +34,6 @@ fn main() {
     let dt4 = (t2-t)/TIMES;
     println!("image_over                  {:?}",dt4);
 
-    window.mode().set(Mode::Legacy);
-
-    t = time::now();
-    
-    for _i in 0..TIMES {
-        window.image_legacy(10,10,750,550, &data[..]);
-    }
-    t2 = time::now();
-    let dt = (t2-t)/TIMES;
-    println!("image_legacy (pixel_legacy) {:?}",dt );
-
-    window.mode().set(Mode::Blend);
-
     t = time::now();
     
     for _i in 0..TIMES {
@@ -64,15 +51,6 @@ fn main() {
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;
     println!("image_fast                  {:?}",dt2);
-
-    t = time::now();
-    
-    for _i in 0..TIMES {
-        window.image_fast2(40,40,750,550, &data3[..]);
-    }
-    t2 = time::now();
-    let dt2 = (t2-t)/TIMES;
-    println!("image_fast2                 {:?}",dt2);
 
     t = time::now();
     for _i in 0..TIMES {

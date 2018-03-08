@@ -57,7 +57,6 @@ pub trait Renderer {
         match self.mode().get() {
             Mode::Blend => self.pixel_fast(x, y, color), 
             Mode::Overwrite => self.pixel_legacy(x, y, color, true),
-            Mode::Legacy => self.pixel_legacy(x, y, color, false),
         };
     }
     
@@ -308,7 +307,7 @@ pub trait Renderer {
 
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
         let replace = match self.mode().get() {
-            Mode::Blend | Mode::Legacy => false,
+            Mode::Blend => false,
             Mode::Overwrite => true,
         };
         let self_w = self.width();
@@ -342,9 +341,8 @@ pub trait Renderer {
     /// Display an image
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         match self.mode().get() {
-            Mode::Blend => self.image_fast2(start_x, start_y, w, h, data),
+            Mode::Blend => self.image_fast(start_x, start_y, w, h, data),
             Mode::Overwrite => self.image_opaque(start_x, start_y, w, h, data),
-            Mode::Legacy => self.image_legacy(start_x, start_y, w, h, data),
         }
     
     }
@@ -407,68 +405,37 @@ pub trait Renderer {
         }
     }
 
-    // Speed improved, but image has to be all inside of window boundary
+    // Speed improved, image can be outside of window boundary
     #[inline(always)]
-    fn image_fast(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
-        let width = self.width() as usize;
-        let window_len = self.data().len();
-        let w = w as usize;
-        let start_x = start_x as usize;
-        let start_y = start_y as usize;
-        //simply return if image is outside of window
-        if start_x >= width || start_y >= self.height() as usize { return }
-
-        let data = self.data_mut();
-        for i in 0..(w * h as usize) {
-            let y0 = i / w;
-            let y = y0 + start_y;
-            let x = start_x + i - (y0 * w);
-            let window_index = y * width + x;
-            if window_index < window_len && i < image_data.len(){
-                let new = image_data[i].data;
-                let alpha = (new >> 24) & 0xFF;
-                if alpha > 0 {
-                    let old = unsafe{ &mut data[window_index].data};
-                    if alpha >= 255 {
-                        *old = new;
-                    } else {
-                        let n_alpha = 255 - alpha;
-                        let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
-                                (alpha * (new & 0x00FF00FF))) >> 8;
-                        let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) +
-                                ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
-
-                        *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
-                    }
-                }
-            }
-        }
-    }
-
-    // Speed improved, image can even be outside of window boundary
-    #[inline(always)]
-    fn image_fast2 (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
+    fn image_fast (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let w = w as usize;
         let h = h as usize;
         let width = self.width() as usize;
         let start_x = start_x as usize;
         let start_y =start_y as usize;
+        
         //simply return if image is outside of window
         if start_x >= width || start_y >= self.height() as usize { return }
-
         let window_data = self.data_mut();
         let offset = start_y * width + start_x;
+        
         //copy image slices to window line by line
         for l in 0..h {
             let start = offset + l * width;
+            let mut stop = start + w;
             let begin = l * w;
-            let end = begin + cmp::min(w, width - start_x);
+            let mut end = begin + w;
+            
+            //check boundaries 
+            if start_x + w > width {
+                stop = (start_y + l + 1) * width;
+             }
             let mut k = 0;
             for i in begin..end {
                 if i < image_data.len() {
                     let new = image_data[i].data;
                     let alpha = (new >> 24) & 0xFF;
-                    if alpha > 0 && start+k < window_data.len(){
+                    if alpha > 0 && (start + k) < window_data.len() && (start + k) < stop {
                         let old = unsafe{ &mut window_data[start + k].data};
                         if alpha >= 255 {
                             *old = new;
@@ -480,7 +447,7 @@ pub trait Renderer {
                                     ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                             *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
-                        }
+                        } 
                     }
                 k += 1;
                 }
