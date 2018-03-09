@@ -53,60 +53,22 @@ pub trait Renderer {
     fn mode(&self) -> &Cell<Mode>;
 
     ///Draw a pixel 
-    fn pixel(&mut self, x: i32, y: i32, color: Color) {
-        match self.mode().get() {
-            Mode::Blend => self.pixel_fast(x, y, color), 
-            Mode::Overwrite => self.pixel_legacy(x, y, color, true),
-        };
-    }
-    
-    #[inline(always)]
-    fn pixel_legacy(&mut self, x: i32, y: i32, color: Color, replace: bool) {
-        let w = self.width();
-        let h = self.height();
-        let data = self.data_mut();
-
-        if x >= 0 && y >= 0 && x < w as i32 && y < h as i32 {
-            let new = color.data;
-
-            let alpha = (new >> 24) & 0xFF;
-            //if alpha > 0 {
-                let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
-                if alpha >= 255 || replace {
-                    *old = new;
-                } else if alpha >0 {
-                    let n_r = (((new >> 16) & 0xFF) * alpha) >> 8;
-                    let n_g = (((new >> 8) & 0xFF) * alpha) >> 8;
-                    let n_b = ((new & 0xFF) * alpha) >> 8;
-
-                    let n_alpha = 255 - alpha;
-                    let o_a = (((*old >> 24) & 0xFF) * n_alpha) >> 8;
-                    let o_r = (((*old >> 16) & 0xFF) * n_alpha) >> 8;
-                    let o_g = (((*old >> 8) & 0xFF) * n_alpha) >> 8;
-                    let o_b = ((*old & 0xFF) * n_alpha) >> 8;
-
-                    *old = ((o_a << 24) | (o_r << 16) | (o_g << 8) | o_b) + ((alpha << 24) | (n_r << 16) | (n_g << 8) | n_b);
-                }
-            //}
-        }
-    }
-    
     //faster pixel implementation (multiplexing)
-    #[inline(always)]
-    fn pixel_fast(&mut self, x: i32, y: i32, color: Color) {
+    fn pixel(&mut self, x: i32, y: i32, color: Color) {
+        let replace = match self.mode().get() {
+            Mode::Blend => false,
+            Mode::Overwrite => true,
+        };
         let w = self.width();
         let h = self.height();
         let data = self.data_mut();
 
         if x >= 0 && y >= 0 && x < w as i32 && y < h as i32 {
             let new = color.data;
-
             let alpha = (new >> 24) & 0xFF;
-            //let alpha = (new & 0xFF000000) >> 24;
-            
             let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
             
-            if alpha >= 255 {
+            if alpha >= 255 || replace {
                 *old = new;
             } else if alpha >0 {
                 let n_alpha = 255 - alpha;
