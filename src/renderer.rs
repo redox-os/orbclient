@@ -693,7 +693,7 @@ pub trait Renderer {
     ///Gets pixel color at x,y position
     fn getpixel(&self, x:i32, y:i32) -> Color {
         let p = (self.width()as i32 * y + x) as usize;
-        if p > self.data().len() {
+        if p >= self.data().len() {
             return Color::rgba(0,0,0,0) 
         }
         self.data()[p]
