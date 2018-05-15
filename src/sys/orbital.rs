@@ -104,6 +104,7 @@ impl Window {
                 },
                 WindowFlag::Back => flag_str.push('b'),
                 WindowFlag::Front => flag_str.push('f'),
+                WindowFlag::Borderless => flag_str.push('l'),
                 WindowFlag::Resizable => {
                     resizable = true;
                     flag_str.push('r');

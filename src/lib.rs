@@ -31,6 +31,7 @@ pub enum WindowFlag {
     Async,
     Back,
     Front,
+    Borderless,
     Resizable,
     Unclosable
 }

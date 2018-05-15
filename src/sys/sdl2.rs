@@ -107,20 +107,29 @@ impl Window {
         unsafe { init() };
 
         let mut async = false;
+        //TODO: Use z-order
+        let mut _back = false;
+        let mut _front = false;
+        let mut borderless = false;
         let mut resizable = false;
         //TODO: Hide exit button
         let mut _unclosable = false;
         for &flag in flags.iter() {
             match flag {
                 WindowFlag::Async => async = true,
+                WindowFlag::Back => _back = true,
+                WindowFlag::Front => _front = true,
+                WindowFlag::Borderless => borderless = true,
                 WindowFlag::Resizable => resizable = true,
                 WindowFlag::Unclosable => _unclosable = true,
-                //TODO: Handle front and back zorder
-                _ => ()
             }
         }
 
         let mut builder = unsafe { & *VIDEO_CTX }.window(title, w, h);
+
+        if borderless {
+            builder.borderless();
+        }
 
         if resizable {
             builder.resizable();
@@ -128,10 +137,6 @@ impl Window {
 
         if x >= 0 || y >= 0 {
             builder.position(x, y);
-        }
-
-        if title.is_empty() {
-            builder.borderless();
         }
 
         match builder.build() {
