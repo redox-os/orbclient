@@ -206,27 +206,41 @@ impl Window {
     /// Blocking iterator over events
     pub fn events(&mut self) -> EventIter {
         let mut iter = EventIter {
+            extra: None,
             events: [Event::new(); 16],
             i: 0,
-            count: 0,
+            count: 0
         };
 
         'blocking: loop {
-            //Should it be cleared? iter.events = [Event::new(); 128];
-            match self.file.read(unsafe {
-                slice::from_raw_parts_mut(iter.events.as_mut_ptr() as *mut u8, iter.events.len() * mem::size_of::<Event>())
-            }){
-                Ok(0) => if ! self.async {
+            if iter.events.len() - iter.count == 0 {
+                if iter.extra.is_none() {
+                    iter.extra = Some(Vec::with_capacity(32));
+                }
+                iter.extra.as_mut().unwrap().extend(&iter.events);
+                iter.count = 0;
+            }
+            let bytes = unsafe { slice::from_raw_parts_mut(
+                iter.events[iter.count..].as_mut_ptr() as *mut u8,
+                iter.events[iter.count..].len() * mem::size_of::<Event>()
+            ) };
+            match self.file.read(bytes) {
+                Ok(0) => if !self.async
+                        && iter.extra.is_none()
+                        && iter.events.len() == 0 {
                     thread::yield_now();
                 } else {
                     break 'blocking;
                 },
                 Ok(count) => {
-                    iter.count = count/mem::size_of::<Event>();
+                    let count = count / mem::size_of::<Event>();
+                    let events = &iter.events[iter.count..][..count];
+                    iter.count += count;
+
                     if self.resizable {
                         let mut resize = None;
-                        for i in 0..iter.count {
-                            let event = &iter.events[i];
+                        for event in events {
+                            let event = *event;
                             if event.code == EVENT_RESIZE {
                                 resize = Some((event.a as u32, event.b as u32));
                             }
@@ -235,7 +249,6 @@ impl Window {
                             self.set_size(w, h);
                         }
                     }
-                    break 'blocking;
                 },
                 Err(_) => break 'blocking,
             }
@@ -259,23 +272,31 @@ impl AsRawFd for Window {
 
 /// Event iterator
 pub struct EventIter {
+    extra: Option<Vec<Event>>,
     events: [Event; 16],
     i: usize,
-    count: usize,
+    count: usize
 }
 
 impl Iterator for EventIter {
     type Item = Event;
     fn next(&mut self) -> Option<Event> {
-        if self.i < self.count {
-            if let Some(event) = self.events.get(self.i) {
-                self.i += 1;
-                Some(*event)
-            } else {
-                None
+        let mut i = self.i;
+        if let Some(ref mut extra) = self.extra {
+            if i < extra.len() {
+                if let Some(event) = extra.get(i) {
+                    self.i += 1;
+                    return Some(*event);
+                }
             }
-        } else {
-            None
+            i -= extra.len();
         }
+        if i < self.count {
+            if let Some(event) = self.events.get(i) {
+                self.i += 1;
+                return Some(*event);
+            }
+        }
+        None
     }
 }
