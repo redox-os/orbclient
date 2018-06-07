@@ -249,6 +249,10 @@ impl Window {
                             self.set_size(w, h);
                         }
                     }
+                    if !self.async {
+                        // Synchronous windows are blocking, can't attempt another read
+                        break 'blocking;
+                    }
                 },
                 Err(_) => break 'blocking,
             }
