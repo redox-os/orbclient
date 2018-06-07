@@ -227,7 +227,7 @@ impl Window {
             match self.file.read(bytes) {
                 Ok(0) => if !self.async
                         && iter.extra.is_none()
-                        && iter.events.len() == 0 {
+                        && iter.count == 0 {
                     thread::yield_now();
                 } else {
                     break 'blocking;
