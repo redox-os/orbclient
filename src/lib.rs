@@ -18,13 +18,33 @@ pub use color::Color;
 pub use event::*;
 #[cfg(not(feature="no_std"))]
 pub use sys::{get_display_size, EventIter, Window};
-pub use graphicspath::GraphicsPath;
 pub use renderer::Renderer;
 
 pub mod color;
 pub mod event;
-pub mod graphicspath;
 pub mod renderer;
+
+/// Canvas components
+pub use point::Point;
+pub use edge::Edge;
+pub use pathbuilder::PathBuilder;
+pub use matrix::Matrix;
+pub use canvas::Canvas;
+pub use canvaspaintstate::CanvasPaintState;
+
+#[path="canvas/point.rs"]
+pub mod point;
+#[path="canvas/edge.rs"]
+pub mod edge;
+#[path="canvas/pathbuilder.rs"]
+pub mod pathbuilder;
+#[path="canvas/matrix.rs"]
+pub mod matrix;
+#[path="canvas/canvas.rs"]
+pub mod canvas;
+#[path="canvas/canvaspaintstate.rs"]
+pub mod canvaspaintstate;
+
 
 #[derive(Clone, Copy, Debug)]
 pub enum WindowFlag {
