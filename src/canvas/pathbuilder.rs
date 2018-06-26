@@ -70,11 +70,12 @@ impl PathBuilder {
             y += tt * argy2;
 
             t += 0.01;
-            //self.points.push((x as f32, y as f32, PathPointType::Connect));
+
             self.edges.push(Edge::new(tmp_point, Point::new(x,y)));
             tmp_point = Point::new(x,y);
         }
 
+        self.edges.push(Edge::new(tmp_point, Point::new(argx2,argy2)));
         self.last_point = Point::new(argx2,argy2);
     }
 
@@ -110,11 +111,11 @@ impl PathBuilder {
             y += ttt * argy3 as f32;
 
             t += 0.01;
-            //self.points.push((x as f32, y as f32, PathPointType::Connect));
+
             self.edges.push(Edge::new(tmp_point, Point::new(x as f32,y as f32)));
             tmp_point = Point::new(x as f32,y as f32);
         }
-
+        self.edges.push(Edge::new(tmp_point, Point::new(argx3,argy3)));
         self.last_point = Point::new(argx3,argy3);
     }
 }
