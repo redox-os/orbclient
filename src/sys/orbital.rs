@@ -213,11 +213,11 @@ impl Window {
         };
 
         'blocking: loop {
-            if iter.events.len() - iter.count == 0 {
+            if iter.count == iter.events.len() {
                 if iter.extra.is_none() {
                     iter.extra = Some(Vec::with_capacity(32));
                 }
-                iter.extra.as_mut().unwrap().extend(&iter.events);
+                iter.extra.as_mut().unwrap().extend_from_slice(&iter.events);
                 iter.count = 0;
             }
             let bytes = unsafe { slice::from_raw_parts_mut(
@@ -288,18 +288,14 @@ impl Iterator for EventIter {
         let mut i = self.i;
         if let Some(ref mut extra) = self.extra {
             if i < extra.len() {
-                if let Some(event) = extra.get(i) {
-                    self.i += 1;
-                    return Some(*event);
-                }
+                self.i += 1;
+                return Some(extra[i]);
             }
             i -= extra.len();
         }
         if i < self.count {
-            if let Some(event) = self.events.get(i) {
-                self.i += 1;
-                return Some(*event);
-            }
+            self.i += 1;
+            return Some(self.events[i]);
         }
         None
     }
