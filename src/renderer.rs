@@ -338,6 +338,42 @@ pub trait Renderer {
         }
     }
 
+    fn box_shadow(&mut self, x: i32, y: i32, w: u32, h: u32, offset_x: i32, offset_y: i32, r: i32, color: Color) {
+        let real_w = w + (2*r as u32);
+        let real_h = h + (2*r as u32);
+
+        let mut blur_data: Vec<Color> = Vec::new();
+        for new_x in x..x+real_w as i32 {
+            for new_y in y..y+real_h as i32 {
+                if new_x < x+r || new_y < y+r || new_y >= y+h as i32 +r || new_x >= x+w as i32+r {
+                    blur_data.push(Color::rgb(255,0,255));
+                } else {
+                    blur_data.push(Color::rgb(0,0,0));
+                }
+            }
+        }
+
+        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, (r / 3) as f32);
+
+        let mut counter: u32 = 0;
+        for new_x in (x-r)..(x+real_w as i32-r) as i32 {
+            for new_y in (y-r)..(y+real_h as i32 -r) as i32 {
+                let c = blur_data[counter as usize];
+
+                let mut alpha: u8 = if color.a() < 255 - c.r() { color.a() } else { 255 - c.r() };
+                let col = Color::rgba(color.r(), color.g(), color.b(), alpha);
+
+                let new_x_b = new_x + offset_x;
+                let new_y_b = new_y + offset_y;
+                if new_x_b < x || new_x_b > x+w as i32 -1 || new_y_b < y || new_y_b > y+h as i32 -1 {
+                    self.pixel(new_x_b, new_y_b, col);
+                }
+                counter = counter + 1;
+            }
+        }
+
+    }
+
     /// Display an image
     fn image(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, data: &[Color]) {
         match self.mode().get() {
