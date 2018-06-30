@@ -87,6 +87,9 @@ fn main() {
     window.mode().set(Mode::Blend); //set mode to Blend fron now on
     window.rect(200, 230, 80, 80, Color::rgba(100,100,100,100));
 
+    //Draw a blured box over window content
+    window.box_blur(170,100,150,150,10);
+
     window.sync();
 
     'events: loop {
