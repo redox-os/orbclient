@@ -8,6 +8,7 @@ use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
 use Mode;
+use blur;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -298,6 +299,43 @@ pub trait Renderer {
                 }
             }
         //}
+    }
+
+    fn box_blur(&mut self, x: i32, y: i32, w: u32, h: u32, r: i32) {
+
+
+        let self_w = self.width();
+        let self_h = self.height();
+
+        let start_y = cmp::max(0, cmp::min(self_h as i32 - 1, y));
+        let end_y = cmp::max(start_y, cmp::min(self_h as i32, y + h as i32));
+
+        let start_x = cmp::max(0, cmp::min(self_w as i32 - 1, x));
+        let end_x = cmp::max(start_x, cmp::min(self_w as i32, x + w as i32));
+
+        let data = self.data_mut();
+        let mut blur_data: Vec<Color> = Vec::new();
+        for y in start_y..end_y {
+            for x in start_x..end_x {
+                let old = data[y as usize * self_w as usize + x as usize];
+                blur_data.push(old);
+            }
+        }
+        let real_w = end_x - start_x;
+        let real_h = end_y - start_y;
+        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, r as f32);
+
+
+        let mut counter: u32 = 0;
+        for y in start_y..end_y {
+            for x in start_x..end_x {
+                let a = blur_data[counter as usize];
+                let old = unsafe{ &mut data[y as usize * self_w as usize + x as usize].data};
+
+                *old = a.data;
+                counter = counter + 1;
+            }
+        }
     }
 
     /// Display an image

@@ -25,6 +25,7 @@ pub mod color;
 pub mod event;
 pub mod graphicspath;
 pub mod renderer;
+mod blur;
 
 #[derive(Clone, Copy, Debug)]
 pub enum WindowFlag {
