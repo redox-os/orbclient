@@ -90,6 +90,9 @@ fn main() {
     //Draw a blured box over window content
     window.box_blur(170,100,150,150,10);
 
+    //Draw a shadow around a box
+    window.box_shadow(170,100,150,150,0,0,20, Color::rgba(0,0,0,255));
+
     window.sync();
 
     'events: loop {
