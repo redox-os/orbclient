@@ -353,7 +353,7 @@ pub trait Renderer {
             }
         }
 
-        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, (r / 3) as f32);
+        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, r as f32 / 3.0);
 
         let mut counter: u32 = 0;
         for new_x in (x-r)..(x+real_w as i32-r) as i32 {
