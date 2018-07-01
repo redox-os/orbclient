@@ -29,6 +29,7 @@ impl MathColor {
 impl Add for MathColor {
     type Output = MathColor;
 
+    #[inline(always)]
     fn add(self, color: MathColor) -> MathColor {
         MathColor{
             r: self.r + color.r,
@@ -39,6 +40,8 @@ impl Add for MathColor {
 }
 
 impl AddAssign for MathColor {
+
+    #[inline(always)]
     fn add_assign(&mut self, color: MathColor) {
         *self = MathColor{
             r: self.r + color.r,
@@ -51,6 +54,7 @@ impl AddAssign for MathColor {
 impl Sub for MathColor {
     type Output = MathColor;
 
+    #[inline(always)]
     fn sub(self, color: MathColor) -> MathColor {
         MathColor{
             r: self.r - color.r,
@@ -86,10 +90,11 @@ fn boxes_for_gauss(sigma: f32, n: usize) -> Vec<i32>  {
 }
 
 fn box_blur(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
-    box_blur_h(tcl, scl, w, h, r);
     box_blur_t(scl, tcl, w, h, r);
+    box_blur_h(tcl, scl, w, h, r);
 }
 
+#[inline(always)]
 fn box_blur_h(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
     let iarr: f32 = 1.0 / (r + r + 1) as f32;
 
@@ -128,6 +133,7 @@ fn box_blur_h(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r:
     }
 }
 
+#[inline(always)]
 fn box_blur_t(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
     let iarr: f32 = 1.0 / (r + r + 1) as f32;
 
