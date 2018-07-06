@@ -88,10 +88,10 @@ fn main() {
     window.rect(200, 230, 80, 80, Color::rgba(100,100,100,100));
 
     //Draw a blured box over window content
-    window.box_blur(170,100,150,150,10);
+    window.box_blur(170,100,100,150,10);
 
     //Draw a shadow around a box
-    window.box_shadow(170,100,150,150,0,0,20, Color::rgba(0,0,0,255));
+    window.box_shadow(170,100,100,150,0,0,10,0, false, Color::rgba(0,0,0,255));
 
     window.sync();
 

@@ -9,6 +9,7 @@ use graphicspath::GraphicsPath;
 use graphicspath::PointType;
 use Mode;
 use blur;
+use shadow;
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
@@ -338,44 +339,8 @@ pub trait Renderer {
         }
     }
 
-    fn box_shadow(&mut self, x: i32, y: i32, w: u32, h: u32, offset_x: i32, offset_y: i32, r: i32, color: Color) {
-        let renderer_w = self.width();
-        let renderer_h = self.height();
-
-        let start_y = cmp::max(0, cmp::min(renderer_h as i32 - 1, y - r));
-        let end_y = cmp::max(start_y, cmp::min(renderer_h as i32, y + h as i32 + r));
-        let start_x = cmp::max(0, cmp::min(renderer_w as i32 - 1, x - r));
-        let end_x = cmp::max(start_x, cmp::min(renderer_w as i32, x + w as i32 + r));
-
-        let mut blur_data: Vec<Color> = Vec::new();
-        for yb in start_y..end_y {
-            for xb in start_x..end_x {
-                if xb < x || yb < y || yb >= y + h as i32 || xb >= x + w as i32 {
-                    blur_data.push(Color::rgb(255, 0, 255));
-                } else {
-                    blur_data.push(Color::rgb(0, 0, 0));
-                }
-            }
-        }
-
-        let real_w = end_x - start_x;
-        let real_h = end_y - start_y;
-
-        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, r as f32 / 3.0);
-
-        let mut counter: u32 = 0;
-        for yb in start_y + offset_y..end_y + offset_y {
-            for xb in start_x + offset_x..end_x + offset_x {
-
-                if xb < x || yb < y || yb >= y + h as i32 || xb >= x + w as i32 {
-                    let c = blur_data[counter as usize];
-                    let mut alpha: u8 = if color.a() < 255 - c.r() { color.a() } else { 255 - c.r() };
-                    let col = Color::rgba(color.r(), color.g(), color.b(), alpha);
-                    self.pixel(xb , yb , col);
-                }
-                counter = counter + 1;
-            }
-        }
+    fn box_shadow(&mut self, x: i32, y: i32, w: u32, h: u32, offset_x: i32, offset_y: i32, blur_radius: u32, box_radius: u32, invert: bool, color: Color) {
+        shadow::box_shadow(self, x,y,w,h,offset_x,offset_y,blur_radius,box_radius,invert, color);
     }
 
     /// Display an image
