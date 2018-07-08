@@ -94,6 +94,7 @@ impl DerefMut for Event {
     }
 }
 
+
 pub const K_A: u8 = 0x1E;
 pub const K_B: u8 = 0x30;
 pub const K_C: u8 = 0x2E;
@@ -130,6 +131,18 @@ pub const K_6: u8 = 0x07;
 pub const K_7: u8 = 0x08;
 pub const K_8: u8 = 0x09;
 pub const K_9: u8 = 0x0A;
+
+// Numpad keys (codes 0x70-0x79)
+pub const K_NUM_0: u8 = 0x70;
+pub const K_NUM_1: u8 = 0x71;
+pub const K_NUM_2: u8 = 0x72;
+pub const K_NUM_3: u8 = 0x73;
+pub const K_NUM_4: u8 = 0x74;
+pub const K_NUM_5: u8 = 0x75;
+pub const K_NUM_6: u8 = 0x76;
+pub const K_NUM_7: u8 = 0x77;
+pub const K_NUM_8: u8 = 0x78;
+pub const K_NUM_9: u8 = 0x79;
 
 /// Tick/tilde key
 pub const K_TICK: u8 = 0x29;
@@ -169,6 +182,8 @@ pub const K_RIGHT_SHIFT: u8 = 0x36;
 pub const K_CTRL: u8 = 0x1D;
 /// Alt key
 pub const K_ALT: u8 = 0x38;
+/// AltGr key
+pub const K_ALT_GR: u8 = 0x64;
 /// Enter key
 pub const K_ENTER: u8 = 0x1C;
 /// Escape key
