@@ -3,7 +3,6 @@
 #![feature(alloc)]
 #![feature(asm)]
 #![feature(const_fn)]
-#![cfg_attr(all(not(feature="no_std"), not(target_os = "redox")), feature(const_ptr_null_mut))]
 #![cfg_attr(feature="no_std", no_std)]
 
 #![deny(warnings)]
