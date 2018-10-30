@@ -410,34 +410,41 @@ pub trait Renderer {
 
     ///Display an image using non transparent method 
     #[inline(always)]
-    fn image_opaque (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
-        let w = w as usize;
-        let mut h = h as usize;
-        let width = self.width() as usize;
-        let height = self.height() as usize;
-        let start_x = start_x as usize;
-        let start_y =start_y as usize;
+    fn image_opaque (&mut self, x: i32, y: i32, width: u32, height: u32, image_data: &[Color]) {
+        // Position on the source image where the data is copied from
+        let source_x = if x < 0 { -x as usize } else { 0 };
+        let source_y = if y < 0 { -y as usize } else { 0 };
 
-        //check boundaries 
-        if start_x >= width || start_y >= height { return }
-        if h + start_y > height {
-            h = height - start_y;
-        }
+        // Position on the window where the data is copied to
+        let target_x = if x < 0 { 0 } else { x as usize };
+        let target_y = if y < 0 { 0 } else { y as usize };
+
+        // Size of the rectangle that will be copied
+        let rect_width = if x < 0 {
+            cmp::min((width as i32 + x) as usize, self.width() as usize)
+        } else {
+            cmp::min(width as usize, (self.width() as i32 - x) as usize)
+        };
+
+        let rect_height = if y < 0 {
+            cmp::min((height as i32 + y) as usize, self.height() as usize)
+        } else {
+            cmp::min(height as usize, (self.height() as i32 - y) as usize)
+        };
+
+        let source_width = width as usize;
+        let target_width = self.width() as usize;
+
         let window_data = self.data_mut();
-        let offset = start_y * width + start_x;
-        //copy image slices to window line by line
-        for l in 0..h {
-            let start = offset + l * width;
-            let mut stop = start + w;
-            let begin = l * w;
-            let mut end = begin + w;
-            //check boundaries
-            if start_x + w > width {
-                stop = (start_y + l +1) * width - 1;
-                end = begin + stop - start;
-            }
-            window_data[start..stop]
-            .copy_from_slice(&image_data[begin..end]);
+
+        for y in 0..rect_height {
+            let source_start = (y + source_y) * source_width + source_x;
+            let source_end = source_start + rect_width;
+
+            let target_start = (y + target_y) * target_width + target_x;
+            let target_end = target_start + rect_width;
+
+            window_data[target_start..target_end].copy_from_slice(&image_data[source_start..source_end]);
         }
     }
 
