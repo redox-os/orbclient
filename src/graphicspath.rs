@@ -1,3 +1,4 @@
+#[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 
 /// point type (is the point a new position or a connection point)

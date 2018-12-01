@@ -1,7 +1,9 @@
 extern crate rayon;
 
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+use core::cell::Cell;
 use core::cmp;
-use std::cell::Cell;
 
 use FONT;
 use color::Color;
@@ -53,7 +55,7 @@ pub trait Renderer {
     /// Set/get drawing mode
     fn mode(&self) -> &Cell<Mode>;
 
-    ///Draw a pixel 
+    ///Draw a pixel
     //faster pixel implementation (multiplexing)
     fn pixel(&mut self, x: i32, y: i32, color: Color) {
         let replace = match self.mode().get() {
@@ -68,7 +70,7 @@ pub trait Renderer {
             let new = color.data;
             let alpha = (new >> 24) & 0xFF;
             let old = unsafe{ &mut data[y as usize * w as usize + x as usize].data};
-            
+
             if alpha >= 255 || replace {
                 *old = new;
             } else if alpha >0 {
@@ -124,7 +126,7 @@ pub trait Renderer {
         let mut x = radius.abs();
         let mut y = 0;
         let mut err = -radius.abs();
-        
+
         match radius {
             radius if radius > 0 => {
                 err = 0;
@@ -137,16 +139,16 @@ pub trait Renderer {
                     self.pixel(x0 + x, y0 - y, color);
                     self.pixel(x0 - y, y0 - x, color);
                     self.pixel(x0 + y, y0 - x, color);
-                
+
                     y += 1;
                     err += 1 + 2*y;
                     if 2*(err-x) + 1 > 0 {
                         x -= 1;
                         err += 1 - 2*x;
                     }
-                }      
+                }
             },
-            
+
             radius if radius < 0 => {
                 while x >= y {
                     let lasty = y;
@@ -167,11 +169,11 @@ pub trait Renderer {
                 },
                      _ => {
                             self.pixel(x0, y0, color);
-                            
+
                         },
         }
     }
-    
+
     fn line4points(&mut self, x0: i32, y0: i32, x: i32, y: i32, color: Color){
         //self.line(x0 - x, y0 + y, (x+x0), y0 + y, color);
         self.rect(x0 - x, y0 + y, x as u32 * 2 + 1, 1, color);
@@ -380,7 +382,7 @@ pub trait Renderer {
             Mode::Blend => self.image_fast(start_x, start_y, w, h, data),
             Mode::Overwrite => self.image_opaque(start_x, start_y, w, h, data),
         }
-    
+
     }
 
     // TODO: Improve speed
@@ -404,11 +406,11 @@ pub trait Renderer {
         let window_data = self.data_mut();
         let stop = cmp::min(start + image_data.len(), window_data.len());
         let end = cmp::min(image_data.len(), window_data.len() - start);
-        
+
         window_data[start..stop].copy_from_slice(&image_data[..end]);
     }
 
-    ///Display an image using non transparent method 
+    ///Display an image using non transparent method
     #[inline(always)]
     fn image_opaque (&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
         let w = w as usize;
@@ -418,7 +420,7 @@ pub trait Renderer {
         let start_x = start_x as usize;
         let start_y =start_y as usize;
 
-        //check boundaries 
+        //check boundaries
         if start_x >= width || start_y >= height { return }
         if h + start_y > height {
             h = height - start_y;
@@ -449,20 +451,20 @@ pub trait Renderer {
         let width = self.width() as usize;
         let start_x = start_x as usize;
         let start_y =start_y as usize;
-        
+
         //simply return if image is outside of window
         if start_x >= width || start_y >= self.height() as usize { return }
         let window_data = self.data_mut();
         let offset = start_y * width + start_x;
-        
+
         //copy image slices to window line by line
         for l in 0..h {
             let start = offset + l * width;
             let mut stop = start + w;
             let begin = l * w;
             let mut end = begin + w;
-            
-            //check boundaries 
+
+            //check boundaries
             if start_x + w > width {
                 stop = (start_y + l + 1) * width;
              }
@@ -483,12 +485,12 @@ pub trait Renderer {
                                     ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
 
                             *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
-                        } 
+                        }
                     }
                 k += 1;
                 }
             }
-        } 
+        }
     }
 
     ///Render an image using parallel threads if possible
@@ -527,7 +529,7 @@ pub trait Renderer {
                 let y= i / w;
                 let x = i - (y * w);
                 let window_index = y * window_w + x;
-                
+
                 if window_index < window_len && i < image_data.len(){
                     let new = image_data[i].data;
                     let alpha = (new >> 24) & 0xFF;
@@ -546,7 +548,7 @@ pub trait Renderer {
                         }
                     }
                 }
-                
+
             }
         }
     }
@@ -641,26 +643,26 @@ pub trait Renderer {
         let g = color.g();
         let b = color.b();
         let a = color.a() as f64;
-        
+
         fn ipart (x: f64) -> i32 {
             x.trunc() as i32
         }
 
         fn fpart (x: f64) -> f64 {
             if x <0.0 { return 1.0-(x-x.floor());}
-            x-x.floor() 
+            x-x.floor()
         }
-        
+
         fn rfpart(x: f64) -> f64 {
             1.0-fpart(x)
         }
-        
+
         fn chkalpha (mut alpha :f64) -> u8 {
              if alpha > 255.0 { alpha = 255.0};
              if alpha < 0.0 {alpha = 0.0};
              alpha as u8
         }
-        
+
         let steep :bool = (y1-y0).abs() > (x1-x0).abs();
         let mut temp;
         if steep {
@@ -674,13 +676,13 @@ pub trait Renderer {
         let dx = x1 -x0;
         let dy = y1- y0;
         let gradient = dy/dx;
-        
+
         let mut xend: f64 = (x0 as f64).round() ;
         let mut yend: f64 = y0 + gradient * (xend - x0);
         let mut xgap: f64 = rfpart(x0+0.5);
         let xpixel1 = xend as i32;
         let ypixel1 = (ipart (yend)) as i32;
-        
+
         if steep {
             self.pixel(ypixel1, xpixel1, Color::rgba(r,g,b,chkalpha(rfpart(yend)*xgap*a)));
             self.pixel(ypixel1+1, xpixel1, Color::rgba(r,g,b,chkalpha(fpart(yend)*xgap*a)));
@@ -712,8 +714,8 @@ pub trait Renderer {
                 self.pixel(x, ipart(intery) as i32, Color::rgba(r,g,b,chkalpha(a*rfpart(intery))));
                 self.pixel(x, ipart(intery) as i32 + 1, Color::rgba(r,g,b,chkalpha(a*fpart(intery))));
                 intery += gradient;
-            } 
-        }           
+            }
+        }
     }
 
     ///Draws antialiased circle
@@ -725,18 +727,18 @@ pub trait Renderer {
         let mut y = 0;
         let mut x = radius;
         let mut d = 0_f64;
-        
+
         self.pixel (x0+x,y0+y,color);
         self.pixel (x0-x,y0-y,color);
         self.pixel (x0+y,y0-x,color);
         self.pixel (x0-y,y0+x,color);
-        
+
         while x > y {
             let di = dist(radius,y);
             if di < d { x -= 1;}
             let col = Color::rgba(r,g,b,(a as f64*(1.0-di)) as u8);
             let col2 = Color::rgba(r,g,b,(a as f64*di) as u8);
-            
+
             self.pixel(x0+x, y0+y, col);
             self.pixel(x0+x-1, y0+y, col2);//-
             self.pixel(x0-x, y0+y, col);
@@ -745,7 +747,7 @@ pub trait Renderer {
             self.pixel(x0+x-1, y0-y, col2);//-
             self.pixel(x0-x, y0-y, col);
             self.pixel(x0-x+1, y0-y, col2);//+
-            
+
             self.pixel(x0+y, y0+x, col);
             self.pixel(x0+y, y0+x-1, col2);
             self.pixel(x0-y, y0+x, col);
@@ -757,7 +759,7 @@ pub trait Renderer {
             d = di;
             y += 1;
         }
-        
+
         fn dist(r: i32, y: i32) -> f64 {
             let x :f64 = ((r*r-y*y)as f64).sqrt();
             x.ceil()-x
@@ -768,7 +770,7 @@ pub trait Renderer {
     fn getpixel(&self, x:i32, y:i32) -> Color {
         let p = (self.width()as i32 * y + x) as usize;
         if p >= self.data().len() {
-            return Color::rgba(0,0,0,0) 
+            return Color::rgba(0,0,0,0)
         }
         self.data()[p]
     }

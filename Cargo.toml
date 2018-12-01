@@ -14,8 +14,8 @@ keywords = [
 ]
 
 [dependencies]
-time = "0.1"
-rayon = "0.8"
+time = "0.1.40"
+rayon = "1.0.3"
 
 [features]
 default = []
@@ -27,4 +27,4 @@ path = "src/lib.rs"
 [target.'cfg(all(not(feature="no_std"), not(target_os="redox")))'.dependencies]
 sdl2 = "0.31.0"
 [target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
-redox_syscall = "0.1.31"
+redox_syscall = "0.1.43"

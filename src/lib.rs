@@ -1,12 +1,13 @@
 #![crate_name="orbclient"]
 #![crate_type="lib"]
-#![feature(alloc)]
 #![feature(asm)]
-#![feature(const_fn)]
+#![cfg_attr(feature="no_std", feature(alloc))]
 #![cfg_attr(feature="no_std", no_std)]
 
 #![deny(warnings)]
 
+#[cfg(feature="no_std")]
+#[macro_use]
 extern crate alloc;
 #[cfg(not(feature="no_std"))]
 extern crate core;
@@ -38,7 +39,7 @@ pub enum WindowFlag {
 
 #[derive(Clone, Copy, Debug)]
 pub enum Mode {
-    Blend,      //Composite  
+    Blend,      //Composite
     Overwrite   //Replace
 }
 

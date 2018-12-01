@@ -3,8 +3,11 @@ Inspired from http://blog.ivank.net/fastest-gaussian-blur.html the algorithm 4.
 The struct MathColor is needed for the calculate with bigger numbers, the Color struct save the r,g,b values with a u8.
 */
 
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+
 use Color;
-use std::ops::{Add, Sub, AddAssign};
+use core::ops::{Add, Sub, AddAssign};
 
 #[derive(Copy, Clone)]
 pub struct MathColor {
