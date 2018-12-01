@@ -1,66 +1,64 @@
 extern crate orbclient;
-extern crate time;
 
-use orbclient::{Color, Window, Renderer, EventOption};
+use orbclient::{Color, EventOption, Renderer, Window};
 
-const TIMES:i32 = 10;
+const TIMES: usize = 10;
+
+macro_rules! time {
+    ($msg:tt, $block: block) => ({
+        let _time_instant = ::std::time::Instant::now();
+        $block
+        let _time_duration = _time_instant.elapsed();
+        let _time_fractional = _time_duration.as_secs() as f64
+                             + (_time_duration.subsec_nanos() as f64)/1000000000.0;
+        println!(
+            "{}: {} ms",
+            $msg,
+            _time_fractional * 1000.0
+        );
+    });
+}
 
 fn main() {
     //let (width, height) = orbclient::get_display_size().unwrap();
 
-    let mut window = Window::new(10,
-                                 10,
-                                 800,
-                                 600,
-                                 "IMAGE BENCHMARK")
-                         .unwrap();
+    let mut window = Window::new(10, 10, 800, 600, "IMAGE BENCHMARK").unwrap();
 
-    window.set(Color::rgb(255,255,255));
+    window.set(Color::rgb(255, 255, 255));
 
     //create image data : a green square
-    let data = vec![Color::rgba(100,200,10,20);412500];
-    let data2 = vec![Color::rgba(200,100,10,20);412500];
-    let data3 = vec![Color::rgba(10,100,100,20);412500];
-    let data4 = vec![Color::rgba(10,100,200,20);480000];
+    let data = vec![Color::rgba(100, 200, 10, 20); 412500];
+    let data2 = vec![Color::rgba(200, 100, 10, 20); 412500];
+    let data3 = vec![Color::rgba(10, 100, 100, 20); 412500];
+    let data4 = vec![Color::rgba(10, 100, 200, 20); 480000];
 
     //draw image benchmarking
     println!("Benchmarking implementations to draw an image on window:");
-    let mut t = time::now();
 
-    for _i in 0..TIMES {
-        window.image_over(50, &data4[..360000]);
-    }
-    let mut t2 = time::now();
-    let dt4 = (t2-t)/TIMES;
-    println!("image_over                  {:?}",dt4);
+    time!("image_legacy", {
+        for _i in 0..TIMES {
+            window.image_legacy(15, 15, 750, 550, &data[..]);
+        }
+    });
 
-    t = time::now();
+    time!("image_fast", {
+        for _i in 0..TIMES {
+            window.image_fast(20, 20, 750, 550, &data2[..]);
+        }
+    });
 
-    for _i in 0..TIMES {
-        window.image_legacy(15,15,750,550, &data[..]);
-    }
-    t2 = time::now();
-    let dt = (t2-t)/TIMES;
-    println!("image_legacy (pixel_fast)   {:?}",dt );
+    time!("image_opaque", {
+        for _i in 0..TIMES {
+            window.image_opaque(50, 50, 750, 550, &data3[..]);
+        }
+    });
 
-    t = time::now();
+    time!("image_over", {
+        for _i in 0..TIMES {
+            window.image_over(50, &data4[..360000]);
+        }
+    });
 
-    for _i in 0..TIMES {
-        window.image_fast(20,20,750,550, &data2[..]);
-    }
-    t2 = time::now();
-    let dt2 = (t2-t)/TIMES;
-    println!("image_fast                  {:?}",dt2);
-
-    t = time::now();
-    for _i in 0..TIMES {
-        window.image_opaque(50,50,750,550, &data4[..]);
-    }
-    t2 = time::now();
-    let dt3 = (t2-t)/TIMES;
-    println!("image_opaque                {:?}",dt3);
-
-    //println!("difference {:?}", dt-dt3);
     println!("------------------------------------------------");
 
     window.sync();
@@ -69,8 +67,12 @@ fn main() {
         for event in window.events() {
             match event.to_option() {
                 EventOption::Quit(_quit_event) => break 'events,
-                EventOption::Mouse(evt) => println!("At position {:?} pixel color is : {:?}",(evt.x,evt.y), window.getpixel(evt.x,evt.y )),
-                event_option => println!("{:?}", event_option)
+                EventOption::Mouse(evt) => println!(
+                    "At position {:?} pixel color is : {:?}",
+                    (evt.x, evt.y),
+                    window.getpixel(evt.x, evt.y)
+                ),
+                event_option => println!("{:?}", event_option),
             }
         }
     }

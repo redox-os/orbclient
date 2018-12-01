@@ -13,9 +13,6 @@ keywords = [
     "ui",
 ]
 
-[dependencies]
-time = "0.1.40"
-
 [features]
 default = []
 no_std = []
