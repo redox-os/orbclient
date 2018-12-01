@@ -1,5 +1,5 @@
-use core::{char, mem, slice};
 use core::ops::{Deref, DerefMut};
+use core::{char, mem, slice};
 
 pub const EVENT_NONE: i64 = 0;
 pub const EVENT_KEY: i64 = 1;
@@ -81,7 +81,8 @@ impl Deref for Event {
     type Target = [u8];
     fn deref(&self) -> &[u8] {
         unsafe {
-            slice::from_raw_parts(self as *const Event as *const u8, mem::size_of::<Event>()) as &[u8]
+            slice::from_raw_parts(self as *const Event as *const u8, mem::size_of::<Event>())
+                as &[u8]
         }
     }
 }
@@ -89,7 +90,8 @@ impl Deref for Event {
 impl DerefMut for Event {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
-            slice::from_raw_parts_mut(self as *mut Event as *mut u8, mem::size_of::<Event>()) as &mut [u8]
+            slice::from_raw_parts_mut(self as *mut Event as *mut u8, mem::size_of::<Event>())
+                as &mut [u8]
         }
     }
 }
@@ -291,8 +293,7 @@ impl ButtonEvent {
     pub fn to_event(&self) -> Event {
         Event {
             code: EVENT_BUTTON,
-            a: self.left as i64 | (self.middle as i64) << 1 |
-               (self.right as i64) << 2,
+            a: self.left as i64 | (self.middle as i64) << 1 | (self.right as i64) << 2,
             b: 0,
         }
     }
@@ -356,7 +357,7 @@ impl QuitEvent {
 #[derive(Copy, Clone, Debug)]
 pub struct FocusEvent {
     /// True if window has been focused, false if not
-    pub focused: bool
+    pub focused: bool,
 }
 
 impl FocusEvent {
@@ -370,7 +371,7 @@ impl FocusEvent {
 
     pub fn from_event(event: Event) -> FocusEvent {
         FocusEvent {
-            focused: event.a > 0
+            focused: event.a > 0,
         }
     }
 }
@@ -379,7 +380,7 @@ impl FocusEvent {
 #[derive(Copy, Clone, Debug)]
 pub struct MoveEvent {
     pub x: i32,
-    pub y: i32
+    pub y: i32,
 }
 
 impl MoveEvent {
@@ -394,7 +395,7 @@ impl MoveEvent {
     pub fn from_event(event: Event) -> MoveEvent {
         MoveEvent {
             x: event.a as i32,
-            y: event.b as i32
+            y: event.b as i32,
         }
     }
 }
@@ -403,7 +404,7 @@ impl MoveEvent {
 #[derive(Copy, Clone, Debug)]
 pub struct ResizeEvent {
     pub width: u32,
-    pub height: u32
+    pub height: u32,
 }
 
 impl ResizeEvent {
@@ -418,7 +419,7 @@ impl ResizeEvent {
     pub fn from_event(event: Event) -> ResizeEvent {
         ResizeEvent {
             width: event.a as u32,
-            height: event.b as u32
+            height: event.b as u32,
         }
     }
 }
@@ -427,7 +428,7 @@ impl ResizeEvent {
 #[derive(Copy, Clone, Debug)]
 pub struct ScreenEvent {
     pub width: u32,
-    pub height: u32
+    pub height: u32,
 }
 
 impl ScreenEvent {
@@ -442,7 +443,7 @@ impl ScreenEvent {
     pub fn from_event(event: Event) -> ScreenEvent {
         ScreenEvent {
             width: event.a as u32,
-            height: event.b as u32
+            height: event.b as u32,
         }
     }
 }

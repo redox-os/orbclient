@@ -1,4 +1,4 @@
-#[cfg(not(feature="no_std"))]
+#[cfg(not(feature = "no_std"))]
 use std::fmt;
 
 /// A color
@@ -11,12 +11,16 @@ pub struct Color {
 impl Color {
     /// Create a new color from RGB
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Color { data: 0xFF000000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
+        Color {
+            data: 0xFF000000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
+        }
     }
 
     /// Set the alpha
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Color { data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
+        Color {
+            data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
+        }
     }
 
     /// Get the r value
@@ -54,18 +58,16 @@ impl Color {
 }
 
 /// Compare two colors (Do not take care of alpha)
-impl PartialEq for Color{
+impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
-        self.r() == other.r() &&
-        self.g() == other.g() &&
-        self.b() == other.b()
+        self.r() == other.r() && self.g() == other.g() && self.b() == other.b()
     }
 }
 
-#[cfg(not(feature="no_std"))]
+#[cfg(not(feature = "no_std"))]
 impl fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:#010X}", {self.data})
+        write!(f, "{:#010X}", { self.data })
     }
 }
 
@@ -74,10 +76,9 @@ mod tests {
     #[test]
     fn partial_eq() {
         use Color;
-        assert_eq!(true, Color::rgb(1,2,3) == Color::rgba(1,2,3,200));
-        assert_eq!(false, Color::rgb(1,2,3) == Color::rgba(11,2,3,200));
-        assert_eq!(true, Color::rgba(1,2,3,200) == Color::rgba(1,2,3,200));
+        assert_eq!(true, Color::rgb(1, 2, 3) == Color::rgba(1, 2, 3, 200));
+        assert_eq!(false, Color::rgb(1, 2, 3) == Color::rgba(11, 2, 3, 200));
+        assert_eq!(true, Color::rgba(1, 2, 3, 200) == Color::rgba(1, 2, 3, 200));
     }
-
 
 }

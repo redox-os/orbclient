@@ -1,30 +1,41 @@
 extern crate syscall;
 
-use std::{env, mem, slice, thread};
+use std::cell::Cell;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
-use std::cell::Cell;
+use std::{env, mem, slice, thread};
 
 use color::Color;
 use event::{Event, EVENT_RESIZE};
 use renderer::Renderer;
-use WindowFlag;
 use Mode;
+use WindowFlag;
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = try!(env::var("DISPLAY").or(Err("DISPLAY not set")));
     match File::open(&display_path) {
         Ok(display) => {
             let mut buf: [u8; 4096] = [0; 4096];
-            let count = syscall::fpath(display.as_raw_fd() as usize, &mut buf).map_err(|err| format!("{}", err))?;
+            let count = syscall::fpath(display.as_raw_fd() as usize, &mut buf)
+                .map_err(|err| format!("{}", err))?;
             let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
             let res = path.split(":").nth(1).unwrap_or("");
-            let width = res.split("/").nth(1).unwrap_or("").parse::<u32>().unwrap_or(0);
-            let height = res.split("/").nth(2).unwrap_or("").parse::<u32>().unwrap_or(0);
+            let width = res
+                .split("/")
+                .nth(1)
+                .unwrap_or("")
+                .parse::<u32>()
+                .unwrap_or(0);
+            let height = res
+                .split("/")
+                .nth(2)
+                .unwrap_or("")
+                .parse::<u32>()
+                .unwrap_or(0);
             Ok((width, height))
-        },
-        Err(err) => Err(format!("{}", err))
+        }
+        Err(err) => Err(format!("{}", err)),
     }
 }
 
@@ -91,7 +102,14 @@ impl Window {
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, flags: &[WindowFlag]) -> Option<Self> {
+    pub fn new_flags(
+        x: i32,
+        y: i32,
+        w: u32,
+        h: u32,
+        title: &str,
+        flags: &[WindowFlag],
+    ) -> Option<Self> {
         let mut flag_str = String::new();
 
         let mut async = false;
@@ -101,14 +119,14 @@ impl Window {
                 WindowFlag::Async => {
                     async = true;
                     flag_str.push('a');
-                },
+                }
                 WindowFlag::Back => flag_str.push('b'),
                 WindowFlag::Front => flag_str.push('f'),
                 WindowFlag::Borderless => flag_str.push('l'),
                 WindowFlag::Resizable => {
                     resizable = true;
                     flag_str.push('r');
-                },
+                }
                 WindowFlag::Unclosable => flag_str.push('u'),
             }
         }
@@ -117,7 +135,8 @@ impl Window {
             "orbital:{}/{}/{}/{}/{}/{}",
             flag_str, x, y, w, h, title
         )) {
-            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) } {
+            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) }
+            {
                 Some(Window {
                     x: x,
                     y: y,
@@ -128,7 +147,9 @@ impl Window {
                     resizable: resizable,
                     mode: Cell::new(Mode::Blend),
                     file: file,
-                    data: unsafe { slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize) },
+                    data: unsafe {
+                        slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize)
+                    },
                 })
             } else {
                 None
@@ -187,13 +208,18 @@ impl Window {
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
         unsafe {
-            syscall::funmap(self.data.as_ptr() as usize).expect("orbclient: failed to unmap memory in resize");
+            syscall::funmap(self.data.as_ptr() as usize)
+                .expect("orbclient: failed to unmap memory in resize");
         }
-        let _ = self.file.write(&format!("S,{},{}", width, height).as_bytes());
+        let _ = self
+            .file
+            .write(&format!("S,{},{}", width, height).as_bytes());
         self.sync_path();
         unsafe {
-            let address = syscall::fmap(self.file.as_raw_fd(), 0, (self.w * self.h * 4) as usize).expect("orbclient: failed to map memory in resize");
-            self.data = slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
+            let address = syscall::fmap(self.file.as_raw_fd(), 0, (self.w * self.h * 4) as usize)
+                .expect("orbclient: failed to map memory in resize");
+            self.data =
+                slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
         }
     }
 
@@ -209,7 +235,7 @@ impl Window {
             extra: None,
             events: [Event::new(); 16],
             i: 0,
-            count: 0
+            count: 0,
         };
 
         'blocking: loop {
@@ -220,18 +246,20 @@ impl Window {
                 iter.extra.as_mut().unwrap().extend_from_slice(&iter.events);
                 iter.count = 0;
             }
-            let bytes = unsafe { slice::from_raw_parts_mut(
-                iter.events[iter.count..].as_mut_ptr() as *mut u8,
-                iter.events[iter.count..].len() * mem::size_of::<Event>()
-            ) };
+            let bytes = unsafe {
+                slice::from_raw_parts_mut(
+                    iter.events[iter.count..].as_mut_ptr() as *mut u8,
+                    iter.events[iter.count..].len() * mem::size_of::<Event>(),
+                )
+            };
             match self.file.read(bytes) {
-                Ok(0) => if !self.async
-                        && iter.extra.is_none()
-                        && iter.count == 0 {
-                    thread::yield_now();
-                } else {
-                    break 'blocking;
-                },
+                Ok(0) => {
+                    if !self.async && iter.extra.is_none() && iter.count == 0 {
+                        thread::yield_now();
+                    } else {
+                        break 'blocking;
+                    }
+                }
                 Ok(count) => {
                     let count = count / mem::size_of::<Event>();
                     let events = &iter.events[iter.count..][..count];
@@ -253,7 +281,7 @@ impl Window {
                         // Synchronous windows are blocking, can't attempt another read
                         break 'blocking;
                     }
-                },
+                }
                 Err(_) => break 'blocking,
             }
         }
@@ -279,7 +307,7 @@ pub struct EventIter {
     extra: Option<Vec<Event>>,
     events: [Event; 16],
     i: usize,
-    count: usize
+    count: usize,
 }
 
 impl Iterator for EventIter {

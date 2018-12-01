@@ -1,14 +1,14 @@
 extern crate sdl2;
 
-use std::{mem, ptr, slice};
-use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 use std::cell::Cell;
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::{mem, ptr, slice};
 
 use color::Color;
 use event::*;
 use renderer::Renderer;
-use WindowFlag;
 use Mode;
+use WindowFlag;
 
 static SDL_USAGES: AtomicUsize = ATOMIC_USIZE_INIT;
 /// SDL2 Context
@@ -30,7 +30,8 @@ unsafe fn init() {
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     unsafe { init() };
-    unsafe { & *VIDEO_CTX }.display_bounds(0)
+    unsafe { &*VIDEO_CTX }
+        .display_bounds(0)
         .map(|rect| (rect.width(), rect.height()))
         .map_err(|err| format!("{}", err))
 }
@@ -70,17 +71,27 @@ impl Renderer for Window {
     /// Access pixel buffer
     fn data(&self) -> &[Color] {
         let window = self.inner.window();
-        let surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
+        let surface = window.surface(unsafe { &*EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock().unwrap();
-        unsafe { slice::from_raw_parts(bytes.as_ptr() as *const Color, bytes.len()/mem::size_of::<Color>()) }
+        unsafe {
+            slice::from_raw_parts(
+                bytes.as_ptr() as *const Color,
+                bytes.len() / mem::size_of::<Color>(),
+            )
+        }
     }
 
     /// Access pixel buffer mutably
     fn data_mut(&mut self) -> &mut [Color] {
         let window = self.inner.window_mut();
-        let mut surface = window.surface(unsafe { & *EVENT_PUMP }).unwrap();
+        let mut surface = window.surface(unsafe { &*EVENT_PUMP }).unwrap();
         let bytes = surface.without_lock_mut().unwrap();
-        unsafe { slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut Color, bytes.len()/mem::size_of::<Color>()) }
+        unsafe {
+            slice::from_raw_parts_mut(
+                bytes.as_mut_ptr() as *mut Color,
+                bytes.len() / mem::size_of::<Color>(),
+            )
+        }
     }
 
     /// Flip the window buffer
@@ -102,7 +113,14 @@ impl Window {
     }
 
     /// Create a new window with flags
-    pub fn new_flags(x: i32, y: i32, w: u32, h: u32, title: &str, flags: &[WindowFlag]) -> Option<Self> {
+    pub fn new_flags(
+        x: i32,
+        y: i32,
+        w: u32,
+        h: u32,
+        title: &str,
+        flags: &[WindowFlag],
+    ) -> Option<Self> {
         //Insure that init has been called
         unsafe { init() };
 
@@ -125,7 +143,7 @@ impl Window {
             }
         }
 
-        let mut builder = unsafe { & *VIDEO_CTX }.window(title, w, h);
+        let mut builder = unsafe { &*VIDEO_CTX }.window(title, w, h);
 
         if borderless {
             builder.borderless();
@@ -150,7 +168,7 @@ impl Window {
                 mode: Cell::new(Mode::Blend),
                 inner: window.into_canvas().software().build().unwrap(),
             }),
-            Err(_) => None
+            Err(_) => None,
         }
     }
 
@@ -187,7 +205,7 @@ impl Window {
     pub fn set_pos(&mut self, x: i32, y: i32) {
         self.inner.window_mut().set_position(
             sdl2::video::WindowPos::Positioned(x),
-            sdl2::video::WindowPos::Positioned(y)
+            sdl2::video::WindowPos::Positioned(y),
         );
         self.sync_path();
     }
@@ -204,7 +222,11 @@ impl Window {
         self.sync_path();
     }
 
-    fn convert_scancode(&self, scancode_option: Option<sdl2::keyboard::Scancode>, shift: bool) -> Option<(char, u8)> {
+    fn convert_scancode(
+        &self,
+        scancode_option: Option<sdl2::keyboard::Scancode>,
+        shift: bool,
+    ) -> Option<(char, u8)> {
         if let Some(scancode) = scancode_option {
             match scancode {
                 sdl2::keyboard::Scancode::A => Some((if shift { 'A' } else { 'a' }, K_A)),
@@ -246,11 +268,21 @@ impl Window {
                 sdl2::keyboard::Scancode::Grave => Some((if shift { '~' } else { '`' }, K_TICK)),
                 sdl2::keyboard::Scancode::Minus => Some((if shift { '_' } else { '-' }, K_MINUS)),
                 sdl2::keyboard::Scancode::Equals => Some((if shift { '+' } else { '=' }, K_EQUALS)),
-                sdl2::keyboard::Scancode::LeftBracket => Some((if shift { '{' } else { '[' }, K_BRACE_OPEN)),
-                sdl2::keyboard::Scancode::RightBracket => Some((if shift { '}' } else { ']' }, K_BRACE_CLOSE)),
-                sdl2::keyboard::Scancode::Backslash => Some((if shift { '|' } else { '\\' }, K_BACKSLASH)),
-                sdl2::keyboard::Scancode::Semicolon => Some((if shift { ':' } else { ';' }, K_SEMICOLON)),
-                sdl2::keyboard::Scancode::Apostrophe => Some((if shift { '"' } else { '\'' }, K_QUOTE)),
+                sdl2::keyboard::Scancode::LeftBracket => {
+                    Some((if shift { '{' } else { '[' }, K_BRACE_OPEN))
+                }
+                sdl2::keyboard::Scancode::RightBracket => {
+                    Some((if shift { '}' } else { ']' }, K_BRACE_CLOSE))
+                }
+                sdl2::keyboard::Scancode::Backslash => {
+                    Some((if shift { '|' } else { '\\' }, K_BACKSLASH))
+                }
+                sdl2::keyboard::Scancode::Semicolon => {
+                    Some((if shift { ':' } else { ';' }, K_SEMICOLON))
+                }
+                sdl2::keyboard::Scancode::Apostrophe => {
+                    Some((if shift { '"' } else { '\'' }, K_QUOTE))
+                }
                 sdl2::keyboard::Scancode::Comma => Some((if shift { '<' } else { ',' }, K_COMMA)),
                 sdl2::keyboard::Scancode::Period => Some((if shift { '>' } else { '.' }, K_PERIOD)),
                 sdl2::keyboard::Scancode::Slash => Some((if shift { '?' } else { '/' }, K_SLASH)),
@@ -286,7 +318,7 @@ impl Window {
                 sdl2::keyboard::Scancode::F12 => Some(('\0', K_F12)),
                 sdl2::keyboard::Scancode::LShift => Some(('\0', K_LEFT_SHIFT)),
                 sdl2::keyboard::Scancode::RShift => Some(('\0', K_RIGHT_SHIFT)),
-                _ => None
+                _ => None,
             }
         } else {
             None
@@ -301,14 +333,15 @@ impl Window {
             ButtonEvent {
                 left: mouse.left(),
                 middle: mouse.middle(),
-                right: mouse.right()
-            }.to_event()
+                right: mouse.right(),
+            }
+            .to_event()
         };
 
         let mods = unsafe { &mut *SDL_CTX }.keyboard().mod_state();
         let shift = if mods.contains(sdl2::keyboard::CAPSMOD)
-                    || mods.contains(sdl2::keyboard::LSHIFTMOD)
-                    || mods.contains(sdl2::keyboard::RSHIFTMOD)
+            || mods.contains(sdl2::keyboard::LSHIFTMOD)
+            || mods.contains(sdl2::keyboard::RSHIFTMOD)
         {
             true
         } else {
@@ -317,46 +350,56 @@ impl Window {
 
         match event {
             sdl2::event::Event::Window { win_event, .. } => match win_event {
-                sdl2::event::WindowEvent::Moved(x, y) => events.push(MoveEvent {
-                    x: x,
-                    y: y
-                }.to_event()),
-                sdl2::event::WindowEvent::Resized(w, h) => events.push(ResizeEvent {
-                    width: w as u32,
-                    height: h as u32
-                }.to_event()),
-                sdl2::event::WindowEvent::FocusGained => events.push(FocusEvent {
-                    focused: true
-                }.to_event()),
-                sdl2::event::WindowEvent::FocusLost => events.push(FocusEvent {
-                    focused: false
-                }.to_event()),
-                _ => ()
+                sdl2::event::WindowEvent::Moved(x, y) => {
+                    events.push(MoveEvent { x: x, y: y }.to_event())
+                }
+                sdl2::event::WindowEvent::Resized(w, h) => events.push(
+                    ResizeEvent {
+                        width: w as u32,
+                        height: h as u32,
+                    }
+                    .to_event(),
+                ),
+                sdl2::event::WindowEvent::FocusGained => {
+                    events.push(FocusEvent { focused: true }.to_event())
+                }
+                sdl2::event::WindowEvent::FocusLost => {
+                    events.push(FocusEvent { focused: false }.to_event())
+                }
+                _ => (),
             },
-            sdl2::event::Event::MouseMotion { x, y, .. } => events.push(MouseEvent {
-                x: x,
-                y: y
-            }.to_event()),
+            sdl2::event::Event::MouseMotion { x, y, .. } => {
+                events.push(MouseEvent { x: x, y: y }.to_event())
+            }
             sdl2::event::Event::MouseButtonDown { .. } => events.push(button_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(button_event()),
-            sdl2::event::Event::MouseWheel { x, y, .. } => events.push(ScrollEvent {
-                x: x,
-                y: y
-            }.to_event()),
-            sdl2::event::Event::KeyDown { scancode, .. } => if let Some(code) = self.convert_scancode(scancode, shift) {
-                events.push(KeyEvent {
-                    character: code.0,
-                    scancode: code.1,
-                    pressed: true
-                }.to_event());
-            },
-            sdl2::event::Event::KeyUp { scancode, .. } => if let Some(code) = self.convert_scancode(scancode, shift) {
-                events.push(KeyEvent {
-                    character: code.0,
-                    scancode: code.1,
-                    pressed: false
-                }.to_event());
-            },
+            sdl2::event::Event::MouseWheel { x, y, .. } => {
+                events.push(ScrollEvent { x: x, y: y }.to_event())
+            }
+            sdl2::event::Event::KeyDown { scancode, .. } => {
+                if let Some(code) = self.convert_scancode(scancode, shift) {
+                    events.push(
+                        KeyEvent {
+                            character: code.0,
+                            scancode: code.1,
+                            pressed: true,
+                        }
+                        .to_event(),
+                    );
+                }
+            }
+            sdl2::event::Event::KeyUp { scancode, .. } => {
+                if let Some(code) = self.convert_scancode(scancode, shift) {
+                    events.push(
+                        KeyEvent {
+                            character: code.0,
+                            scancode: code.1,
+                            pressed: false,
+                        }
+                        .to_event(),
+                    );
+                }
+            }
             sdl2::event::Event::Quit { .. } => events.push(QuitEvent.to_event()),
             _ => (),
         }
@@ -372,9 +415,9 @@ impl Window {
             count: 0,
         };
 
-        if ! self.async {
+        if !self.async {
             let event = unsafe { &mut *EVENT_PUMP }.wait_event();
-            if let sdl2::event::Event::Window{..} = event {
+            if let sdl2::event::Event::Window { .. } = event {
                 self.sync_path();
             }
             for converted_event in self.convert_event(event) {
@@ -388,7 +431,7 @@ impl Window {
         }
 
         while let Some(event) = unsafe { &mut *EVENT_PUMP }.poll_event() {
-            if let sdl2::event::Event::Window{..} = event {
+            if let sdl2::event::Event::Window { .. } = event {
                 self.sync_path();
             }
             for converted_event in self.convert_event(event) {
