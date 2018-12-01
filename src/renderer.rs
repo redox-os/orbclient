@@ -9,29 +9,6 @@ use Mode;
 #[cfg(not(feature = "no_std"))]
 use blur;
 
-#[cfg(target_arch = "x86")]
-#[inline(always)]
-#[cold]
-pub unsafe fn fast_set32(dst: *mut u32, src: u32, len: usize) {
-    asm!("cld
-        rep stosd"
-        :
-        : "{edi}"(dst as usize), "{eax}"(src), "{ecx}"(len)
-        : "cc", "memory", "edi", "ecx"
-        : "intel", "volatile");
-}
-
-#[cfg(target_arch = "x86_64")]
-#[inline(always)]
-#[cold]
-pub unsafe fn fast_set32(dst: *mut u32, src: u32, len: usize) {
-    asm!("cld
-        rep stosd"
-        :
-        : "{rdi}"(dst as usize), "{eax}"(src), "{rcx}"(len)
-        : "cc", "memory", "rdi", "rcx"
-        : "intel", "volatile");
-}
 
 pub trait Renderer {
     /// Get width
@@ -257,8 +234,11 @@ pub trait Renderer {
     /// Set entire window to a color
     fn set(&mut self, color: Color) {
         let data = self.data_mut();
-        unsafe {
-            fast_set32(data.as_mut_ptr() as *mut u32, color.data, data.len());
+        let data_ptr = data.as_mut_ptr();
+        for i in 0..data.len() as isize {
+            unsafe {
+                *data_ptr.offset(i) = color
+            }
         }
     }
 
@@ -285,9 +265,14 @@ pub trait Renderer {
         //if alpha > 0 {
             if alpha >= 255 || replace {
                 let data = self.data_mut();
+                let data_ptr = data.as_mut_ptr();
                 for y in start_y..end_y {
-                    unsafe {
-                        fast_set32(data.as_mut_ptr().offset((y * self_w as i32 + start_x) as isize) as *mut u32, color.data, len as usize);
+                    let start = (y * self_w as i32 + start_x) as isize;
+                    let end = start + len as isize;
+                    for i in start..end {
+                        unsafe {
+                            *data_ptr.offset(i) = color;
+                        }
                     }
                 }
             } else {

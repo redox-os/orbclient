@@ -1,6 +1,5 @@
 #![crate_name="orbclient"]
 #![crate_type="lib"]
-#![feature(asm)]
 #![cfg_attr(feature="no_std", feature(alloc))]
 #![cfg_attr(feature="no_std", no_std)]
 
