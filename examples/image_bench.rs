@@ -16,14 +16,14 @@ fn main() {
                          .unwrap();
 
     window.set(Color::rgb(255,255,255));
-    
+
     //create image data : a green square
     let data = vec![Color::rgba(100,200,10,20);412500];
     let data2 = vec![Color::rgba(200,100,10,20);412500];
     let data3 = vec![Color::rgba(10,100,100,20);412500];
     let data4 = vec![Color::rgba(10,100,200,20);480000];
 
-    //draw image benchmarking 
+    //draw image benchmarking
     println!("Benchmarking implementations to draw an image on window:");
     let mut t = time::now();
 
@@ -35,7 +35,7 @@ fn main() {
     println!("image_over                  {:?}",dt4);
 
     t = time::now();
-    
+
     for _i in 0..TIMES {
         window.image_legacy(15,15,750,550, &data[..]);
     }
@@ -44,21 +44,13 @@ fn main() {
     println!("image_legacy (pixel_fast)   {:?}",dt );
 
     t = time::now();
-    
+
     for _i in 0..TIMES {
         window.image_fast(20,20,750,550, &data2[..]);
     }
     t2 = time::now();
     let dt2 = (t2-t)/TIMES;
     println!("image_fast                  {:?}",dt2);
-
-    t = time::now();
-    for _i in 0..TIMES {
-        window.image_parallel(30,30,750,550, &data3[..]);
-    }
-    t2 = time::now();
-    let dt3 = (t2-t)/TIMES;
-    println!("image_parallel              {:?}",dt3);
 
     t = time::now();
     for _i in 0..TIMES {
@@ -70,7 +62,7 @@ fn main() {
 
     //println!("difference {:?}", dt-dt3);
     println!("------------------------------------------------");
-    
+
     window.sync();
 
     'events: loop {

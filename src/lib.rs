@@ -7,7 +7,6 @@
 #![deny(warnings)]
 
 #[cfg(feature="no_std")]
-#[macro_use]
 extern crate alloc;
 #[cfg(not(feature="no_std"))]
 extern crate core;
@@ -25,6 +24,7 @@ pub mod color;
 pub mod event;
 pub mod graphicspath;
 pub mod renderer;
+#[cfg(not(feature = "no_std"))]
 mod blur;
 
 #[derive(Clone, Copy, Debug)]

@@ -1,7 +1,3 @@
-extern crate rayon;
-
-#[cfg(feature = "no_std")]
-use alloc::vec::Vec;
 use core::cell::Cell;
 use core::cmp;
 
@@ -10,6 +6,7 @@ use color::Color;
 use graphicspath::GraphicsPath;
 use graphicspath::PointType;
 use Mode;
+#[cfg(not(feature = "no_std"))]
 use blur;
 
 #[cfg(target_arch = "x86")]
@@ -303,9 +300,8 @@ pub trait Renderer {
         //}
     }
 
+    #[cfg(not(feature = "no_std"))]
     fn box_blur(&mut self, x: i32, y: i32, w: u32, h: u32, r: i32) {
-
-
         let self_w = self.width();
         let self_h = self.height();
 
@@ -340,6 +336,7 @@ pub trait Renderer {
         }
     }
 
+    #[cfg(not(feature = "no_std"))]
     fn box_shadow(&mut self, x: i32, y: i32, w: u32, h: u32, offset_x: i32, offset_y: i32, r: i32, color: Color) {
         let real_w = w + (2*r as u32);
         let real_h = h + (2*r as u32);
@@ -493,66 +490,6 @@ pub trait Renderer {
         }
     }
 
-    ///Render an image using parallel threads if possible
-    //Works in Linux but not in Redox !
-    fn image_parallel(&mut self, start_x: i32, start_y: i32, w: u32, h: u32, image_data: &[Color]) {
-        let start_x = start_x as usize;
-        let start_y = start_y as usize;
-        let h_hi = (h / 2) as usize;
-        let h_lo = h as usize - h_hi;
-        let w = w as usize;
-        let mid = image_data.len() / 2;
-        let width = self.width() as usize;
-        let window_data = self.data_mut();
-
-        let hi_start = start_x + start_y * width;
-        let hi_stop = width * (h_hi + start_y);
-        let lo_start = hi_stop + start_x;
-        let lo_stop = cmp::min(width * (start_y + h_lo + h_hi), window_data.len());
-
-        let mut window_lo = vec![Color::rgba(0,0,0,0); lo_stop - lo_start];
-
-        {
-            window_lo.copy_from_slice(&window_data[lo_start..lo_stop]);
-            let window_hi = &mut window_data[hi_start..hi_stop];
-
-            rayon::join(|| blit(width, window_hi, w, h_hi, &image_data[..mid]),
-                        || blit(width, &mut window_lo, w, h_lo, &image_data[mid..]),
-                        );
-        }
-
-        window_data[lo_start..lo_stop].copy_from_slice(&window_lo);
-
-        fn blit(window_w: usize, window_data: &mut[Color], w: usize, h: usize, image_data: &[Color]){
-            let window_len = window_data.len();
-            for i in 0..(w * h) {
-                let y= i / w;
-                let x = i - (y * w);
-                let window_index = y * window_w + x;
-
-                if window_index < window_len && i < image_data.len(){
-                    let new = image_data[i].data;
-                    let alpha = (new >> 24) & 0xFF;
-                    if alpha > 0 {
-                        let old = unsafe{ &mut window_data[window_index].data};
-                        if alpha >= 255 {
-                            *old = new;
-                        } else {
-                            let n_alpha = 255 - alpha;
-                            let rb = ((n_alpha * ( *old & 0x00FF00FF)) +
-                                (alpha * (new & 0x00FF00FF))) >> 8;
-                            let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8)) +
-                                ( alpha * (0x01000000 | ((new & 0x0000FF00) >>8)));
-
-                            *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
     /// Draw a linear gradient in a rectangular region
     #[cfg(not(feature="no_std"))]
     fn linear_gradient(&mut self, rect_x: i32, rect_y: i32, rect_width: u32, rect_height:u32, start_x: i32, start_y: i32, end_x: i32, end_y: i32, start_color: Color, end_color: Color) {
@@ -633,6 +570,7 @@ pub trait Renderer {
     }
 
     /// Draws antialiased line
+    #[cfg(not(feature = "no_std"))]
     fn wu_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) {
         //adapted from https://rosettacode.org/wiki/Xiaolin_Wu's_line_algorithm#C.23
         let mut x0 = x0 as f64;
@@ -719,6 +657,7 @@ pub trait Renderer {
     }
 
     ///Draws antialiased circle
+    #[cfg(not(feature = "no_std"))]
     fn wu_circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
         let r = color.r();
         let g = color.g();
