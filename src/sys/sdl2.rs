@@ -130,6 +130,8 @@ impl Window {
         let mut _front = false;
         let mut borderless = false;
         let mut resizable = false;
+        //TODO: Transparent
+        let mut _transparent = false;
         //TODO: Hide exit button
         let mut _unclosable = false;
         for &flag in flags.iter() {
@@ -139,6 +141,7 @@ impl Window {
                 WindowFlag::Front => _front = true,
                 WindowFlag::Borderless => borderless = true,
                 WindowFlag::Resizable => resizable = true,
+                WindowFlag::Transparent => _transparent = true,
                 WindowFlag::Unclosable => _unclosable = true,
             }
         }

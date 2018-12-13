@@ -32,6 +32,7 @@ pub enum WindowFlag {
     Front,
     Borderless,
     Resizable,
+    Transparent,
     Unclosable,
 }
 

@@ -127,6 +127,7 @@ impl Window {
                     resizable = true;
                     flag_str.push('r');
                 }
+                WindowFlag::Transparent => flag_str.push('t'),
                 WindowFlag::Unclosable => flag_str.push('u'),
             }
         }
