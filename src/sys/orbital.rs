@@ -136,7 +136,11 @@ impl Window {
             "orbital:{}/{}/{}/{}/{}/{}",
             flag_str, x, y, w, h, title
         )) {
-            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), 0, (w * h * 4) as usize) }
+            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd(), &syscall::Map {
+                offset: 0,
+                size: (w * h * 4) as usize,
+                flags: syscall::PROT_READ | syscall::PROT_WRITE,
+            }) }
             {
                 Some(Window {
                     x: x,
@@ -217,7 +221,11 @@ impl Window {
             .write(&format!("S,{},{}", width, height).as_bytes());
         self.sync_path();
         unsafe {
-            let address = syscall::fmap(self.file.as_raw_fd(), 0, (self.w * self.h * 4) as usize)
+            let address = syscall::fmap(self.file.as_raw_fd(), &syscall::Map {
+                offset: 0,
+                size: (self.w * self.h * 4) as usize,
+                flags: syscall::PROT_READ | syscall::PROT_WRITE,
+            })
                 .expect("orbclient: failed to map memory in resize");
             self.data =
                 slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
