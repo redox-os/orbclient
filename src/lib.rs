@@ -46,6 +46,6 @@ pub enum Mode {
 #[path = "sys/orbital.rs"]
 mod sys;
 
-#[cfg(all(not(feature = "no_std"), not(target_os = "redox")))]
+#[cfg(all(not(feature = "no_std"), any(unix, windows)))]
 #[path = "sys/sdl2.rs"]
 mod sys;

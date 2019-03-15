@@ -1,7 +1,7 @@
 extern crate sdl2;
 
 use std::cell::Cell;
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
 use color::Color;
@@ -10,7 +10,7 @@ use renderer::Renderer;
 use Mode;
 use WindowFlag;
 
-static SDL_USAGES: AtomicUsize = ATOMIC_USIZE_INIT;
+static SDL_USAGES: AtomicUsize = AtomicUsize::new(0);
 /// SDL2 Context
 static mut SDL_CTX: *mut sdl2::Sdl = ptr::null_mut();
 /// Video Context
