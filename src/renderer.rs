@@ -407,7 +407,7 @@ pub trait Renderer {
             for new_y in (y - r)..(y + real_h as i32 - r) as i32 {
                 let c = blur_data[counter as usize];
 
-                let mut alpha: u8 = if color.a() < 255 - c.r() {
+                let alpha: u8 = if color.a() < 255 - c.r() {
                     color.a()
                 } else {
                     255 - c.r()
@@ -515,7 +515,7 @@ pub trait Renderer {
             let start = offset + l * width;
             let mut stop = start + w;
             let begin = l * w;
-            let mut end = begin + w;
+            let end = begin + w;
 
             //check boundaries
             if start_x + w > width {
