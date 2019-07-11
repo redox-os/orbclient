@@ -11,6 +11,7 @@ pub const EVENT_FOCUS: i64 = 6;
 pub const EVENT_MOVE: i64 = 7;
 pub const EVENT_RESIZE: i64 = 8;
 pub const EVENT_SCREEN: i64 = 9;
+pub const EVENT_CLIPBOARD: i64 = 10;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -33,6 +34,8 @@ pub enum EventOption {
     Resize(ResizeEvent),
     /// A screen report event
     Screen(ScreenEvent),
+    /// A clipboard event
+    Clipboard(ClipboardEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -72,6 +75,7 @@ impl Event {
             EVENT_MOVE => EventOption::Move(MoveEvent::from_event(self)),
             EVENT_RESIZE => EventOption::Resize(ResizeEvent::from_event(self)),
             EVENT_SCREEN => EventOption::Screen(ScreenEvent::from_event(self)),
+            EVENT_CLIPBOARD => EventOption::Clipboard(ClipboardEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -444,6 +448,34 @@ impl ScreenEvent {
         ScreenEvent {
             width: event.a as u32,
             height: event.b as u32,
+        }
+    }
+}
+
+pub const CLIPBOARD_COPY: u8 = 0;
+pub const CLIPBOARD_CUT: u8 = 1;
+pub const CLIPBOARD_PASTE: u8 = 2;
+
+/// A clipboard event
+#[derive(Copy, Clone, Debug)]
+pub struct ClipboardEvent {
+    pub kind: u8,
+    pub size: usize,
+}
+
+impl ClipboardEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_CLIPBOARD,
+            a: self.kind as i64,
+            b: self.size as i64,
+        }
+    }
+
+    pub fn from_event(event: Event) -> ClipboardEvent {
+        ClipboardEvent {
+            kind: event.a as u8,
+            size: event.b as usize,
         }
     }
 }
