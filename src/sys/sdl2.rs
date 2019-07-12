@@ -342,9 +342,9 @@ impl Window {
         };
 
         let mods = unsafe { &mut *SDL_CTX }.keyboard().mod_state();
-        let shift = if mods.contains(sdl2::keyboard::CAPSMOD)
-            || mods.contains(sdl2::keyboard::LSHIFTMOD)
-            || mods.contains(sdl2::keyboard::RSHIFTMOD)
+        let shift = if mods.contains(sdl2::keyboard::Mod::CAPSMOD)
+            || mods.contains(sdl2::keyboard::Mod::LSHIFTMOD)
+            || mods.contains(sdl2::keyboard::Mod::RSHIFTMOD)
         {
             true
         } else {
