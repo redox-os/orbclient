@@ -3,7 +3,7 @@ extern crate syscall;
 use std::cell::Cell;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
 use std::{env, mem, slice, thread};
 
 use color::Color;
@@ -161,6 +161,24 @@ impl Window {
             }
         } else {
             None
+        }
+    }
+
+    pub fn clipboard(&self) -> String {
+        let mut text = String::new();
+        let window_fd = self.file.as_raw_fd();
+        if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
+            let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+            let _ = clipboard_file.read_to_string(&mut text);
+        }
+        text
+    }
+
+    pub fn set_clipboard(&mut self, text: &str) {
+        let window_fd = self.file.as_raw_fd();
+        if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
+            let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+            let _ = clipboard_file.write(text.as_bytes());
         }
     }
 

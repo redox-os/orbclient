@@ -175,6 +175,14 @@ impl Window {
         }
     }
 
+    pub fn clipboard(&self) -> String {
+        unsafe { &*VIDEO_CTX }.clipboard().clipboard_text().unwrap()
+    }
+
+    pub fn set_clipboard(&mut self, text: &str) {
+        unsafe { &*VIDEO_CTX }.clipboard().set_clipboard_text(text).unwrap();
+    }
+
     pub fn sync_path(&mut self) {
         let window = self.inner.window();
         let pos = window.position();
