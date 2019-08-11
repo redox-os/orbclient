@@ -221,13 +221,28 @@ impl Window {
         self.t.clone()
     }
 
-    // Set position
+    /// Set cursor visibility
+    pub fn set_mouse_cursor(&mut self, visible: bool) {
+        let _ = self.file.write(if visible { b"M,C,1" } else { b"M,C,0" });
+    }
+
+    /// Set mouse grabbing
+    pub fn set_mouse_grab(&mut self, grab: bool) {
+        let _ = self.file.write(if grab { b"M,G,1" } else { b"M,G,0" });
+    }
+
+    /// Set mouse relative mode
+    pub fn set_mouse_relative(&mut self, relative: bool) {
+        let _ = self.file.write(if relative { b"M,R,1" } else { b"M,R,0" });
+    }
+
+    /// Set position
     pub fn set_pos(&mut self, x: i32, y: i32) {
         let _ = self.file.write(&format!("P,{},{}", x, y).as_bytes());
         self.sync_path();
     }
 
-    // Set size
+    /// Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
         unsafe {

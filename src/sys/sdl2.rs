@@ -212,7 +212,22 @@ impl Window {
         self.t.clone()
     }
 
-    // Set position
+    /// Set cursor visibility
+    pub fn set_mouse_cursor(&mut self, visible: bool) {
+        unsafe { &mut *SDL_CTX }.mouse().show_cursor(visible);
+    }
+
+    /// Set mouse grabbing
+    pub fn set_mouse_grab(&mut self, grab: bool) {
+        unsafe { &mut *SDL_CTX }.mouse().capture(grab);
+    }
+
+    /// Set mouse relative mode
+    pub fn set_mouse_relative(&mut self, relative: bool) {
+        unsafe { &mut *SDL_CTX }.mouse().set_relative_mouse_mode(relative);
+    }
+
+    /// Set position
     pub fn set_pos(&mut self, x: i32, y: i32) {
         self.inner.window_mut().set_position(
             sdl2::video::WindowPos::Positioned(x),
@@ -221,7 +236,7 @@ impl Window {
         self.sync_path();
     }
 
-    // Set size
+    /// Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
         let _ = self.inner.window_mut().set_size(width, height);
         self.sync_path();
