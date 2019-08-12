@@ -71,6 +71,7 @@ impl Event {
             EVENT_NONE => EventOption::None,
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
+            EVENT_MOUSE_RELATIVE => EventOption::MouseRelative(MouseRelativeEvent::from_event(self)),
             EVENT_BUTTON => EventOption::Button(ButtonEvent::from_event(self)),
             EVENT_SCROLL => EventOption::Scroll(ScrollEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
