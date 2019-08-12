@@ -55,6 +55,8 @@ pub struct Window {
     mode: Cell<Mode>,
     /// The inner renderer
     inner: sdl2::render::WindowCanvas,
+    /// Mouse in relative mode
+    mouse_relative: bool,
 }
 
 impl Renderer for Window {
@@ -170,6 +172,7 @@ impl Window {
                 async: async,
                 mode: Cell::new(Mode::Blend),
                 inner: window.into_canvas().software().build().unwrap(),
+                mouse_relative: false,
             }),
             Err(_) => None,
         }
@@ -225,6 +228,7 @@ impl Window {
     /// Set mouse relative mode
     pub fn set_mouse_relative(&mut self, relative: bool) {
         unsafe { &mut *SDL_CTX }.mouse().set_relative_mouse_mode(relative);
+        self.mouse_relative = relative;
     }
 
     /// Set position
@@ -394,8 +398,12 @@ impl Window {
                 }
                 _ => (),
             },
-            sdl2::event::Event::MouseMotion { x, y, .. } => {
-                events.push(MouseEvent { x: x, y: y }.to_event())
+            sdl2::event::Event::MouseMotion { x, y, xrel, yrel, .. } => {
+                if self.mouse_relative {
+                    events.push(MouseRelativeEvent { dx: xrel, dy: yrel }.to_event())
+                } else {
+                    events.push(MouseEvent { x: x, y: y }.to_event())
+                }
             }
             sdl2::event::Event::MouseButtonDown { .. } => events.push(button_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(button_event()),

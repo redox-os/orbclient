@@ -12,14 +12,17 @@ pub const EVENT_MOVE: i64 = 7;
 pub const EVENT_RESIZE: i64 = 8;
 pub const EVENT_SCREEN: i64 = 9;
 pub const EVENT_CLIPBOARD: i64 = 10;
+pub const EVENT_MOUSE_RELATIVE: i64 = 11;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
 pub enum EventOption {
     /// A key event
     Key(KeyEvent),
-    /// A mouse event
+    /// A mouse event (absolute)
     Mouse(MouseEvent),
+    /// A mouse event (relative)
+    MouseRelative(MouseRelativeEvent),
     /// A mouse button event
     Button(ButtonEvent),
     /// A mouse scroll event
@@ -253,7 +256,7 @@ impl KeyEvent {
     }
 }
 
-/// A event related to the mouse
+/// A event related to the mouse (absolute position)
 #[derive(Copy, Clone, Debug)]
 pub struct MouseEvent {
     /// The x coordinate of the mouse
@@ -277,6 +280,34 @@ impl MouseEvent {
         MouseEvent {
             x: event.a as i32,
             y: event.b as i32,
+        }
+    }
+}
+
+/// A event related to the mouse (relative position)
+#[derive(Copy, Clone, Debug)]
+pub struct MouseRelativeEvent {
+    /// The x coordinate of the mouse
+    pub dx: i32,
+    /// The y coordinate of the mouse
+    pub dy: i32,
+}
+
+impl MouseRelativeEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_MOUSE_RELATIVE,
+            a: self.dx as i64,
+            b: self.dy as i64,
+        }
+    }
+
+    /// Convert an `Event` to a `MouseRelativeEvent`
+    pub fn from_event(event: Event) -> MouseRelativeEvent {
+        MouseRelativeEvent {
+            dx: event.a as i32,
+            dy: event.b as i32,
         }
     }
 }
