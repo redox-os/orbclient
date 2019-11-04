@@ -1,8 +1,6 @@
 #![crate_name = "orbclient"]
 #![crate_type = "lib"]
-#![cfg_attr(feature = "no_std", feature(alloc))]
 #![cfg_attr(feature = "no_std", no_std)]
-#![deny(warnings)]
 
 #[cfg(feature = "no_std")]
 extern crate alloc;

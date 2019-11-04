@@ -515,7 +515,7 @@ pub trait Renderer {
             let start = offset + l * width;
             let mut stop = start + w;
             let begin = l * w;
-            let mut end = begin + w;
+            let end = begin + w;
 
             //check boundaries
             if start_x + w > width {
