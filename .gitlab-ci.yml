@@ -2,7 +2,7 @@ image: "redoxos/redoxer"
 
 build:linux:
   before_script:
-  - sudo apt install cmake -y
+  - apt-get install cmake -y
   script:
   - cargo build
 
