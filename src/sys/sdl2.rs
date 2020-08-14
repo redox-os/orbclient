@@ -150,6 +150,10 @@ impl Window {
 
         let mut builder = unsafe { &*VIDEO_CTX }.window(title, w, h);
 
+        {
+            builder.allow_highdpi();
+        }
+
         if borderless {
             builder.borderless();
         }
@@ -183,7 +187,10 @@ impl Window {
     }
 
     pub fn set_clipboard(&mut self, text: &str) {
-        unsafe { &*VIDEO_CTX }.clipboard().set_clipboard_text(text).unwrap();
+        unsafe { &*VIDEO_CTX }
+            .clipboard()
+            .set_clipboard_text(text)
+            .unwrap();
     }
 
     pub fn sync_path(&mut self) {
@@ -227,7 +234,9 @@ impl Window {
 
     /// Set mouse relative mode
     pub fn set_mouse_relative(&mut self, relative: bool) {
-        unsafe { &mut *SDL_CTX }.mouse().set_relative_mouse_mode(relative);
+        unsafe { &mut *SDL_CTX }
+            .mouse()
+            .set_relative_mouse_mode(relative);
         self.mouse_relative = relative;
     }
 
@@ -398,7 +407,9 @@ impl Window {
                 }
                 _ => (),
             },
-            sdl2::event::Event::MouseMotion { x, y, xrel, yrel, .. } => {
+            sdl2::event::Event::MouseMotion {
+                x, y, xrel, yrel, ..
+            } => {
                 if self.mouse_relative {
                     events.push(MouseRelativeEvent { dx: xrel, dy: yrel }.to_event())
                 } else {
