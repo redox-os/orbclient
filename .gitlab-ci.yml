@@ -1,9 +1,9 @@
-image: "redoxos/redoxer"
-
 build:linux:
+  image: rust:latest
   script:
   - cargo build
 
 build:redox:
+  image: redoxos/redoxer
   script:
   - redoxer build
