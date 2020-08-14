@@ -8,3 +8,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Add sdl2 bundled feature
 * Add HiDPi support for sdl2 sys
+* Add DropEvent (file | text) for sdl2 sys
