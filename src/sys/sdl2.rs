@@ -1,6 +1,6 @@
 extern crate sdl2;
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
@@ -50,13 +50,15 @@ pub struct Window {
     /// The title of the window
     t: String,
     /// True if the window should not wait for events
-    async: bool,
+    window_async: bool,
     /// Drawing mode
     mode: Cell<Mode>,
     /// The inner renderer
     inner: sdl2::render::WindowCanvas,
     /// Mouse in relative mode
     mouse_relative: bool,
+    /// Content of the last drop (file | text) operation
+    drop_content: RefCell<Option<String>>,
 }
 
 impl Renderer for Window {
@@ -126,7 +128,7 @@ impl Window {
         //Insure that init has been called
         unsafe { init() };
 
-        let mut async = false;
+        let mut window_async = false;
         //TODO: Use z-order
         let mut _back = false;
         let mut _front = false;
@@ -138,7 +140,7 @@ impl Window {
         let mut _unclosable = false;
         for &flag in flags.iter() {
             match flag {
-                WindowFlag::Async => async = true,
+                WindowFlag::Async => window_async = true,
                 WindowFlag::Back => _back = true,
                 WindowFlag::Front => _front = true,
                 WindowFlag::Borderless => borderless = true,
@@ -173,10 +175,11 @@ impl Window {
                 w: w,
                 h: h,
                 t: title.to_string(),
-                async: async,
+                window_async,
                 mode: Cell::new(Mode::Blend),
                 inner: window.into_canvas().software().build().unwrap(),
                 mouse_relative: false,
+                drop_content: RefCell::new(None),
             }),
             Err(_) => None,
         }
@@ -191,6 +194,14 @@ impl Window {
             .clipboard()
             .set_clipboard_text(text)
             .unwrap();
+    }
+
+    /// Pops the content of the last drop event from the window.
+    pub fn pop_drop_content(&self) -> Option<String> {
+        let result = self.drop_content.borrow().clone();
+        *self.drop_content.borrow_mut() = None;
+
+        result
     }
 
     pub fn sync_path(&mut self) {
@@ -433,6 +444,14 @@ impl Window {
                     );
                 }
             }
+            sdl2::event::Event::DropFile { filename, .. } => {
+                *self.drop_content.borrow_mut() = Some(filename);
+                events.push(DropEvent { kind: DROP_FILE }.to_event())
+            }
+            sdl2::event::Event::DropText { filename, .. } => {
+                *self.drop_content.borrow_mut() = Some(filename);
+                events.push(DropEvent { kind: DROP_TEXT }.to_event())
+            }
             sdl2::event::Event::KeyUp { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
                     events.push(
@@ -460,7 +479,7 @@ impl Window {
             count: 0,
         };
 
-        if !self.async {
+        if !self.window_async {
             let event = unsafe { &mut *EVENT_PUMP }.wait_event();
             if let sdl2::event::Event::Window { .. } = event {
                 self.sync_path();

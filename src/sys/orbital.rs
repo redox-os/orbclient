@@ -52,7 +52,7 @@ pub struct Window {
     /// The title of the window
     t: String,
     /// True if the window should not wait for events
-    async: bool,
+    window_async: bool,
     /// True if the window can be resized
     resizable: bool,
     /// Drawing mode
@@ -112,12 +112,12 @@ impl Window {
     ) -> Option<Self> {
         let mut flag_str = String::new();
 
-        let mut async = false;
+        let mut window_async = false;
         let mut resizable = false;
         for &flag in flags.iter() {
             match flag {
                 WindowFlag::Async => {
-                    async = true;
+                    window_async = true;
                     flag_str.push('a');
                 }
                 WindowFlag::Back => flag_str.push('b'),
@@ -136,19 +136,23 @@ impl Window {
             "orbital:{}/{}/{}/{}/{}/{}",
             flag_str, x, y, w, h, title
         )) {
-            if let Ok(address) = unsafe { syscall::fmap(file.as_raw_fd() as usize, &syscall::Map {
-                offset: 0,
-                size: (w * h * 4) as usize,
-                flags: syscall::PROT_READ | syscall::PROT_WRITE,
-            }) }
-            {
+            if let Ok(address) = unsafe {
+                syscall::fmap(
+                    file.as_raw_fd() as usize,
+                    &syscall::Map {
+                        offset: 0,
+                        size: (w * h * 4) as usize,
+                        flags: syscall::PROT_READ | syscall::PROT_WRITE,
+                    },
+                )
+            } {
                 Some(Window {
                     x: x,
                     y: y,
                     w: w,
                     h: h,
                     t: title.to_string(),
-                    async: async,
+                    window_async,
                     resizable: resizable,
                     mode: Cell::new(Mode::Blend),
                     file: file,
@@ -180,6 +184,11 @@ impl Window {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
             let _ = clipboard_file.write(text.as_bytes());
         }
+    }
+
+    /// Not yet available on Redox OS.
+    pub fn pop_drop_content(&self) -> Option<String> {
+        None
     }
 
     // TODO: Replace with smarter mechanism, maybe a move event?
@@ -254,12 +263,15 @@ impl Window {
             .write(&format!("S,{},{}", width, height).as_bytes());
         self.sync_path();
         unsafe {
-            let address = syscall::fmap(self.file.as_raw_fd() as usize, &syscall::Map {
-                offset: 0,
-                size: (self.w * self.h * 4) as usize,
-                flags: syscall::PROT_READ | syscall::PROT_WRITE,
-            })
-                .expect("orbclient: failed to map memory in resize");
+            let address = syscall::fmap(
+                self.file.as_raw_fd() as usize,
+                &syscall::Map {
+                    offset: 0,
+                    size: (self.w * self.h * 4) as usize,
+                    flags: syscall::PROT_READ | syscall::PROT_WRITE,
+                },
+            )
+            .expect("orbclient: failed to map memory in resize");
             self.data =
                 slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
         }
@@ -296,7 +308,7 @@ impl Window {
             };
             match self.file.read(bytes) {
                 Ok(0) => {
-                    if !self.async && iter.extra.is_none() && iter.count == 0 {
+                    if !self.window_async && iter.extra.is_none() && iter.count == 0 {
                         thread::yield_now();
                     } else {
                         break 'blocking;
@@ -319,7 +331,7 @@ impl Window {
                             self.set_size(w, h);
                         }
                     }
-                    if !self.async {
+                    if !self.window_async {
                         // Synchronous windows are blocking, can't attempt another read
                         break 'blocking;
                     }

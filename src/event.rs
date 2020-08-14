@@ -13,6 +13,7 @@ pub const EVENT_RESIZE: i64 = 8;
 pub const EVENT_SCREEN: i64 = 9;
 pub const EVENT_CLIPBOARD: i64 = 10;
 pub const EVENT_MOUSE_RELATIVE: i64 = 11;
+pub const EVENT_DROP: i64 = 12;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -39,6 +40,8 @@ pub enum EventOption {
     Screen(ScreenEvent),
     /// A clipboard event
     Clipboard(ClipboardEvent),
+    /// A drop file / text event (available on linux, windows and macOS)
+    Drop(DropEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -71,7 +74,9 @@ impl Event {
             EVENT_NONE => EventOption::None,
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
             EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
-            EVENT_MOUSE_RELATIVE => EventOption::MouseRelative(MouseRelativeEvent::from_event(self)),
+            EVENT_MOUSE_RELATIVE => {
+                EventOption::MouseRelative(MouseRelativeEvent::from_event(self))
+            }
             EVENT_BUTTON => EventOption::Button(ButtonEvent::from_event(self)),
             EVENT_SCROLL => EventOption::Scroll(ScrollEvent::from_event(self)),
             EVENT_QUIT => EventOption::Quit(QuitEvent::from_event(self)),
@@ -80,6 +85,7 @@ impl Event {
             EVENT_RESIZE => EventOption::Resize(ResizeEvent::from_event(self)),
             EVENT_SCREEN => EventOption::Screen(ScreenEvent::from_event(self)),
             EVENT_CLIPBOARD => EventOption::Clipboard(ClipboardEvent::from_event(self)),
+            EVENT_DROP => EventOption::Drop(DropEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -508,6 +514,31 @@ impl ClipboardEvent {
         ClipboardEvent {
             kind: event.a as u8,
             size: event.b as usize,
+        }
+    }
+}
+
+pub const DROP_FILE: u8 = 0;
+pub const DROP_TEXT: u8 = 1;
+
+/// A drop file event.
+#[derive(Copy, Clone, Debug)]
+pub struct DropEvent {
+    pub kind: u8,
+}
+
+impl DropEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_DROP,
+            a: self.kind as i64,
+            b: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> DropEvent {
+        DropEvent {
+            kind: event.a as u8,
         }
     }
 }
