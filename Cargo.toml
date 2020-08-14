@@ -1,6 +1,6 @@
 [package]
 name = "orbclient"
-version = "0.3.27"
+version = "0.3.28"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 description = "The Orbital Client Library"
 documentation = "https://docs.rs/orbclient"
@@ -14,13 +14,13 @@ keywords = [
 ]
 
 [features]
-default = []
+default = ["sdl2/bundled"]
 no_std = []
 
 [lib]
 name = "orbclient"
 path = "src/lib.rs"
 [target.'cfg(all(not(feature="no_std"), not(target_os = "redox")))'.dependencies]
-sdl2 = "0.32.2"
+sdl2 = "0.34"
 [target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
 redox_syscall = "0.1.56"
