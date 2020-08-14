@@ -1,9 +1,11 @@
+image: "redoxos/redoxer"
+
 build:linux:
-  image: rust:latest
+  before_script:
+  - sudo apt install cmake -y
   script:
   - cargo build
 
 build:redox:
-  image: redoxos/redoxer
   script:
   - redoxer build
