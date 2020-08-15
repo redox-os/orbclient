@@ -110,7 +110,6 @@ impl DerefMut for Event {
     }
 }
 
-
 pub const K_A: u8 = 0x1E;
 pub const K_B: u8 = 0x30;
 pub const K_C: u8 = 0x2E;
@@ -250,7 +249,7 @@ pub const K_F12: u8 = 0x58;
 /// A key event (such as a pressed key)
 #[derive(Copy, Clone, Debug)]
 pub struct KeyEvent {
-    /// The charecter of the key
+    /// The character of the key
     pub character: char,
     /// The scancode of the key
     pub scancode: u8,
