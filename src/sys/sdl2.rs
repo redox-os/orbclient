@@ -382,6 +382,16 @@ impl Window {
         }
     }
 
+    fn get_mouse_position(&self) -> (i32, i32) {
+        unsafe {
+            let p_x: *mut i32 = libc::malloc(mem::size_of::<i32>()) as *mut i32;
+            let p_y: *mut i32 = libc::malloc(mem::size_of::<i32>()) as *mut i32;
+            sdl2_sys::SDL_GetMouseState(p_x, p_y);
+
+            (*p_x, *p_y)
+        }
+    }
+
     fn convert_event(&self, event: sdl2::event::Event) -> Vec<Event> {
         let mut events = Vec::new();
 
@@ -475,10 +485,19 @@ impl Window {
             }
             sdl2::event::Event::DropFile { filename, .. } => {
                 *self.drop_content.borrow_mut() = Some(filename);
+
+                let (x, y) = self.get_mouse_position();
+
+                events.push(MouseEvent { x: x, y: y }.to_event());
+
                 events.push(DropEvent { kind: DROP_FILE }.to_event())
             }
             sdl2::event::Event::DropText { filename, .. } => {
                 *self.drop_content.borrow_mut() = Some(filename);
+
+                let (x, y) = self.get_mouse_position();
+
+                events.push(MouseEvent { x: x, y: y }.to_event());
                 events.push(DropEvent { kind: DROP_TEXT }.to_event())
             }
             sdl2::event::Event::KeyUp { scancode, .. } => {

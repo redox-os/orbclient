@@ -22,5 +22,7 @@ name = "orbclient"
 path = "src/lib.rs"
 [target.'cfg(all(not(feature="no_std"), not(target_os = "redox")))'.dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
+sdl2-sys = { version = "0.34", features = ["bundled", "static-link"] }
+libc = "0.2"
 [target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
 redox_syscall = "0.1.56"
