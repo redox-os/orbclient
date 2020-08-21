@@ -14,13 +14,13 @@ keywords = [
 ]
 
 [features]
-default = ["sdl2/bundled"]
+default = []
 no_std = []
 
 [lib]
 name = "orbclient"
 path = "src/lib.rs"
 [target.'cfg(all(not(feature="no_std"), not(target_os = "redox")))'.dependencies]
-sdl2 = "0.34"
+sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 [target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
 redox_syscall = "0.1.56"
