@@ -451,7 +451,9 @@ impl Window {
                     self.key_event_correction.set(None);
                 }
             }
-            sdl2::event::Event::KeyDown { scancode, .. } => {
+            sdl2::event::Event::KeyDown {
+                scancode, keymod, ..
+            } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
                     let key_event = KeyEvent {
                         character: code.0,
@@ -460,7 +462,10 @@ impl Window {
                     };
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                    if key_event.character == '\0' {
+                    if key_event.character == '\0'
+                        || key_event.character == '\u{0}'
+                        || keymod != sdl2::keyboard::Mod::NOMOD
+                    {
                         events.push(key_event.to_event());
                     } else {
                         self.key_event_correction.set(Some(key_event));
@@ -480,7 +485,7 @@ impl Window {
                     let mut character = code.0;
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                    if character != '\0' {
+                    if character != '\0' || character == '\u{0}' {
                         if let Some(last) = self.last_text_input.get() {
                             character = last;
                             self.last_text_input.set(None);
