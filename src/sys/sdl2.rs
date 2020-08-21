@@ -362,6 +362,7 @@ impl Window {
                 sdl2::keyboard::Scancode::F9 => Some(('\0', K_F9)),
                 sdl2::keyboard::Scancode::F10 => Some(('\0', K_F10)),
                 sdl2::keyboard::Scancode::Home => Some(('\0', K_HOME)),
+                sdl2::keyboard::Scancode::LGui => Some(('\0', K_HOME)),
                 sdl2::keyboard::Scancode::Up => Some(('\0', K_UP)),
                 sdl2::keyboard::Scancode::PageUp => Some(('\0', K_PGUP)),
                 sdl2::keyboard::Scancode::Left => Some(('\0', K_LEFT)),
