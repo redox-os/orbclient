@@ -527,7 +527,7 @@ impl ClipboardUpdateEvent {
         }
     }
 
-    pub fn from_event(event: Event) -> ClipboardUpdateEvent {
+    pub fn from_event(_: Event) -> ClipboardUpdateEvent {
         ClipboardUpdateEvent
     }
 }
