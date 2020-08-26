@@ -41,6 +41,8 @@ pub enum EventOption {
     Screen(ScreenEvent),
     /// A clipboard event
     Clipboard(ClipboardEvent),
+    /// A clipboard update event
+    ClipboardUpdate(ClipboardUpdateEvent),
     /// A drop file / text event (available on linux, windows and macOS)
     Drop(DropEvent),
     /// An unknown event
