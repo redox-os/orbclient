@@ -88,6 +88,9 @@ impl Event {
             EVENT_RESIZE => EventOption::Resize(ResizeEvent::from_event(self)),
             EVENT_SCREEN => EventOption::Screen(ScreenEvent::from_event(self)),
             EVENT_CLIPBOARD => EventOption::Clipboard(ClipboardEvent::from_event(self)),
+            EVENT_CLIPBOARD_UPDATE => {
+                EventOption::ClipboardUpdate(ClipboardUpdateEvent::from_event(self))
+            }
             EVENT_DROP => EventOption::Drop(DropEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
