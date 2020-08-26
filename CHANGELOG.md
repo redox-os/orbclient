@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.3.28
 
-* Add sdl2 bundled feature
+* Add sdl2 bundled and static feature
 * Add HiDPi support for sdl2 sys
 * Add DropEvent (file | text) for sdl2 sys
+* Add raw-window-handle implementation for sdl2

@@ -574,6 +574,12 @@ impl Window {
     }
 }
 
+unsafe impl raw_window_handle::HasRawWindowHandle for Window {
+    fn raw_window_handle(&self) -> raw_window_handle::RawWindowHandle {
+        self.inner.window().raw_window_handle()
+    }
+}
+
 /// Event iterator
 pub struct EventIter {
     events: [Event; 16],

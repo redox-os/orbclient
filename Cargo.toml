@@ -13,16 +13,19 @@ keywords = [
     "ui",
 ]
 
-[features]
-default = []
-no_std = []
-
 [lib]
 name = "orbclient"
 path = "src/lib.rs"
-[target.'cfg(all(not(feature="no_std"), not(target_os = "redox")))'.dependencies]
-sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
-sdl2-sys = { version = "0.34", features = ["bundled", "static-link"] }
-libc = "0.2"
-[target.'cfg(all(not(feature="no_std"), target_os="redox"))'.dependencies]
-redox_syscall = "0.1.56"
+
+[target.'cfg(not(target_os = "redox"))'.dependencies]
+sdl2 = { version = "0.34", features = ["bundled", "static-link", "raw-window-handle"], optional = true }
+sdl2-sys = { version = "0.34", features = ["bundled", "static-link"], optional = true }
+libc = { version = "0.2", optional = true }
+raw-window-handle = { version = "0.3", optional = true }
+
+[target.'cfg(target_os="redox")'.dependencies]
+redox_syscall = { version = "0.2", optional = true }
+
+[features]
+default = ["sdl2", "sdl2-sys", "libc", "raw-window-handle", "redox_syscall"]
+no_std = []
