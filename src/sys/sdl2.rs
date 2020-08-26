@@ -192,14 +192,22 @@ impl Window {
     }
 
     pub fn clipboard(&self) -> String {
-        unsafe { &*VIDEO_CTX }.clipboard().clipboard_text().unwrap()
+        let result = unsafe { &*VIDEO_CTX }.clipboard().clipboard_text();
+
+        match result {
+            Ok(value) => return value,
+            Err(message) => println!("{}", message),
+        }
+
+        String::default()
     }
 
     pub fn set_clipboard(&mut self, text: &str) {
-        unsafe { &*VIDEO_CTX }
-            .clipboard()
-            .set_clipboard_text(text)
-            .unwrap();
+        let result = unsafe { &*VIDEO_CTX }.clipboard().set_clipboard_text(text);
+
+        if let Err(message) = result {
+            println!("{}", message);
+        }
     }
 
     /// Pops the content of the last drop event from the window.
