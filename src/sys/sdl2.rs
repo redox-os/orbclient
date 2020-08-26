@@ -443,6 +443,9 @@ impl Window {
                 }
                 _ => (),
             },
+            sdl2::event::Event::ClipboardUpdate { .. } => {
+                events.push(ClipboardUpdateEvent.to_event())
+            }
             sdl2::event::Event::MouseMotion {
                 x, y, xrel, yrel, ..
             } => {

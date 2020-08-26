@@ -14,6 +14,7 @@ pub const EVENT_SCREEN: i64 = 9;
 pub const EVENT_CLIPBOARD: i64 = 10;
 pub const EVENT_MOUSE_RELATIVE: i64 = 11;
 pub const EVENT_DROP: i64 = 12;
+pub const EVENT_CLIPBOARD_UPDATE: i64 = 14;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -507,6 +508,24 @@ impl ScreenEvent {
 pub const CLIPBOARD_COPY: u8 = 0;
 pub const CLIPBOARD_CUT: u8 = 1;
 pub const CLIPBOARD_PASTE: u8 = 2;
+
+/// A clipboard event
+#[derive(Copy, Clone, Debug)]
+pub struct ClipboardUpdateEvent;
+
+impl ClipboardUpdateEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_CLIPBOARD_UPDATE,
+            a: 0,
+            b: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> ClipboardUpdateEvent {
+        ClipboardUpdateEvent
+    }
+}
 
 /// A clipboard event
 #[derive(Copy, Clone, Debug)]
