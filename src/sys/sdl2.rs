@@ -299,6 +299,7 @@ impl Window {
                 sdl2::keyboard::Scancode::Up => return true,
                 sdl2::keyboard::Scancode::Right => return true,
                 sdl2::keyboard::Scancode::Down => return true,
+                sdl2::keyboard::Scancode::Backspace => return true,
                 sdl2::keyboard::Scancode::F1 => return true,
                 sdl2::keyboard::Scancode::F2 => return true,
                 sdl2::keyboard::Scancode::F3 => return true,
