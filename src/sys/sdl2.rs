@@ -286,6 +286,36 @@ impl Window {
         self.sync_path();
     }
 
+    fn check_action_key(&self, scancode_option: Option<sdl2::keyboard::Scancode>) -> bool {
+        if let Some(scancode) = scancode_option {
+            match scancode {
+                sdl2::keyboard::Scancode::Return => return true,
+                sdl2::keyboard::Scancode::Delete => return true,
+                sdl2::keyboard::Scancode::Escape => return true,
+                sdl2::keyboard::Scancode::Tab => return true,
+                sdl2::keyboard::Scancode::PageUp => return true,
+                sdl2::keyboard::Scancode::PageDown => return true,
+                sdl2::keyboard::Scancode::Left => return true,
+                sdl2::keyboard::Scancode::Up => return true,
+                sdl2::keyboard::Scancode::Right => return true,
+                sdl2::keyboard::Scancode::Down => return true,
+                sdl2::keyboard::Scancode::F1 => return true,
+                sdl2::keyboard::Scancode::F2 => return true,
+                sdl2::keyboard::Scancode::F3 => return true,
+                sdl2::keyboard::Scancode::F4 => return true,
+                sdl2::keyboard::Scancode::F5 => return true,
+                sdl2::keyboard::Scancode::F6 => return true,
+                sdl2::keyboard::Scancode::F7 => return true,
+                sdl2::keyboard::Scancode::F8 => return true,
+                sdl2::keyboard::Scancode::F9 => return true,
+                sdl2::keyboard::Scancode::F10 => return true,
+                _ => return false,
+            }
+        }
+
+        false
+    }
+
     fn convert_scancode(
         &self,
         scancode_option: Option<sdl2::keyboard::Scancode>,
@@ -484,7 +514,7 @@ impl Window {
                     };
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                    if key_event.character == '\n'
+                    if self.check_action_key(scancode)
                         || ((key_event.character == '\0' || key_event.character == '\u{0}')
                             && keymod != sdl2::keyboard::Mod::NOMOD)
                     {
