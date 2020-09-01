@@ -300,6 +300,9 @@ impl Window {
                 sdl2::keyboard::Scancode::Right => return true,
                 sdl2::keyboard::Scancode::Down => return true,
                 sdl2::keyboard::Scancode::Backspace => return true,
+                sdl2::keyboard::Scancode::Home => return true,
+                sdl2::keyboard::Scancode::LCtrl => return true,
+                sdl2::keyboard::Scancode::RCtrl => return true,
                 sdl2::keyboard::Scancode::F1 => return true,
                 sdl2::keyboard::Scancode::F2 => return true,
                 sdl2::keyboard::Scancode::F3 => return true,
@@ -516,8 +519,7 @@ impl Window {
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
                     if self.check_action_key(scancode)
-                        || ((key_event.character == '\0' || key_event.character == '\u{0}')
-                            && keymod != sdl2::keyboard::Mod::NOMOD)
+                        || (key_event.character == '\0' || key_event.character == '\u{0}')
                     {
                         events.push(key_event.to_event());
                     } else {
