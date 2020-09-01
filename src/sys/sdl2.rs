@@ -519,7 +519,8 @@ impl Window {
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
                     if self.check_action_key(scancode)
-                        || (key_event.character == '\0' || key_event.character == '\u{0}')
+                        || keymod != sdl2::keyboard::Mod::CAPSMOD
+                            && keymod != sdl2::keyboard::Mod::NOMOD
                     {
                         events.push(key_event.to_event());
                     } else {
