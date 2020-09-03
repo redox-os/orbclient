@@ -2,7 +2,7 @@ extern crate orbclient;
 
 use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window};
 
-fn main() {
+fn main() { 
     let (width, height) = orbclient::get_display_size().unwrap();
 
     let mut window = Window::new(
@@ -133,12 +133,12 @@ fn main() {
         for event in window.events() {
             match event.to_option() {
                 EventOption::Quit(_quit_event) => break 'events,
-                EventOption::Mouse(evt) => println!(
-                    "At position {:?} pixel color is : {:?}",
-                    (evt.x, evt.y),
-                    window.getpixel(evt.x, evt.y)
-                ),
-                event_option => println!("{:?}", event_option),
+                // EventOption::Mouse(evt) => println!(
+                //     "At position {:?} pixel color is : {:?}",
+                //     (evt.x, evt.y),
+                //     window.getpixel(evt.x, evt.y)
+                // ),
+                event_option =>  {}//println!("{:?}", event_option),
             }
         }
     }
