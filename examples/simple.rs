@@ -133,12 +133,12 @@ fn main() {
         for event in window.events() {
             match event.to_option() {
                 EventOption::Quit(_quit_event) => break 'events,
-                // EventOption::Mouse(evt) => println!(
-                //     "At position {:?} pixel color is : {:?}",
-                //     (evt.x, evt.y),
-                //     window.getpixel(evt.x, evt.y)
-                // ),
-                event_option =>  {}//println!("{:?}", event_option),
+                EventOption::Mouse(evt) => println!(
+                    "At position {:?} pixel color is : {:?}",
+                    (evt.x, evt.y),
+                    window.getpixel(evt.x, evt.y)
+                ),
+                event_option =>  println!("{:?}", event_option),
             }
         }
     }
