@@ -28,6 +28,18 @@ unsafe fn init() {
     }
 }
 
+// Call this when drop the sdl2 CTX.
+#[inline]
+unsafe fn drop_sdl2() {
+    if SDL_USAGES.load(Ordering::Relaxed) == 0 {
+        return;
+    }
+
+    drop(Box::from_raw(SDL_CTX));
+    drop(Box::from_raw(VIDEO_CTX));
+    drop(Box::from_raw(EVENT_PUMP));
+}
+
 pub fn get_display_size() -> Result<(u32, u32), String> {
     unsafe { init() };
     unsafe { &*VIDEO_CTX }
@@ -63,6 +75,14 @@ pub struct Window {
     key_event_correction: Cell<Option<KeyEvent>>,
     /// This is used to correct the character of the key up event depending on the correct text input
     last_text_input: Cell<Option<char>>,
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        unsafe {
+            drop_sdl2();
+        }
+    }
 }
 
 impl Renderer for Window {
