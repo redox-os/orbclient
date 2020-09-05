@@ -2,7 +2,7 @@ extern crate orbclient;
 
 use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window};
 
-fn main() {
+fn main() { 
     let (width, height) = orbclient::get_display_size().unwrap();
 
     let mut window = Window::new(
@@ -138,7 +138,7 @@ fn main() {
                     (evt.x, evt.y),
                     window.getpixel(evt.x, evt.y)
                 ),
-                event_option => println!("{:?}", event_option),
+                event_option =>  println!("{:?}", event_option),
             }
         }
     }
