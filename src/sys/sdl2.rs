@@ -211,6 +211,10 @@ impl Window {
         }
     }
 
+    pub fn event_sender(&self) -> sdl2::event::EventSender {
+        unsafe { &mut *SDL_CTX }.event().unwrap().event_sender()
+    }
+
     pub fn clipboard(&self) -> String {
         let result = unsafe { &*VIDEO_CTX }.clipboard().clipboard_text();
 
@@ -541,7 +545,8 @@ impl Window {
 
                     // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
                     if self.check_action_key(scancode)
-                        || (keymod != sdl2::keyboard::Mod::LSHIFTMOD && keymod != sdl2::keyboard::Mod::RSHIFTMOD
+                        || (keymod != sdl2::keyboard::Mod::LSHIFTMOD
+                            && keymod != sdl2::keyboard::Mod::RSHIFTMOD
                             && keymod != sdl2::keyboard::Mod::NOMOD)
                     {
                         events.push(key_event.to_event());
