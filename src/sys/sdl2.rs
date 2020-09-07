@@ -30,7 +30,7 @@ unsafe fn init() {
 
 // Call this when drop the sdl2 CTX.
 #[inline]
-unsafe fn drop_sdl2() {
+unsafe fn cleanup() {
     if SDL_USAGES.load(Ordering::Relaxed) == 0 {
         return;
     }
@@ -80,7 +80,7 @@ pub struct Window {
 impl Drop for Window {
     fn drop(&mut self) {
         unsafe {
-            drop_sdl2();
+            cleanup();
         }
     }
 }
