@@ -31,7 +31,7 @@ unsafe fn init() {
 // Call this when drop the sdl2 CTX.
 #[inline]
 unsafe fn cleanup() {
-    if SDL_USAGES.load(Ordering::Relaxed) == 0 {
+    if SDL_USAGES.fetch_add(0, Ordering::Relaxed) == 1 {
         return;
     }
 
