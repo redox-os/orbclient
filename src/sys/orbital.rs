@@ -143,7 +143,6 @@ impl Window {
                         offset: 0,
                         size: (w * h * 4) as usize,
                         flags: syscall::PROT_READ | syscall::PROT_WRITE,
-                        address: 0
                     },
                 )
             } {
@@ -256,7 +255,7 @@ impl Window {
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
         unsafe {
-            syscall::funmap(self.data.as_ptr() as usize, self.data.len())
+            syscall::funmap(self.data.as_ptr() as usize)
                 .expect("orbclient: failed to unmap memory in resize");
         }
         let _ = self
@@ -270,7 +269,6 @@ impl Window {
                     offset: 0,
                     size: (self.w * self.h * 4) as usize,
                     flags: syscall::PROT_READ | syscall::PROT_WRITE,
-                    address: 0
                 },
             )
             .expect("orbclient: failed to map memory in resize");
@@ -348,7 +346,7 @@ impl Window {
 
 impl Drop for Window {
     fn drop(&mut self) {
-        let _ = unsafe { syscall::funmap(self.data.as_ptr() as usize, self.data.len()) };
+        let _ = unsafe { syscall::funmap(self.data.as_ptr() as usize) };
     }
 }
 
