@@ -484,6 +484,9 @@ impl Window {
         };
 
         match event {
+            sdl2::event::Event::RenderTargetsReset { .. } => {
+                events.push(Event::new());
+            }
             sdl2::event::Event::Window { win_event, .. } => match win_event {
                 sdl2::event::WindowEvent::Moved(x, y) => {
                     events.push(MoveEvent { x: x, y: y }.to_event())
