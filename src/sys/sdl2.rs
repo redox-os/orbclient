@@ -71,10 +71,6 @@ pub struct Window {
     mouse_relative: bool,
     /// Content of the last drop (file | text) operation
     drop_content: RefCell<Option<String>>,
-    /// This is used to correct the character of the key down event depending on the correct text input
-    key_event_correction: Cell<Option<KeyEvent>>,
-    /// This is used to correct the character of the key up event depending on the correct text input
-    last_text_input: Cell<Option<char>>,
 }
 
 impl Drop for Window {
@@ -204,8 +200,6 @@ impl Window {
                 inner: window.into_canvas().software().build().unwrap(),
                 mouse_relative: false,
                 drop_content: RefCell::new(None),
-                key_event_correction: Cell::new(None),
-                last_text_input: Cell::new(None),
             }),
             Err(_) => None,
         }
@@ -308,42 +302,6 @@ impl Window {
     pub fn set_title(&mut self, title: &str) {
         let _ = self.inner.window_mut().set_title(title);
         self.sync_path();
-    }
-
-    fn check_action_key(&self, scancode_option: Option<sdl2::keyboard::Scancode>) -> bool {
-        if let Some(scancode) = scancode_option {
-            match scancode {
-                sdl2::keyboard::Scancode::Return => return true,
-                sdl2::keyboard::Scancode::Delete => return true,
-                sdl2::keyboard::Scancode::Escape => return true,
-                sdl2::keyboard::Scancode::Tab => return true,
-                sdl2::keyboard::Scancode::PageUp => return true,
-                sdl2::keyboard::Scancode::PageDown => return true,
-                sdl2::keyboard::Scancode::Left => return true,
-                sdl2::keyboard::Scancode::Up => return true,
-                sdl2::keyboard::Scancode::Right => return true,
-                sdl2::keyboard::Scancode::Down => return true,
-                sdl2::keyboard::Scancode::Backspace => return true,
-                sdl2::keyboard::Scancode::Home => return true,
-                sdl2::keyboard::Scancode::LCtrl => return true,
-                sdl2::keyboard::Scancode::RCtrl => return true,
-                sdl2::keyboard::Scancode::LShift => return true,
-                sdl2::keyboard::Scancode::RShift => return true,
-                sdl2::keyboard::Scancode::F1 => return true,
-                sdl2::keyboard::Scancode::F2 => return true,
-                sdl2::keyboard::Scancode::F3 => return true,
-                sdl2::keyboard::Scancode::F4 => return true,
-                sdl2::keyboard::Scancode::F5 => return true,
-                sdl2::keyboard::Scancode::F6 => return true,
-                sdl2::keyboard::Scancode::F7 => return true,
-                sdl2::keyboard::Scancode::F8 => return true,
-                sdl2::keyboard::Scancode::F9 => return true,
-                sdl2::keyboard::Scancode::F10 => return true,
-                _ => return false,
-            }
-        }
-
-        false
     }
 
     fn convert_scancode(
@@ -524,38 +482,34 @@ impl Window {
                 events.push(ScrollEvent { x: x, y: y }.to_event())
             }
             sdl2::event::Event::TextInput { text, .. } => {
-                // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                if let Some(mut key_event) = self.key_event_correction.get() {
-                    for c in text.chars() {
-                        key_event.character = c;
-                        break;
+                events.push(
+                    TextInputEvent {
+                        character: text.chars().nth(0).unwrap(),
                     }
+                    .to_event(),
+                );
+                // // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
+                // if let Some(mut key_event) = self.key_event_correction.get() {
+                //     for c in text.chars() {
+                //         key_event.character = c;
+                //         break;
+                //     }
 
-                    self.last_text_input.set(Some(key_event.character));
-                    events.push(key_event.to_event());
-                    self.key_event_correction.set(None);
-                }
+                //     self.last_text_input.set(Some(key_event.character));
+                //     events.push(key_event.to_event());
+                //     self.key_event_correction.set(None);
+                // }
             }
-            sdl2::event::Event::KeyDown {
-                scancode, keymod, ..
-            } => {
+            sdl2::event::Event::KeyDown { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
-                    let key_event = KeyEvent {
-                        character: code.0,
-                        scancode: code.1,
-                        pressed: true,
-                    };
-
-                    // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                    if self.check_action_key(scancode)
-                        || (keymod != sdl2::keyboard::Mod::LSHIFTMOD
-                            && keymod != sdl2::keyboard::Mod::RSHIFTMOD
-                            && keymod != sdl2::keyboard::Mod::NOMOD)
-                    {
-                        events.push(key_event.to_event());
-                    } else {
-                        self.key_event_correction.set(Some(key_event));
-                    }
+                    events.push(
+                        KeyEvent {
+                            character: code.0,
+                            scancode: code.1,
+                            pressed: true,
+                        }
+                        .to_event(),
+                    );
                 }
             }
             sdl2::event::Event::DropFile { filename, .. } => {
@@ -577,19 +531,9 @@ impl Window {
             }
             sdl2::event::Event::KeyUp { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
-                    let mut character = code.0;
-
-                    // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                    if character != '\0' || character == '\u{0}' {
-                        if let Some(last) = self.last_text_input.get() {
-                            character = last;
-                            self.last_text_input.set(None);
-                        }
-                    }
-
                     events.push(
                         KeyEvent {
-                            character,
+                            character: code.0,
                             scancode: code.1,
                             pressed: false,
                         }

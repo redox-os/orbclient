@@ -14,6 +14,7 @@ pub const EVENT_SCREEN: i64 = 9;
 pub const EVENT_CLIPBOARD: i64 = 10;
 pub const EVENT_MOUSE_RELATIVE: i64 = 11;
 pub const EVENT_DROP: i64 = 12;
+pub const EVENT_TEXT_INPUT: i64 = 13;
 pub const EVENT_CLIPBOARD_UPDATE: i64 = 14;
 
 /// An optional event
@@ -21,6 +22,8 @@ pub const EVENT_CLIPBOARD_UPDATE: i64 = 14;
 pub enum EventOption {
     /// A key event
     Key(KeyEvent),
+    /// A text input event
+    TextInput(TextInputEvent),
     /// A mouse event (absolute)
     Mouse(MouseEvent),
     /// A mouse event (relative)
@@ -76,6 +79,7 @@ impl Event {
         match self.code {
             EVENT_NONE => EventOption::None,
             EVENT_KEY => EventOption::Key(KeyEvent::from_event(self)),
+            EVENT_TEXT_INPUT => EventOption::TextInput(TextInputEvent::from_event(self)),
             EVENT_MOUSE => EventOption::Mouse(MouseEvent::from_event(self)),
             EVENT_MOUSE_RELATIVE => {
                 EventOption::MouseRelative(MouseRelativeEvent::from_event(self))
@@ -279,6 +283,29 @@ impl KeyEvent {
             character: char::from_u32(event.a as u32).unwrap_or('\0'),
             scancode: event.b as u8,
             pressed: event.b & 1 << 8 == 1 << 8,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct TextInputEvent {
+    pub character: char,
+}
+
+impl TextInputEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_TEXT_INPUT,
+            a: self.character as i64,
+            b: 0,
+        }
+    }
+
+    /// Convert from an `Event`
+    pub fn from_event(event: Event) -> TextInputEvent {
+        TextInputEvent {
+            character: char::from_u32(event.a as u32).unwrap_or('\0'),
         }
     }
 }
