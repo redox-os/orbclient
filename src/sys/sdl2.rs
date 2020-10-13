@@ -488,17 +488,6 @@ impl Window {
                     }
                     .to_event(),
                 );
-                // // workaround to get right character dependent on keyboard language settings (should be removed after keycode and keymap implementation is finished)
-                // if let Some(mut key_event) = self.key_event_correction.get() {
-                //     for c in text.chars() {
-                //         key_event.character = c;
-                //         break;
-                //     }
-
-                //     self.last_text_input.set(Some(key_event.character));
-                //     events.push(key_event.to_event());
-                //     self.key_event_correction.set(None);
-                // }
             }
             sdl2::event::Event::KeyDown { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
