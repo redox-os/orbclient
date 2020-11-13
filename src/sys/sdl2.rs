@@ -462,6 +462,7 @@ impl Window {
                 sdl2::event::WindowEvent::FocusLost => {
                     events.push(FocusEvent { focused: false }.to_event())
                 }
+                sdl2::event::WindowEvent::None => events.push(Event::new()),
                 _ => (),
             },
             sdl2::event::Event::ClipboardUpdate { .. } => {
