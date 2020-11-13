@@ -580,6 +580,11 @@ impl Window {
 
         iter
     }
+
+    /// Returns the id
+    pub fn id(&self) -> u32 {
+        self.inner.window().id()
+    }
 }
 
 unsafe impl raw_window_handle::HasRawWindowHandle for Window {
