@@ -16,6 +16,7 @@ pub const EVENT_MOUSE_RELATIVE: i64 = 11;
 pub const EVENT_DROP: i64 = 12;
 pub const EVENT_TEXT_INPUT: i64 = 13;
 pub const EVENT_CLIPBOARD_UPDATE: i64 = 14;
+pub const EVENT_HOVER: i64 = 15;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -48,6 +49,8 @@ pub enum EventOption {
     ClipboardUpdate(ClipboardUpdateEvent),
     /// A drop file / text event (available on linux, windows and macOS)
     Drop(DropEvent),
+    /// A hover event
+    Hover(HoverEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -96,6 +99,7 @@ impl Event {
                 EventOption::ClipboardUpdate(ClipboardUpdateEvent::from_event(self))
             }
             EVENT_DROP => EventOption::Drop(DropEvent::from_event(self)),
+            EVENT_HOVER => EventOption::Hover(HoverEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -604,6 +608,29 @@ impl DropEvent {
     pub fn from_event(event: Event) -> DropEvent {
         DropEvent {
             kind: event.a as u8,
+        }
+    }
+}
+
+/// A hover event
+#[derive(Copy, Clone, Debug)]
+pub struct HoverEvent {
+    /// True if window has been entered, false if exited
+    pub entered: bool,
+}
+
+impl HoverEvent {
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_HOVER,
+            a: self.entered as i64,
+            b: 0,
+        }
+    }
+
+    pub fn from_event(event: Event) -> HoverEvent {
+        HoverEvent {
+            entered: event.a > 0,
         }
     }
 }

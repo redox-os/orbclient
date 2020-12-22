@@ -462,6 +462,12 @@ impl Window {
                 sdl2::event::WindowEvent::FocusLost => {
                     events.push(FocusEvent { focused: false }.to_event())
                 }
+                sdl2::event::WindowEvent::Enter => {
+                    events.push(HoverEvent { entered: true }.to_event())
+                }
+                sdl2::event::WindowEvent::Leave => {
+                    events.push(HoverEvent { entered: false }.to_event())
+                }
                 sdl2::event::WindowEvent::None => events.push(Event::new()),
                 _ => (),
             },
