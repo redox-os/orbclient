@@ -12,20 +12,33 @@ impl Color {
     /// Create a new color from RGB
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Color {
+            #[cfg(not(target_arch = "wasm32"))]
             data: 0xFF000000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
+            #[cfg(target_arch = "wasm32")]
+            data: 0xFF000000 | ((b as u32) << 16) | ((g as u32) << 8) | (r as u32),
         }
     }
 
     /// Set the alpha
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
         Color {
+            #[cfg(not(target_arch = "wasm32"))]
             data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
+            #[cfg(target_arch = "wasm32")]
+            data: ((a as u32) << 24) | ((b as u32) << 16) | ((g as u32) << 8) | (r as u32),
         }
     }
 
     /// Get the r value
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn r(&self) -> u8 {
         ((self.data & 0x00FF0000) >> 16) as u8
+    }
+
+    /// Get the r value
+    #[cfg(target_arch = "wasm32")]
+    pub fn r(&self) -> u8 {
+        (self.data & 0x000000FF) as u8
     }
 
     /// Get the g value
@@ -34,8 +47,14 @@ impl Color {
     }
 
     /// Get the b value
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn b(&self) -> u8 {
         (self.data & 0x000000FF) as u8
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn b(&self) -> u8 {
+        ((self.data & 0x00FF0000) >> 16) as u8
     }
 
     /// Get the alpha value
@@ -80,5 +99,4 @@ mod tests {
         assert_eq!(false, Color::rgb(1, 2, 3) == Color::rgba(11, 2, 3, 200));
         assert_eq!(true, Color::rgba(1, 2, 3, 200) == Color::rgba(1, 2, 3, 200));
     }
-
 }

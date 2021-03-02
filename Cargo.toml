@@ -1,6 +1,6 @@
 [package]
 name = "orbclient"
-version = "0.3.30"
+version = "0.3.31"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 description = "The Orbital Client Library"
 documentation = "https://docs.rs/orbclient"
@@ -17,7 +17,7 @@ keywords = [
 name = "orbclient"
 path = "src/lib.rs"
 
-[target.'cfg(not(target_os = "redox"))'.dependencies]
+[target.'cfg(all(not(target_os = "redox"), not(target_arch = "wasm32")))'.dependencies]
 sdl2 = { version = "0.34", features = ["raw-window-handle"] }
 sdl2-sys = "0.34"
 libc = "0.2"
@@ -25,6 +25,35 @@ raw-window-handle = "0.3"
 
 [target.'cfg(target_os="redox")'.dependencies]
 redox_syscall = { version = "0.2.1" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.69"
+# js-sys = "0.3"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
+version = "0.3"
+features = [
+    "Node", 
+    "Element", 
+    "console", 
+    "CanvasRenderingContext2d", 
+    "Document",  
+    "Element", 
+    "ImageData", 
+    "HtmlCanvasElement", 
+    "HtmlElement", 
+    "Window", 
+    "CssStyleDeclaration", 
+    "MouseEvent", 
+    "KeyboardEvent", 
+    "WheelEvent",
+    "FocusEvent",
+    "DragEvent",
+    "DataTransfer",
+    "Navigator",
+    "Clipboard",
+    "DomRect"
+]
 
 [features]
 default = ["bundled"]

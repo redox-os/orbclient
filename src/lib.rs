@@ -17,6 +17,9 @@ pub use renderer::Renderer;
 #[cfg(not(feature = "no_std"))]
 pub use sys::{get_display_size, EventIter, Window};
 
+#[cfg(target_arch = "wasm32")]
+pub use sys::{animation_loop, log};
+
 #[cfg(not(feature = "no_std"))]
 mod blur;
 pub mod color;
@@ -41,10 +44,22 @@ pub enum Mode {
     Overwrite, //Replace
 }
 
-#[cfg(all(not(feature = "no_std"), target_os = "redox"))]
+#[cfg(all(
+    not(feature = "no_std"),
+    not(target_arch = "wasm32"),
+    target_os = "redox"
+))]
 #[path = "sys/orbital.rs"]
 mod sys;
 
-#[cfg(all(not(feature = "no_std"), not(target_os = "redox")))]
+#[cfg(all(
+    not(feature = "no_std"),
+    not(target_arch = "wasm32"),
+    not(target_os = "redox")
+))]
 #[path = "sys/sdl2.rs"]
+mod sys;
+
+#[cfg(target_arch = "wasm32")]
+#[path = "sys/web.rs"]
 mod sys;
