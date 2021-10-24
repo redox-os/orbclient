@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 extern crate sdl2;
 
 use std::cell::{Cell, RefCell};

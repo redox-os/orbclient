@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 extern crate wasm_bindgen;
 extern crate web_sys;
 

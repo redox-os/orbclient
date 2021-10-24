@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use core::cell::Cell;
 use core::cmp;
 

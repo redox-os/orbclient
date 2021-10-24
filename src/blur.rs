@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /*
 Inspired from http://blog.ivank.net/fastest-gaussian-blur.html the algorithm 4.
 The struct MathColor is needed for the calculate with bigger numbers, the Color struct save the r,g,b values with a u8.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #![crate_name = "orbclient"]
 #![crate_type = "lib"]
 #![cfg_attr(feature = "no_std", feature(alloc))]
