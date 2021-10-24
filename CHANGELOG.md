@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 
 * Change Rust edition from 2015 to 2018
+* Change `Color` from `repr(packed)` to `repr(transparent)`
 
 ## 0.3.31
 
