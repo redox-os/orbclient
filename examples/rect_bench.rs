@@ -40,6 +40,7 @@ fn main() {
 
     'events: loop {
         for event in window.events() {
+            #[allow(clippy::single_match)]
             match event.to_option() {
                 EventOption::Quit(_quit_event) => break 'events,
                 _ => (),

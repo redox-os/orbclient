@@ -10,7 +10,7 @@ extern crate alloc;
 #[cfg(not(feature = "no_std"))]
 extern crate core;
 
-pub static FONT: &'static [u8] = include_bytes!("../res/unifont.font");
+pub static FONT: &[u8] = include_bytes!("../res/unifont.font");
 
 pub use color::Color;
 pub use event::*;

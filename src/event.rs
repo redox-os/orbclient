@@ -68,6 +68,7 @@ pub struct Event {
     pub b: i64,
 }
 
+#[allow(clippy::new_without_default)]
 impl Event {
     /// Create a null event
     pub fn new() -> Event {
