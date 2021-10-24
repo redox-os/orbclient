@@ -6,8 +6,6 @@ use wasm_bindgen::prelude::*;
 
 use orbclient::{animation_loop, log, Color, EventOption, GraphicsPath, Mode, Renderer, Window};
 
-use std::panic;
-
 #[wasm_bindgen(start)]
 pub fn start() {
     console_error_panic_hook::set_once();

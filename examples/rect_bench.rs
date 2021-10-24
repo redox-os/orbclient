@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-extern crate orbclient;
-
 use orbclient::{Color, EventOption, Renderer, Window};
 
 macro_rules! time {

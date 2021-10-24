@@ -4,12 +4,12 @@ use core::cell::Cell;
 use core::cmp;
 
 #[cfg(not(feature = "no_std"))]
-use blur;
-use color::Color;
-use graphicspath::GraphicsPath;
-use graphicspath::PointType;
-use Mode;
-use FONT;
+use crate::blur;
+use crate::color::Color;
+use crate::graphicspath::GraphicsPath;
+use crate::graphicspath::PointType;
+use crate::Mode;
+use crate::FONT;
 
 pub trait Renderer {
     /// Get width

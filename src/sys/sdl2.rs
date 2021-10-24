@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-extern crate sdl2;
-
 use std::cell::{Cell, RefCell};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
-use color::Color;
-use event::*;
-use renderer::Renderer;
-use Mode;
-use WindowFlag;
+use crate::color::Color;
+use crate::event::*;
+use crate::renderer::Renderer;
+use crate::Mode;
+use crate::WindowFlag;
 
 static SDL_USAGES: AtomicUsize = AtomicUsize::new(0);
 /// SDL2 Context

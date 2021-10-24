@@ -9,7 +9,7 @@ The struct MathColor is needed for the calculate with bigger numbers, the Color 
 use alloc::vec::Vec;
 
 use core::ops::{Add, AddAssign, Sub};
-use Color;
+use crate::color::Color;
 
 #[derive(Copy, Clone)]
 pub struct MathColor {
