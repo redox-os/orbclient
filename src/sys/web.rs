@@ -1,19 +1,18 @@
-extern crate wasm_bindgen;
-extern crate web_sys;
+// SPDX-License-Identifier: MIT
 
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
 
-use self::wasm_bindgen::{prelude::*, Clamped, JsCast};
-use self::web_sys::{Document, HtmlCanvasElement, HtmlElement, Window as WebWindow};
+use wasm_bindgen::{prelude::*, Clamped, JsCast};
+use web_sys::{Document, HtmlCanvasElement, HtmlElement, Window as WebWindow};
 
-use color::Color;
-use event::*;
-use renderer::Renderer;
-use Mode;
-use WindowFlag;
+use crate::color::Color;
+use crate::event::*;
+use crate::renderer::Renderer;
+use crate::Mode;
+use crate::WindowFlag;
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let width = window()?

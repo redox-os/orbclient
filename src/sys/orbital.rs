@@ -1,4 +1,4 @@
-extern crate syscall;
+// SPDX-License-Identifier: MIT
 
 use std::cell::Cell;
 use std::fs::File;
@@ -6,11 +6,11 @@ use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
 use std::{env, mem, slice, thread};
 
-use color::Color;
-use event::{Event, EVENT_RESIZE};
-use renderer::Renderer;
-use Mode;
-use WindowFlag;
+use crate::color::Color;
+use crate::event::{Event, EVENT_RESIZE};
+use crate::renderer::Renderer;
+use crate::Mode;
+use crate::WindowFlag;
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = env::var("DISPLAY").or(Err("DISPLAY not set"))?;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 
@@ -15,6 +17,7 @@ pub struct GraphicsPath {
     pub points: Vec<(i32, i32, PointType)>,
 }
 
+#[allow(clippy::new_without_default)]
 impl GraphicsPath {
     pub fn new() -> GraphicsPath {
         GraphicsPath {
@@ -61,7 +64,7 @@ impl GraphicsPath {
             x += tt * (argx2 as f32);
             y += tt * (argy2 as f32);
 
-            t = t + 0.01;
+            t += 0.01;
             self.points.push((x as i32, y as i32, PointType::Connect));
         }
 
@@ -107,7 +110,7 @@ impl GraphicsPath {
             x += ttt * (argx3 as f32);
             y += ttt * (argy3 as f32);
 
-            t = t + 0.01;
+            t += 0.01;
             self.points.push((x as i32, y as i32, PointType::Connect));
         }
 

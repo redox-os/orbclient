@@ -1,4 +1,4 @@
-extern crate orbclient;
+// SPDX-License-Identifier: MIT
 
 use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window};
 

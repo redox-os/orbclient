@@ -1,9 +1,10 @@
-#[cfg(not(feature = "no_std"))]
-use std::fmt;
+// SPDX-License-Identifier: MIT
+
+use core::fmt;
 
 /// A color
 #[derive(Copy, Clone)]
-#[repr(packed)]
+#[repr(transparent)]
 pub struct Color {
     pub data: u32,
 }
@@ -83,7 +84,6 @@ impl PartialEq for Color {
     }
 }
 
-#[cfg(not(feature = "no_std"))]
 impl fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "{:#010X}", { self.data })
@@ -92,11 +92,21 @@ impl fmt::Debug for Color {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn partial_eq() {
-        use Color;
-        assert_eq!(true, Color::rgb(1, 2, 3) == Color::rgba(1, 2, 3, 200));
-        assert_eq!(false, Color::rgb(1, 2, 3) == Color::rgba(11, 2, 3, 200));
-        assert_eq!(true, Color::rgba(1, 2, 3, 200) == Color::rgba(1, 2, 3, 200));
+        assert_eq!(Color::rgb(1, 2, 3), Color::rgba(1, 2, 3, 200));
+        assert_ne!(Color::rgb(1, 2, 3), Color::rgba(11, 2, 3, 200));
+        assert_eq!(Color::rgba(1, 2, 3, 200), Color::rgba(1, 2, 3, 200));
+    }
+
+    #[test]
+    fn alignment() {
+        assert_eq!(4, core::mem::size_of::<Color>());
+        assert_eq!(8, core::mem::size_of::<[Color; 2]>());
+        assert_eq!(12, core::mem::size_of::<[Color; 3]>());
+        assert_eq!(16, core::mem::size_of::<[Color; 4]>());
+        assert_eq!(20, core::mem::size_of::<[Color; 5]>());
     }
 }

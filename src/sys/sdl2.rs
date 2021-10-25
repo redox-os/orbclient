@@ -1,14 +1,14 @@
-extern crate sdl2;
+// SPDX-License-Identifier: MIT
 
 use std::cell::{Cell, RefCell};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
-use color::Color;
-use event::*;
-use renderer::Renderer;
-use Mode;
-use WindowFlag;
+use crate::color::Color;
+use crate::event::*;
+use crate::renderer::Renderer;
+use crate::Mode;
+use crate::WindowFlag;
 
 static SDL_USAGES: AtomicUsize = AtomicUsize::new(0);
 /// SDL2 Context
@@ -23,8 +23,8 @@ static mut EVENT_PUMP: *mut sdl2::EventPump = ptr::null_mut();
 unsafe fn init() {
     if SDL_USAGES.fetch_add(1, Ordering::Relaxed) == 0 {
         SDL_CTX = Box::into_raw(Box::new(sdl2::init().unwrap()));
-        VIDEO_CTX = Box::into_raw(Box::new((&mut *SDL_CTX).video().unwrap()));
-        EVENT_PUMP = Box::into_raw(Box::new((&mut *SDL_CTX).event_pump().unwrap()));
+        VIDEO_CTX = Box::into_raw(Box::new((&*SDL_CTX).video().unwrap()));
+        EVENT_PUMP = Box::into_raw(Box::new((&*SDL_CTX).event_pump().unwrap()));
     }
 }
 
@@ -45,7 +45,6 @@ pub fn get_display_size() -> Result<(u32, u32), String> {
     unsafe { &*VIDEO_CTX }
         .display_bounds(0)
         .map(|rect| (rect.width(), rect.height()))
-        .map_err(|err| format!("{}", err))
 }
 
 /// A window
@@ -190,10 +189,10 @@ impl Window {
 
         match builder.build() {
             Ok(window) => Some(Window {
-                x: x,
-                y: y,
-                w: w,
-                h: h,
+                x,
+                y,
+                w,
+                h,
                 t: title.to_string(),
                 window_async,
                 mode: Cell::new(Mode::Blend),
@@ -432,14 +431,9 @@ impl Window {
         };
 
         let mods = unsafe { &mut *SDL_CTX }.keyboard().mod_state();
-        let shift = if mods.contains(sdl2::keyboard::Mod::CAPSMOD)
+        let shift = mods.contains(sdl2::keyboard::Mod::CAPSMOD)
             || mods.contains(sdl2::keyboard::Mod::LSHIFTMOD)
-            || mods.contains(sdl2::keyboard::Mod::RSHIFTMOD)
-        {
-            true
-        } else {
-            false
-        };
+            || mods.contains(sdl2::keyboard::Mod::RSHIFTMOD);
 
         match event {
             sdl2::event::Event::RenderTargetsReset { .. } => {
@@ -447,7 +441,7 @@ impl Window {
             }
             sdl2::event::Event::Window { win_event, .. } => match win_event {
                 sdl2::event::WindowEvent::Moved(x, y) => {
-                    events.push(MoveEvent { x: x, y: y }.to_event())
+                    events.push(MoveEvent { x, y }.to_event())
                 }
                 sdl2::event::WindowEvent::Resized(w, h) => events.push(
                     ResizeEvent {
@@ -480,18 +474,18 @@ impl Window {
                 if self.mouse_relative {
                     events.push(MouseRelativeEvent { dx: xrel, dy: yrel }.to_event())
                 } else {
-                    events.push(MouseEvent { x: x, y: y }.to_event())
+                    events.push(MouseEvent { x, y }.to_event())
                 }
             }
             sdl2::event::Event::MouseButtonDown { .. } => events.push(button_event()),
             sdl2::event::Event::MouseButtonUp { .. } => events.push(button_event()),
             sdl2::event::Event::MouseWheel { x, y, .. } => {
-                events.push(ScrollEvent { x: x, y: y }.to_event())
+                events.push(ScrollEvent { x, y }.to_event())
             }
             sdl2::event::Event::TextInput { text, .. } => {
                 events.push(
                     TextInputEvent {
-                        character: text.chars().nth(0).unwrap(),
+                        character: text.chars().next().unwrap(),
                     }
                     .to_event(),
                 );
@@ -513,7 +507,7 @@ impl Window {
 
                 let (x, y) = self.get_mouse_position();
 
-                events.push(MouseEvent { x: x, y: y }.to_event());
+                events.push(MouseEvent { x, y }.to_event());
 
                 events.push(DropEvent { kind: DROP_FILE }.to_event())
             }
@@ -522,7 +516,7 @@ impl Window {
 
                 let (x, y) = self.get_mouse_position();
 
-                events.push(MouseEvent { x: x, y: y }.to_event());
+                events.push(MouseEvent { x, y }.to_event());
                 events.push(DropEvent { kind: DROP_TEXT }.to_event())
             }
             sdl2::event::Event::KeyUp { scancode, .. } => {

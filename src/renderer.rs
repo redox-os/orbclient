@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: MIT
+
 use core::cell::Cell;
 use core::cmp;
 
 #[cfg(not(feature = "no_std"))]
-use blur;
-use color::Color;
-use graphicspath::GraphicsPath;
-use graphicspath::PointType;
-use Mode;
-use FONT;
+use crate::blur;
+use crate::color::Color;
+use crate::graphicspath::GraphicsPath;
+use crate::graphicspath::PointType;
+use crate::Mode;
+use crate::FONT;
 
 pub trait Renderer {
     /// Get width
@@ -42,7 +44,7 @@ pub trait Renderer {
         if x >= 0 && y >= 0 && x < w as i32 && y < h as i32 {
             let new = color.data;
             let alpha = (new >> 24) & 0xFF;
-            let old = unsafe { &mut data[y as usize * w as usize + x as usize].data };
+            let old = &mut data[y as usize * w as usize + x as usize].data;
 
             if alpha >= 255 || replace {
                 *old = new;
@@ -63,6 +65,8 @@ pub trait Renderer {
         let mut y = 0;
         let mut err = 0;
 
+        // https://github.com/rust-lang/rust-clippy/issues/5354
+        #[allow(clippy::comparison_chain)]
         while x >= y {
             if radius < 0 {
                 if parts & 1 << 0 != 0 {
@@ -230,7 +234,7 @@ pub trait Renderer {
     }
 
     fn lines(&mut self, points: &[[i32; 2]], color: Color) {
-        if points.len() == 0 {
+        if points.is_empty() {
             // when no points given, do nothing
         } else if points.len() == 1 {
             self.pixel(points[0][0], points[0][1], color);
@@ -253,9 +257,8 @@ pub trait Renderer {
         let mut y: i32 = 0;
 
         for point in graphicspath.points {
-            match point.2 {
-                PointType::Connect => self.line(x, y, point.0, point.1, color),
-                _ => {}
+            if let PointType::Connect = point.2 {
+                self.line(x, y, point.0, point.1, color)
             }
             x = point.0;
             y = point.1;
@@ -362,14 +365,15 @@ pub trait Renderer {
         for y in start_y..end_y {
             for x in start_x..end_x {
                 let a = blur_data[counter as usize];
-                let old = unsafe { &mut data[y as usize * self_w as usize + x as usize].data };
+                let old = &mut data[y as usize * self_w as usize + x as usize].data;
 
                 *old = a.data;
-                counter = counter + 1;
+                counter += 1;
             }
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[cfg(not(feature = "no_std"))]
     fn box_shadow(
         &mut self,
@@ -423,7 +427,7 @@ pub trait Renderer {
                 {
                     self.pixel(new_x_b, new_y_b, col);
                 }
-                counter = counter + 1;
+                counter += 1;
             }
         }
     }
@@ -527,7 +531,7 @@ pub trait Renderer {
                     let new = image_data[i].data;
                     let alpha = (new >> 24) & 0xFF;
                     if alpha > 0 && (start + k) < window_data.len() && (start + k) < stop {
-                        let old = unsafe { &mut window_data[start + k].data };
+                        let old = &mut window_data[start + k].data;
                         if alpha >= 255 {
                             *old = new;
                         } else {
@@ -548,6 +552,7 @@ pub trait Renderer {
     }
 
     /// Draw a linear gradient in a rectangular region
+    #[allow(clippy::too_many_arguments)]
     #[cfg(not(feature = "no_std"))]
     fn linear_gradient(
         &mut self,
@@ -624,6 +629,7 @@ pub trait Renderer {
     }
 
     /// Draw a rect with rounded corners
+    #[allow(clippy::too_many_arguments)]
     fn rounded_rect(
         &mut self,
         x: i32,

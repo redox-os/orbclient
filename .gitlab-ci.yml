@@ -1,11 +1,20 @@
-image: "redoxos/redoxer"
 
 build:linux:
+  image: "redoxos/redoxer"
   before_script:
   - apt-get install cmake -y
   script:
   - cargo build
 
 build:redox:
+  image: "redoxos/redoxer"
   script:
   - redoxer build
+
+build:wasm32:
+  image: "rust:latest"
+  before_script:
+  - rustup toolchain add stable
+  - rustup target add wasm32-unknown-unknown --toolchain stable
+  script:
+  - cargo +stable build --no-default-features --target wasm32-unknown-unknown
