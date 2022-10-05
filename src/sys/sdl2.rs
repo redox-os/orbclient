@@ -483,12 +483,14 @@ impl Window {
                 events.push(ScrollEvent { x, y }.to_event())
             }
             sdl2::event::Event::TextInput { text, .. } => {
-                events.push(
-                    TextInputEvent {
-                        character: text.chars().next().unwrap(),
-                    }
-                    .to_event(),
-                );
+                for character in text.chars() {
+                    events.push(
+                        TextInputEvent {
+                            character,
+                        }
+                        .to_event(),
+                    );
+                }
             }
             sdl2::event::Event::KeyDown { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
