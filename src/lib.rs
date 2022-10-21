@@ -6,7 +6,7 @@
 extern crate alloc;
 
 cfg_if::cfg_if! {
-    if #[cfg(all(feature = "std", feature = "sdl"))] {
+    if #[cfg(all(feature = "std", feature = "sdl", not(target_arch = "wasm"), not(target_os = "redox")))] {
         #[path = "sys/sdl2.rs"]
         mod sys;
         pub use sys::{get_display_size, EventIter, Window};

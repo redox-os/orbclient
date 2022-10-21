@@ -59,7 +59,7 @@ features = [
 ]
 
 [features]
-default = ["std"]
+default = ["std", "sdl"]
 std = []
 sdl = ["sdl2", "sdl2-sys", "libc", "raw-window-handle"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
