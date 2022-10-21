@@ -3,7 +3,7 @@
 use core::cell::Cell;
 use core::cmp;
 
-#[cfg(not(feature = "no_std"))]
+#[cfg(feature = "std")]
 use crate::blur;
 use crate::color::Color;
 use crate::graphicspath::GraphicsPath;
@@ -338,7 +338,7 @@ pub trait Renderer {
         //}
     }
 
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     fn box_blur(&mut self, x: i32, y: i32, w: u32, h: u32, r: i32) {
         let self_w = self.width();
         let self_h = self.height();
@@ -374,7 +374,7 @@ pub trait Renderer {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     fn box_shadow(
         &mut self,
         x: i32,
@@ -553,7 +553,7 @@ pub trait Renderer {
 
     /// Draw a linear gradient in a rectangular region
     #[allow(clippy::too_many_arguments)]
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     fn linear_gradient(
         &mut self,
         rect_x: i32,
@@ -677,7 +677,7 @@ pub trait Renderer {
     }
 
     /// Draws antialiased line
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     fn wu_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) {
         //adapted from https://rosettacode.org/wiki/Xiaolin_Wu's_line_algorithm#C.23
         let mut x0 = x0 as f64;
@@ -826,7 +826,7 @@ pub trait Renderer {
     }
 
     ///Draws antialiased circle
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     fn wu_circle(&mut self, x0: i32, y0: i32, radius: i32, color: Color) {
         let r = color.r();
         let g = color.g();

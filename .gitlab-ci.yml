@@ -18,3 +18,11 @@ build:wasm32:
   - rustup target add wasm32-unknown-unknown --toolchain stable
   script:
   - cargo +stable build --no-default-features --target wasm32-unknown-unknown
+
+build:no_std:
+  image: "rust:latest"
+  before_script:
+  - rustup toolchain add stable
+  - rustup target add thumbv6m-none-eabi --toolchain stable
+  script:
+  - cargo +stable build --no-default-features --target thumbv6m-none-eabi
