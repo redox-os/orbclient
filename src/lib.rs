@@ -6,11 +6,11 @@
 extern crate alloc;
 
 cfg_if::cfg_if! {
-    if #[cfg(all(feature = "std", feature = "sdl", not(target_arch = "wasm"), not(target_os = "redox")))] {
+    if #[cfg(all(feature = "std", feature = "sdl", not(target_arch = "wasm32"), not(target_os = "redox")))] {
         #[path = "sys/sdl2.rs"]
         mod sys;
         pub use sys::{get_display_size, EventIter, Window};
-    } else if #[cfg(all(feature = "std", not(target_arch = "wasm"), target_os = "redox"))] {
+    } else if #[cfg(all(feature = "std", not(target_arch = "wasm32"), target_os = "redox"))] {
         #[path = "sys/orbital.rs"]
         mod sys;
         pub use sys::{get_display_size, EventIter, Window};
