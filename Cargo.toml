@@ -18,18 +18,20 @@ keywords = [
 name = "orbclient"
 path = "src/lib.rs"
 
+[dependencies]
+cfg-if = "1.0"
+
 [target.'cfg(all(not(target_os = "redox"), not(target_arch = "wasm32")))'.dependencies]
-sdl2 = { version = "0.35.2", features = ["bundled", "static-link", "raw-window-handle"] }
-sdl2-sys = "0.35.2"
-libc = "0.2"
-raw-window-handle = "0.3"
+sdl2 = { version = "0.35.2", features = ["bundled", "static-link", "raw-window-handle"], optional = true }
+sdl2-sys = { version = "0.35.2", optional = true }
+libc = { version = "0.2", optional = true }
+raw-window-handle = { version = "0.3", optional = true }
 
 [target.'cfg(target_os="redox")'.dependencies]
 redox_syscall = { version = "0.2.1" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.69"
-# js-sys = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
 version = "0.3"
@@ -57,6 +59,7 @@ features = [
 ]
 
 [features]
-default = ["bundled"]
-bundled = ["sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
-no_std = []
+default = ["std"]
+std = []
+sdl = ["sdl2", "sdl2-sys", "libc", "raw-window-handle"]
+bundled = ["sdl", "sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
