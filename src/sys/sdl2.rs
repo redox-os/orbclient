@@ -264,6 +264,11 @@ impl Window {
         self.t.clone()
     }
 
+    /// Set async
+    pub fn set_async(&mut self, is_async: bool) {
+        self.window_async = is_async;
+    }
+
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
         unsafe { &mut *SDL_CTX }.mouse().show_cursor(visible);

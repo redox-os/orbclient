@@ -231,6 +231,12 @@ impl Window {
         self.t.clone()
     }
 
+    /// Set async
+    pub fn set_async(&mut self, is_async: bool) {
+        self.window_async = is_async;
+        let _ = self.file.write(if is_async { b"A,1" } else { b"A,0" });
+    }
+
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
         let _ = self.file.write(if visible { b"M,C,1" } else { b"M,C,0" });
