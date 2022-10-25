@@ -231,6 +231,11 @@ impl Window {
         self.t.clone()
     }
 
+    /// Get async
+    pub fn is_async(&self) -> bool {
+        self.window_async
+    }
+
     /// Set async
     pub fn set_async(&mut self, is_async: bool) {
         self.window_async = is_async;
