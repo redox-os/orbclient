@@ -21,6 +21,7 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(feature = "unifont")]
 pub static FONT: &[u8] = include_bytes!("../res/unifont.font");
 
 pub use color::Color;

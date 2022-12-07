@@ -9,7 +9,6 @@ use crate::color::Color;
 use crate::graphicspath::GraphicsPath;
 use crate::graphicspath::PointType;
 use crate::Mode;
-use crate::FONT;
 
 pub trait Renderer {
     /// Get width
@@ -266,12 +265,13 @@ pub trait Renderer {
     }
 
     /// Draw a character, using the loaded font
+    #[cfg(feature = "unifont")]
     fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         let mut offset = (c as usize) * 16;
         for row in 0..16 {
             let row_data;
-            if offset < FONT.len() {
-                row_data = FONT[offset];
+            if offset < crate::FONT.len() {
+                row_data = crate::FONT[offset];
             } else {
                 row_data = 0;
             }

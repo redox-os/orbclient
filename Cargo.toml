@@ -1,6 +1,6 @@
 [package]
 name = "orbclient"
-version = "0.3.41"
+version = "0.3.42"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 description = "The Orbital Client Library"
 documentation = "https://docs.rs/orbclient"
@@ -59,7 +59,8 @@ features = [
 ]
 
 [features]
-default = ["std", "sdl"]
+default = ["std", "sdl", "unifont"]
 std = []
 sdl = ["sdl2", "sdl2-sys", "libc", "raw-window-handle"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
+unifont = []
