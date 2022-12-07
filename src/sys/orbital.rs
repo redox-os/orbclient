@@ -346,12 +346,12 @@ impl Window {
     unsafe fn remap(&mut self) {
         self.unmap();
 
-        let size = (self.w * self.h * 4) as usize;
+        let size = (self.w * self.h) as usize;
         let address = syscall::fmap(
             self.file().as_raw_fd() as usize,
             &syscall::Map {
                 offset: 0,
-                size,
+                size: size * mem::size_of::<Color>(),
                 flags: syscall::PROT_READ | syscall::PROT_WRITE,
                 address: 0,
             },
@@ -365,8 +365,10 @@ impl Window {
 
     unsafe fn unmap(&mut self) {
         if let Some(data) = self.data_opt.take() {
-            syscall::funmap(data.as_ptr() as usize, data.len())
-                .expect("orbclient: failed to unmap memory");
+            syscall::funmap(
+                data.as_ptr() as usize,
+                data.len() * mem::size_of::<Color>()
+            ).expect("orbclient: failed to unmap memory");
         }
     }
 
