@@ -3,7 +3,7 @@
 use std::cell::Cell;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
+use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::{env, mem, slice, thread};
 
 use crate::color::Color;
@@ -58,9 +58,9 @@ pub struct Window {
     /// Drawing mode
     mode: Cell<Mode>,
     /// The input scheme
-    file: File,
+    file_opt: Option<File>,
     /// Window data
-    data: &'static mut [Color],
+    data_opt: Option<&'static mut [Color]>,
 }
 
 impl Renderer for Window {
@@ -76,17 +76,17 @@ impl Renderer for Window {
 
     /// Access pixel buffer
     fn data(&self) -> &[Color] {
-        &self.data
+        self.data_opt.as_ref().unwrap()
     }
 
     /// Access pixel buffer mutably
     fn data_mut(&mut self) -> &mut [Color] {
-        &mut self.data
+        self.data_opt.as_mut().unwrap()
     }
 
     /// Flip the buffer
     fn sync(&mut self) -> bool {
-        self.file.sync_data().is_ok()
+        self.file_mut().sync_data().is_ok()
     }
 
     /// Set/get mode
@@ -136,34 +136,20 @@ impl Window {
             "orbital:{}/{}/{}/{}/{}/{}",
             flag_str, x, y, w, h, title
         )) {
-            if let Ok(address) = unsafe {
-                syscall::fmap(
-                    file.as_raw_fd() as usize,
-                    &syscall::Map {
-                        offset: 0,
-                        size: (w * h * 4) as usize,
-                        flags: syscall::PROT_READ | syscall::PROT_WRITE,
-                        address: 0,
-                    },
-                )
-            } {
-                Some(Window {
-                    x: x,
-                    y: y,
-                    w: w,
-                    h: h,
-                    t: title.to_string(),
-                    window_async,
-                    resizable: resizable,
-                    mode: Cell::new(Mode::Blend),
-                    file: file,
-                    data: unsafe {
-                        slice::from_raw_parts_mut(address as *mut Color, (w * h) as usize)
-                    },
-                })
-            } else {
-                None
-            }
+            let mut window = Window {
+                x: x,
+                y: y,
+                w: w,
+                h: h,
+                t: title.to_string(),
+                window_async,
+                resizable: resizable,
+                mode: Cell::new(Mode::Blend),
+                file_opt: Some(file),
+                data_opt: None,
+            };
+            unsafe { window.remap(); }
+            Some(window)
         } else {
             None
         }
@@ -171,7 +157,7 @@ impl Window {
 
     pub fn clipboard(&self) -> String {
         let mut text = String::new();
-        let window_fd = self.file.as_raw_fd();
+        let window_fd = self.file().as_raw_fd();
         if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
             let _ = clipboard_file.read_to_string(&mut text);
@@ -180,7 +166,7 @@ impl Window {
     }
 
     pub fn set_clipboard(&mut self, text: &str) {
-        let window_fd = self.file.as_raw_fd();
+        let window_fd = self.file().as_raw_fd();
         if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
             let _ = clipboard_file.write(text.as_bytes());
@@ -195,10 +181,14 @@ impl Window {
     // TODO: Replace with smarter mechanism, maybe a move event?
     pub fn sync_path(&mut self) {
         let mut buf: [u8; 4096] = [0; 4096];
-        if let Ok(count) = syscall::fpath(self.file.as_raw_fd() as usize, &mut buf) {
+        if let Ok(count) = syscall::fpath(self.file().as_raw_fd() as usize, &mut buf) {
             let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
             // orbital:/x/y/w/h/t
-            let mut parts = path.split('/').skip(1);
+            let mut parts = path.split('/');
+            if let Some(flags) = parts.next() {
+                self.window_async = flags.contains('a');
+                self.resizable = flags.contains('r');
+            }
             if let Some(x) = parts.next() {
                 self.x = x.parse::<i32>().unwrap_or(0);
             }
@@ -210,6 +200,9 @@ impl Window {
             }
             if let Some(h) = parts.next() {
                 self.h = h.parse::<u32>().unwrap_or(0);
+            }
+            if let Some(t) = parts.next() {
+                self.t = t.to_string();
             }
         }
     }
@@ -239,60 +232,46 @@ impl Window {
     /// Set async
     pub fn set_async(&mut self, is_async: bool) {
         self.window_async = is_async;
-        let _ = self.file.write(if is_async { b"A,1" } else { b"A,0" });
+        let _ = self.file_mut().write(if is_async { b"A,1" } else { b"A,0" });
     }
 
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
-        let _ = self.file.write(if visible { b"M,C,1" } else { b"M,C,0" });
+        let _ = self.file_mut().write(if visible { b"M,C,1" } else { b"M,C,0" });
     }
 
     /// Set mouse grabbing
     pub fn set_mouse_grab(&mut self, grab: bool) {
-        let _ = self.file.write(if grab { b"M,G,1" } else { b"M,G,0" });
+        let _ = self.file_mut().write(if grab { b"M,G,1" } else { b"M,G,0" });
     }
 
     /// Set mouse relative mode
     pub fn set_mouse_relative(&mut self, relative: bool) {
-        let _ = self.file.write(if relative { b"M,R,1" } else { b"M,R,0" });
+        let _ = self.file_mut().write(if relative { b"M,R,1" } else { b"M,R,0" });
     }
 
     /// Set position
     pub fn set_pos(&mut self, x: i32, y: i32) {
-        let _ = self.file.write(&format!("P,{},{}", x, y).as_bytes());
+        let _ = self.file_mut().write(&format!("P,{},{}", x, y).as_bytes());
         self.sync_path();
     }
 
     /// Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
-        unsafe {
-            syscall::funmap(self.data.as_ptr() as usize, (self.w * self.h * 4) as usize)
-                .expect("orbclient: failed to unmap memory in resize");
-        }
+        unsafe { self.unmap(); }
+
         let _ = self
-            .file
+            .file_mut()
             .write(&format!("S,{},{}", width, height).as_bytes());
         self.sync_path();
-        unsafe {
-            let address = syscall::fmap(
-                self.file.as_raw_fd() as usize,
-                &syscall::Map {
-                    offset: 0,
-                    size: (self.w * self.h * 4) as usize,
-                    flags: syscall::PROT_READ | syscall::PROT_WRITE,
-                    address: 0,
-                },
-            )
-            .expect("orbclient: failed to map memory in resize");
-            self.data =
-                slice::from_raw_parts_mut(address as *mut Color, (self.w * self.h) as usize);
-        }
+
+        unsafe { self.remap(); }
     }
 
     /// Set title
     pub fn set_title(&mut self, title: &str) {
-        let _ = self.file.write(&format!("T,{}", title).as_bytes());
+        let _ = self.file_mut().write(&format!("T,{}", title).as_bytes());
         self.sync_path();
     }
 
@@ -319,7 +298,7 @@ impl Window {
                     iter.events[iter.count..].len() * mem::size_of::<Event>(),
                 )
             };
-            match self.file.read(bytes) {
+            match self.file_mut().read(bytes) {
                 Ok(0) => {
                     if !self.window_async && iter.extra.is_none() && iter.count == 0 {
                         thread::yield_now();
@@ -355,17 +334,79 @@ impl Window {
 
         iter
     }
+
+    fn file(&self) -> &File {
+        self.file_opt.as_ref().unwrap()
+    }
+
+    fn file_mut(&mut self) -> &mut File {
+        self.file_opt.as_mut().unwrap()
+    }
+
+    unsafe fn remap(&mut self) {
+        self.unmap();
+
+        let size = (self.w * self.h * 4) as usize;
+        let address = syscall::fmap(
+            self.file().as_raw_fd() as usize,
+            &syscall::Map {
+                offset: 0,
+                size,
+                flags: syscall::PROT_READ | syscall::PROT_WRITE,
+                address: 0,
+            },
+        )
+        .expect("orbclient: failed to map memory");
+
+        self.data_opt = Some(
+            slice::from_raw_parts_mut(address as *mut Color, size)
+        );
+    }
+
+    unsafe fn unmap(&mut self) {
+        if let Some(data) = self.data_opt.take() {
+            syscall::funmap(data.as_ptr() as usize, data.len())
+                .expect("orbclient: failed to unmap memory");
+        }
+    }
+
 }
 
 impl Drop for Window {
     fn drop(&mut self) {
-        let _ = unsafe { syscall::funmap(self.data.as_ptr() as usize, (self.w * self.h * 4) as usize) };
+        unsafe { self.unmap(); }
     }
 }
 
 impl AsRawFd for Window {
     fn as_raw_fd(&self) -> RawFd {
-        self.file.as_raw_fd()
+        self.file().as_raw_fd()
+    }
+}
+
+impl FromRawFd for Window {
+    unsafe fn from_raw_fd(fd: RawFd) -> Window {
+        let mut window = Window {
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0,
+            t: String::new(),
+            window_async: false,
+            resizable: false,
+            mode: Cell::new(Mode::Blend),
+            file_opt: Some(File::from_raw_fd(fd)),
+            data_opt: None,
+        };
+        window.sync_path();
+        window.remap();
+        window
+    }
+}
+
+impl IntoRawFd for Window {
+    fn into_raw_fd(mut self) -> RawFd {
+        self.file_opt.take().unwrap().into_raw_fd()
     }
 }
 
