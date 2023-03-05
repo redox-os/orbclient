@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 use core::fmt;
+use serde::de::{self, Deserializer};
+use serde::Deserialize;
 
 /// A color
 #[derive(Copy, Clone)]
@@ -90,9 +92,60 @@ impl fmt::Debug for Color {
     }
 }
 
+impl<'de> Deserialize<'de> for Color {
+    fn deserialize<D>(deserializer: D) -> Result<Color, D::Error>
+        where
+            D: Deserializer<'de>,
+    {
+        deserializer.deserialize_i32(ColorVisitor)
+    }
+}
+
+struct ColorVisitor;
+
+impl<'de> de::Visitor<'de> for ColorVisitor {
+    type Value = Color;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("Color specification in HEX format '#ARGB'")
+    }
+
+    fn visit_str<E>(self, color_spec: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+    {
+        let chars: Vec<char> = color_spec.chars().collect();
+
+        if chars.len() == 9 && chars[0] == '#' {
+            // TODO: Use slices or ranges in original String and avoid 4 String allocations here?
+            let channels: &[String; 4] = &[
+                chars[1..3].iter().collect(),
+                chars[3..5].iter().collect(),
+                chars[5..7].iter().collect(),
+                chars[7..9].iter().collect(),
+            ];
+
+            let a = u8::from_str_radix(&channels[0], 16)
+                .map_err(|e| E::custom(e))?;
+            let r = u8::from_str_radix(&channels[1], 16)
+                .map_err(|e| E::custom(e.to_string()))?;
+            let g = u8::from_str_radix(&channels[2], 16)
+                .map_err(|e| E::custom(e.to_string()))?;
+            let b = u8::from_str_radix(&channels[3], 16)
+                .map_err(|e| E::custom(e.to_string()))?;
+
+            Ok(Color::rgba(r, g, b, a))
+        } else {
+            Err(E::custom(format!("Invalid Color spec: '{}'", color_spec)))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_derive::Deserialize;
+    use toml;
 
     #[test]
     fn partial_eq() {
@@ -108,5 +161,54 @@ mod tests {
         assert_eq!(12, core::mem::size_of::<[Color; 3]>());
         assert_eq!(16, core::mem::size_of::<[Color; 4]>());
         assert_eq!(20, core::mem::size_of::<[Color; 5]>());
+    }
+
+    #[derive(Deserialize)]
+    struct TestColor {
+        color: Color,
+    }
+
+    #[test]
+    fn deserialize_ok() {
+        let color_spec = r##"color = "#00010203""##;
+        let test_color: TestColor = toml::from_str(color_spec).expect("Color spec did not parse correctly");
+        assert_eq!(test_color.color.a(), 0, "Alpha channel incorrect");
+        assert_eq!(test_color.color.r(), 1, "Red channel incorrect");
+        assert_eq!(test_color.color.g(), 2, "Green channel incorrect");
+        assert_eq!(test_color.color.b(), 3, "Blue channel incorrect");
+    }
+
+    #[test]
+    fn deserialize_hex() {
+        let color_spec = r##"color = "#AABBCCDD""##;
+        let _: TestColor = toml::from_str(color_spec).expect("Color spec did not parse HEX correctly");
+    }
+
+    #[test]
+    fn deserialize_no_hash() {
+        let color_spec = r##"color = "00010203""##;
+        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+        assert!(test_color.is_err(), "Color spec should not parse correctly without leading '#'");
+    }
+
+    #[test]
+    fn deserialize_not_hex() {
+        let color_spec = r##"color = "#GG010203""##;
+        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+        assert!(test_color.is_err(), "Color spec should not parse invalid HEX correctly");
+    }
+
+    #[test]
+    fn deserialize_str_too_long() {
+        let color_spec = r##"color = "#0001020304""##;
+        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+        assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
+    }
+
+    #[test]
+    fn deserialize_str_too_short() {
+        let color_spec = r##"color = "#000102""##;
+        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+        assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
     }
 }
