@@ -6,6 +6,11 @@ build:linux:
   script:
   - cargo build
 
+test:linux:
+  image: "redoxos/redoxer"
+  script:
+    - cargo test
+
 build:redox:
   image: "redoxos/redoxer"
   script:
