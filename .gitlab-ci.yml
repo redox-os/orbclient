@@ -8,6 +8,8 @@ build:linux:
 
 test:linux:
   image: "redoxos/redoxer"
+  before_script:
+    - apt-get install cmake -y
   script:
     - cargo test
 
