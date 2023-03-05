@@ -114,31 +114,21 @@ impl<'de> de::Visitor<'de> for ColorVisitor {
         where
             E: de::Error,
     {
-        let chars: Vec<char> = color_spec.chars().collect();
-
-        if chars[0] != '#' {
-            return Err(E::custom(format!("Color spec must begin with '#' ('{}')", color_spec)));
-        }
-
-        if chars.len() != 9 {
+        if color_spec.len() != 9 {
             return Err(E::custom(format!("Color spec must be of format '#AARRGGBB' ('{}')", color_spec)))
         }
 
-        // TODO: Use slices or ranges in original String and avoid 4 String allocations here?
-        let channels: &[String; 4] = &[
-            chars[1..3].iter().collect(),
-            chars[3..5].iter().collect(),
-            chars[5..7].iter().collect(),
-            chars[7..9].iter().collect(),
-        ];
+        if &color_spec[0..1] != "#" {
+            return Err(E::custom(format!("Color spec must begin with '#' ('{}')", color_spec)));
+        }
 
-        let a = u8::from_str_radix(&channels[0], 16)
+        let a = u8::from_str_radix(&color_spec[1..3], 16)
             .map_err(|e| E::custom(e))?;
-        let r = u8::from_str_radix(&channels[1], 16)
+        let r = u8::from_str_radix(&color_spec[3..5], 16)
             .map_err(|e| E::custom(e.to_string()))?;
-        let g = u8::from_str_radix(&channels[2], 16)
+        let g = u8::from_str_radix(&color_spec[5..7], 16)
             .map_err(|e| E::custom(e.to_string()))?;
-        let b = u8::from_str_radix(&channels[3], 16)
+        let b = u8::from_str_radix(&color_spec[7..9], 16)
             .map_err(|e| E::custom(e.to_string()))?;
 
         Ok(Color::rgba(r, g, b, a))
@@ -190,7 +180,7 @@ mod tests {
 
     #[test]
     fn deserialize_no_hash() {
-        let color_spec = r##"color = "00010203""##;
+        let color_spec = r##"color = "$00010203""##;
         let test_color: Result<TestColor, _> = toml::from_str(color_spec);
         assert!(test_color.is_err(), "Color spec should not parse correctly without leading '#'");
         assert!(test_color.err().unwrap().to_string().contains("must begin with '#'"));
