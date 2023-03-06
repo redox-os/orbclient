@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 use core::fmt;
+#[cfg(feature = "serde")]
 use serde::de::{self, Deserializer};
+#[cfg(feature = "serde")]
 use serde::Deserialize;
 
 /// A color
@@ -92,6 +94,7 @@ impl fmt::Debug for Color {
     }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Color {
     fn deserialize<D>(deserializer: D) -> Result<Color, D::Error>
         where
@@ -101,8 +104,10 @@ impl<'de> Deserialize<'de> for Color {
     }
 }
 
+#[cfg(feature = "serde")]
 struct ColorVisitor;
 
+#[cfg(feature = "serde")]
 impl<'de> de::Visitor<'de> for ColorVisitor {
     type Value = Color;
 
@@ -138,8 +143,6 @@ impl<'de> de::Visitor<'de> for ColorVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_derive::Deserialize;
-    use toml;
 
     #[test]
     fn partial_eq() {
@@ -157,56 +160,63 @@ mod tests {
         assert_eq!(20, core::mem::size_of::<[Color; 5]>());
     }
 
-    #[derive(Deserialize)]
-    struct TestColor {
-        color: Color,
-    }
+    #[cfg(features = "serde")]
+    mod serde {
+        use serde_derive::Deserialize;
+        use toml;
+        use crate::Color;
 
-    #[test]
-    fn deserialize_ok() {
-        let color_spec = r##"color = "#00010203""##;
-        let test_color: TestColor = toml::from_str(color_spec).expect("Color spec did not parse correctly");
-        assert_eq!(test_color.color.a(), 0, "Alpha channel incorrect");
-        assert_eq!(test_color.color.r(), 1, "Red channel incorrect");
-        assert_eq!(test_color.color.g(), 2, "Green channel incorrect");
-        assert_eq!(test_color.color.b(), 3, "Blue channel incorrect");
-    }
+        #[derive(Deserialize)]
+        struct TestColor {
+            color: Color,
+        }
 
-    #[test]
-    fn deserialize_hex() {
-        let color_spec = r##"color = "#AABBCCDD""##;
-        let _: TestColor = toml::from_str(color_spec).expect("Color spec did not parse HEX correctly");
-    }
+        #[test]
+        fn deserialize_ok() {
+            let color_spec = r##"color = "#00010203""##;
+            let test_color: TestColor = toml::from_str(color_spec).expect("Color spec did not parse correctly");
+            assert_eq!(test_color.color.a(), 0, "Alpha channel incorrect");
+            assert_eq!(test_color.color.r(), 1, "Red channel incorrect");
+            assert_eq!(test_color.color.g(), 2, "Green channel incorrect");
+            assert_eq!(test_color.color.b(), 3, "Blue channel incorrect");
+        }
 
-    #[test]
-    fn deserialize_no_hash() {
-        let color_spec = r##"color = "$00010203""##;
-        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
-        assert!(test_color.is_err(), "Color spec should not parse correctly without leading '#'");
-        assert!(test_color.err().unwrap().to_string().contains("must begin with '#'"));
-    }
+        #[test]
+        fn deserialize_hex() {
+            let color_spec = r##"color = "#AABBCCDD""##;
+            let _: TestColor = toml::from_str(color_spec).expect("Color spec did not parse HEX correctly");
+        }
 
-    #[test]
-    fn deserialize_not_hex() {
-        let color_spec = r##"color = "#GG010203""##;
-        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
-        assert!(test_color.is_err(), "Color spec should not parse invalid HEX correctly");
-        assert!(test_color.err().unwrap().to_string().contains("invalid digit"));
-    }
+        #[test]
+        fn deserialize_no_hash() {
+            let color_spec = r##"color = "$00010203""##;
+            let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+            assert!(test_color.is_err(), "Color spec should not parse correctly without leading '#'");
+            assert!(test_color.err().unwrap().to_string().contains("must begin with '#'"));
+        }
 
-    #[test]
-    fn deserialize_str_too_long() {
-        let color_spec = r##"color = "#0001020304""##;
-        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
-        assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
-        assert!(test_color.err().unwrap().to_string().contains("must be of format '#AARRGGBB'"));
-    }
+        #[test]
+        fn deserialize_not_hex() {
+            let color_spec = r##"color = "#GG010203""##;
+            let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+            assert!(test_color.is_err(), "Color spec should not parse invalid HEX correctly");
+            assert!(test_color.err().unwrap().to_string().contains("invalid digit"));
+        }
 
-    #[test]
-    fn deserialize_str_too_short() {
-        let color_spec = r##"color = "#000102""##;
-        let test_color: Result<TestColor, _> = toml::from_str(color_spec);
-        assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
-        assert!(test_color.err().unwrap().to_string().contains("must be of format '#AARRGGBB'"));
+        #[test]
+        fn deserialize_str_too_long() {
+            let color_spec = r##"color = "#0001020304""##;
+            let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+            assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
+            assert!(test_color.err().unwrap().to_string().contains("must be of format '#AARRGGBB'"));
+        }
+
+        #[test]
+        fn deserialize_str_too_short() {
+            let color_spec = r##"color = "#000102""##;
+            let test_color: Result<TestColor, _> = toml::from_str(color_spec);
+            assert!(test_color.is_err(), "Color spec should not parse invalid spec correctly");
+            assert!(test_color.err().unwrap().to_string().contains("must be of format '#AARRGGBB'"));
+        }
     }
 }
