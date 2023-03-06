@@ -20,7 +20,7 @@ build:redox:
 build:no_std:
   image: "rust:latest"
   before_script:
-  - rustup toolchain add stable
+  - rustup toolchain add nightly
   - rustup target add thumbv6m-none-eabi --toolchain nightly
   script:
   - cargo +nightly build --no-default-features --target thumbv6m-none-eabi
