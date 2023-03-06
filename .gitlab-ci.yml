@@ -1,28 +1,26 @@
-
 build:linux:
   image: "redoxos/redoxer"
   before_script:
   - apt-get install cmake -y
   script:
-  - cargo build
+  - cargo +nightly build --all-features
+
+test:linux:
+  image: "redoxos/redoxer"
+  before_script:
+    - apt-get install cmake -y
+  script:
+    - cargo +nightly test --all-features
 
 build:redox:
   image: "redoxos/redoxer"
   script:
   - redoxer build
 
-build:wasm32:
-  image: "rust:latest"
-  before_script:
-  - rustup toolchain add stable
-  - rustup target add wasm32-unknown-unknown --toolchain stable
-  script:
-  - cargo +stable build --no-default-features --target wasm32-unknown-unknown
-
 build:no_std:
   image: "rust:latest"
   before_script:
-  - rustup toolchain add stable
-  - rustup target add thumbv6m-none-eabi --toolchain stable
+  - rustup toolchain add nightly
+  - rustup target add thumbv6m-none-eabi --toolchain nightly
   script:
-  - cargo +stable build --no-default-features --target thumbv6m-none-eabi
+  - cargo +nightly build --no-default-features --target thumbv6m-none-eabi

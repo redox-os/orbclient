@@ -6,6 +6,11 @@ The Orbital Client Library. Compatible with Redox and SDL2.
 [![crates.io](http://meritbadge.herokuapp.com/orbclient)](https://crates.io/crates/orbclient)
 [![docs.rs](https://docs.rs/orbclient/badge.svg)](https://docs.rs/orbclient)
 
+## Features
+The "serde" feature can be used to include code for `Color` deserialization using the `serde` crate (which is an 
+optional dependency). This is not enabled by default. To enable, either build using the `--features "serde"` command
+line option, or use `features = ["serde"]` in your crate, where it declares a dependency on orbclient.
+
 ## Platform notes 
 
 ### Web

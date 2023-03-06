@@ -11,3 +11,6 @@
 Cargo.lock
 target/
 node_modules/
+
+# IDE fiels
+.idea/
