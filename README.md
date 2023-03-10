@@ -31,4 +31,9 @@ line option, or use `features = ["serde"]` in your crate, where it declares a de
   * Don't forget to update the ```nightly``` version of Rust with ```rustup update nightly```
 * SDL2 should be automatically with orbclient if you have trouble try to install it ```libsdl2-dev``` manually   
   * For example, with Ubuntu, please to type ```sudo apt-get install libsdl2-dev``` in your console
+* On fedora please type ```sudo dnf install SDL2-devel SDL2-static``` in your console before building.
+  * if during building, this message comes up ```could not find native static library `SDL2main`, perhaps an -L flag is missing?```.
+   Providing the path to the static library might help. You can provide this path via ```RUSTFLAGS='-L <path-to-folder-with-libSDL2.a>' cargo b ...```.
+   At the moment of writing, the SDL2 library is stored under **/usr/lib64** on fedora. In this case you would type ```RUSTFLAGS='-L /usr/lib64' cargo r --example simple``` 
+   to start the simple example.
 * Other problem? Do not hesitate to create a new issue!
