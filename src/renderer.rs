@@ -269,17 +269,16 @@ pub trait Renderer {
     fn char(&mut self, x: i32, y: i32, c: char, color: Color) {
         let mut offset = (c as usize) * 16;
         for row in 0..16 {
-            let row_data;
-            if offset < crate::FONT.len() {
-                row_data = crate::FONT[offset];
+            let row_data = if offset < crate::FONT.len() {
+                crate::FONT[offset]
             } else {
-                row_data = 0;
-            }
+                0
+            };
 
             for col in 0..8 {
                 let pixel = (row_data >> (7 - col)) & 1;
                 if pixel > 0 {
-                    self.pixel(x + col as i32, y + row as i32, color);
+                    self.pixel(x + col, y + row, color);
                 }
             }
             offset += 1;
@@ -404,11 +403,11 @@ pub trait Renderer {
             }
         }
 
-        blur::gauss_blur(&mut blur_data, real_w as u32, real_h as u32, r as f32 / 3.0);
+        blur::gauss_blur(&mut blur_data, real_w, real_h, r as f32 / 3.0);
 
         let mut counter: u32 = 0;
-        for new_x in (x - r)..(x + real_w as i32 - r) as i32 {
-            for new_y in (y - r)..(y + real_h as i32 - r) as i32 {
+        for new_x in (x - r)..(x + real_w as i32 - r) {
+            for new_y in (y - r)..(y + real_h as i32 - r) {
                 let c = blur_data[counter as usize];
 
                 let alpha: u8 = if color.a() < 255 - c.r() {
@@ -736,11 +735,11 @@ pub trait Renderer {
         let dy = y1 - y0;
         let gradient = dy / dx;
 
-        let mut xend: f64 = (x0 as f64).round();
+        let mut xend: f64 = x0.round();
         let mut yend: f64 = y0 + gradient * (xend - x0);
         let mut xgap: f64 = rfpart(x0 + 0.5);
         let xpixel1 = xend as i32;
-        let ypixel1 = (ipart(yend)) as i32;
+        let ypixel1 = ipart(yend);
 
         if steep {
             self.pixel(
@@ -770,7 +769,7 @@ pub trait Renderer {
         yend = y1 + gradient * (xend - x1);
         xgap = fpart(x1 + 0.5);
         let xpixel2 = xend as i32;
-        let ypixel2 = ipart(yend) as i32;
+        let ypixel2 = ipart(yend) ;
         if steep {
             self.pixel(
                 ypixel2,
@@ -797,12 +796,12 @@ pub trait Renderer {
         if steep {
             for x in (xpixel1 + 1)..(xpixel2) {
                 self.pixel(
-                    ipart(intery) as i32,
+                    ipart(intery),
                     x,
                     Color::rgba(r, g, b, chkalpha(a * rfpart(intery))),
                 );
                 self.pixel(
-                    ipart(intery) as i32 + 1,
+                    ipart(intery) + 1,
                     x,
                     Color::rgba(r, g, b, chkalpha(a * fpart(intery))),
                 );
@@ -812,12 +811,12 @@ pub trait Renderer {
             for x in (xpixel1 + 1)..(xpixel2) {
                 self.pixel(
                     x,
-                    ipart(intery) as i32,
+                    ipart(intery),
                     Color::rgba(r, g, b, chkalpha(a * rfpart(intery))),
                 );
                 self.pixel(
                     x,
-                    ipart(intery) as i32 + 1,
+                    ipart(intery) + 1,
                     Color::rgba(r, g, b, chkalpha(a * fpart(intery))),
                 );
                 intery += gradient;
