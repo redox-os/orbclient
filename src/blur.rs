@@ -72,9 +72,9 @@ impl Sub for MathColor {
     }
 }
 
-pub fn gauss_blur(data: &mut Vec<Color>, w: u32, h: u32, r: f32) {
+pub fn gauss_blur(data: &mut [Color], w: u32, h: u32, r: f32) {
     let bxs = boxes_for_gauss(r, 3);
-    let mut tcl = data.clone();
+    let mut tcl = data.to_owned();
 
     box_blur(
         &mut tcl,
@@ -121,13 +121,13 @@ fn boxes_for_gauss(sigma: f32, n: usize) -> Vec<i32> {
     sizes
 }
 
-fn box_blur(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
+fn box_blur(tcl: &mut [Color], scl: &mut [Color], w: usize, h: usize, r: usize) {
     box_blur_t(scl, tcl, w, h, r);
     box_blur_h(tcl, scl, w, h, r);
 }
 
 #[inline(always)]
-fn box_blur_h(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
+fn box_blur_h(tcl: &mut [Color], scl: &mut [Color], w: usize, h: usize, r: usize) {
     let iarr: f32 = 1.0 / (r + r + 1) as f32;
 
     for i in 0..h {
@@ -172,7 +172,7 @@ fn box_blur_h(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r:
 }
 
 #[inline(always)]
-fn box_blur_t(tcl: &mut Vec<Color>, scl: &mut Vec<Color>, w: usize, h: usize, r: usize) {
+fn box_blur_t(tcl: &mut [Color], scl: &mut [Color], w: usize, h: usize, r: usize) {
     let iarr: f32 = 1.0 / (r + r + 1) as f32;
 
     for i in 0..w {
