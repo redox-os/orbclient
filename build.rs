@@ -1,5 +1,5 @@
 fn main() {
-    if cfg!(target_os = "macos") {
+    if std::env::var("CARGO_CFG_TARGET_OS") == Ok("macos".to_string()) {
         println!("cargo:rustc-link-lib=framework=CoreHaptics");
     }
 }
