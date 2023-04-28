@@ -18,46 +18,14 @@ keywords = [
 name = "orbclient"
 path = "src/lib.rs"
 
-[dependencies]
-cfg-if = "1.0"
-serde = {version = "1", optional = true}
-
-[target.'cfg(all(not(target_os = "redox"), not(target_arch = "wasm32")))'.dependencies]
-sdl2 = { version = "0.35.2", features = ["bundled", "static-link", "raw-window-handle"], optional = true }
+[target.'cfg(not(target_os = "redox"))'.dependencies]
+sdl2 = { version = "0.35.2", optional = true }
 sdl2-sys = { version = "0.35.2", optional = true }
 libc = { version = "0.2", optional = true }
-raw-window-handle = { version = "0.3", optional = true }
+raw-window-handle = { version = "0.5.2", optional = true }
 
 [target.'cfg(target_os="redox")'.dependencies]
-redox_syscall = { version = "0.2.1" }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.69"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
-version = "0.3"
-features = [
-    "Node",
-    "Element",
-    "console",
-    "CanvasRenderingContext2d",
-    "Document",
-    "Element",
-    "ImageData",
-    "HtmlCanvasElement",
-    "HtmlElement",
-    "Window",
-    "CssStyleDeclaration",
-    "MouseEvent",
-    "KeyboardEvent",
-    "WheelEvent",
-    "FocusEvent",
-    "DragEvent",
-    "DataTransfer",
-    "Navigator",
-    "Clipboard",
-    "DomRect"
-]
+redox_syscall = { version = "0.3.5" }
 
 [dev-dependencies]
 toml = "0.7"
@@ -66,6 +34,15 @@ serde_derive = "1.0"
 [features]
 default = ["std", "sdl", "unifont"]
 std = []
-sdl = ["sdl2", "sdl2-sys", "libc", "raw-window-handle"]
+sdl = ["sdl2", "sdl2-sys", "libc"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
 unifont = []
+
+# This is required to fix a problem compiling sdl2 v0.35.2 on macos with clang14
+# until the rust-sdl project publishes a new version on crates.io with the fix that is in HEAD of Master
+# See issues https://github.com/Rust-SDL2/rust-sdl2/issues/1302 where reported to them, and comment
+# https://github.com/Rust-SDL2/rust-sdl2/issues/1302#issuecomment-1525745146 that indicates that a release may not
+# be forthcoming very soon, hence this patch as a workaround.
+[patch.crates-io]
+sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2.git" }
+sdl2-sys = { git = "https://github.com/Rust-SDL2/rust-sdl2.git" }

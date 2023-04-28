@@ -5,21 +5,16 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
-cfg_if::cfg_if! {
-    if #[cfg(all(feature = "std", feature = "sdl", not(target_arch = "wasm32"), not(target_os = "redox")))] {
-        #[path = "sys/sdl2.rs"]
-        mod sys;
-        pub use sys::{get_display_size, EventIter, Window};
-    } else if #[cfg(all(feature = "std", not(target_arch = "wasm32"), target_os = "redox"))] {
-        #[path = "sys/orbital.rs"]
-        mod sys;
-        pub use sys::{get_display_size, EventIter, Window};
-    } else if #[cfg(target_arch = "wasm32")] {
-        #[path = "sys/web.rs"]
-        mod sys;
-        pub use sys::{animation_loop, log, get_display_size, EventIter, Window};
-    }
-}
+#[cfg(all(feature = "std", not(target_os = "redox")))]
+#[path = "sys/sdl2.rs"]
+mod sys;
+
+#[cfg(all(feature = "std", target_os = "redox"))]
+#[path = "sys/orbital.rs"]
+mod sys;
+
+#[cfg(feature = "std")]
+pub use sys::{get_display_size, EventIter, Window};
 
 #[cfg(feature = "unifont")]
 pub static FONT: &[u8] = include_bytes!("../res/unifont.font");
