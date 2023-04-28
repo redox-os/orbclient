@@ -23,8 +23,8 @@ static mut EVENT_PUMP: *mut sdl2::EventPump = ptr::null_mut();
 unsafe fn init() {
     if SDL_USAGES.fetch_add(1, Ordering::Relaxed) == 0 {
         SDL_CTX = Box::into_raw(Box::new(sdl2::init().unwrap()));
-        VIDEO_CTX = Box::into_raw(Box::new((&*SDL_CTX).video().unwrap()));
-        EVENT_PUMP = Box::into_raw(Box::new((&*SDL_CTX).event_pump().unwrap()));
+        VIDEO_CTX = Box::into_raw(Box::new((*SDL_CTX).video().unwrap()));
+        EVENT_PUMP = Box::into_raw(Box::new((*SDL_CTX).event_pump().unwrap()));
     }
 }
 
@@ -40,6 +40,7 @@ unsafe fn cleanup() {
     drop(Box::from_raw(EVENT_PUMP));
 }
 
+/// Return the (width, height) of the display in pixels
 pub fn get_display_size() -> Result<(u32, u32), String> {
     unsafe { init() };
     unsafe { &*VIDEO_CTX }
@@ -596,12 +597,6 @@ impl Window {
     /// Returns the id
     pub fn id(&self) -> u32 {
         self.inner.window().id()
-    }
-}
-
-unsafe impl raw_window_handle::HasRawWindowHandle for Window {
-    fn raw_window_handle(&self) -> raw_window_handle::RawWindowHandle {
-        self.inner.window().raw_window_handle()
     }
 }
 

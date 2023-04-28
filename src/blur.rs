@@ -17,6 +17,7 @@ pub struct MathColor {
     pub g: isize,
     pub b: isize,
 }
+
 impl MathColor {
     pub fn new(color: Color) -> Self {
         MathColor {
