@@ -351,7 +351,7 @@ impl Window {
             self.file().as_raw_fd() as usize,
             &syscall::Map {
                 offset: 0,
-                size: size * mem::size_of::<Color>(),
+                size: next_multiple_of(size * mem::size_of::<Color>(), syscall::PAGE_SIZE),
                 flags: syscall::PROT_READ | syscall::PROT_WRITE,
                 address: 0,
             },
@@ -367,7 +367,7 @@ impl Window {
         if let Some(data) = self.data_opt.take() {
             syscall::funmap(
                 data.as_ptr() as usize,
-                data.len() * mem::size_of::<Color>()
+                next_multiple_of(data.len() * mem::size_of::<Color>(), syscall::PAGE_SIZE),
             ).expect("orbclient: failed to unmap memory");
         }
     }
@@ -437,4 +437,9 @@ impl Iterator for EventIter {
         }
         None
     }
+}
+
+// TODO: Use libcore API once #![feature(int_roundings)] is stabilized.
+fn next_multiple_of(value: usize, size: usize) -> usize {
+    ((value + size - 1) / size) * size
 }
