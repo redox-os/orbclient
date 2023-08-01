@@ -352,7 +352,7 @@ impl Window {
             &syscall::Map {
                 offset: 0,
                 size: next_multiple_of(size * mem::size_of::<Color>(), syscall::PAGE_SIZE),
-                flags: syscall::PROT_READ | syscall::PROT_WRITE,
+                flags: syscall::PROT_READ | syscall::PROT_WRITE | syscall::MAP_SHARED,
                 address: 0,
             },
         )
