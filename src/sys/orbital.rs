@@ -6,6 +6,8 @@ use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::{env, mem, slice, thread};
 
+use libredox::{call as redox, flag};
+
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
@@ -17,7 +19,7 @@ pub fn get_display_size() -> Result<(u32, u32), String> {
     match File::open(&display_path) {
         Ok(display) => {
             let mut buf: [u8; 4096] = [0; 4096];
-            let count = syscall::fpath(display.as_raw_fd() as usize, &mut buf)
+            let count = redox::fpath(display.as_raw_fd() as usize, &mut buf)
                 .map_err(|err| format!("{}", err))?;
             let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
             let res = path.split(":").nth(1).unwrap_or("");
@@ -137,13 +139,13 @@ impl Window {
             flag_str, x, y, w, h, title
         )) {
             let mut window = Window {
-                x: x,
-                y: y,
-                w: w,
-                h: h,
+                x,
+                y,
+                w,
+                h,
                 t: title.to_string(),
                 window_async,
-                resizable: resizable,
+                resizable,
                 mode: Cell::new(Mode::Blend),
                 file_opt: Some(file),
                 data_opt: None,
@@ -158,7 +160,7 @@ impl Window {
     pub fn clipboard(&self) -> String {
         let mut text = String::new();
         let window_fd = self.file().as_raw_fd();
-        if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
+        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
             let _ = clipboard_file.read_to_string(&mut text);
         }
@@ -167,7 +169,7 @@ impl Window {
 
     pub fn set_clipboard(&mut self, text: &str) {
         let window_fd = self.file().as_raw_fd();
-        if let Ok(clipboard_fd) = syscall::dup(window_fd as usize, b"clipboard") {
+        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
             let _ = clipboard_file.write(text.as_bytes());
         }
@@ -181,7 +183,7 @@ impl Window {
     // TODO: Replace with smarter mechanism, maybe a move event?
     pub fn sync_path(&mut self) {
         let mut buf: [u8; 4096] = [0; 4096];
-        if let Ok(count) = syscall::fpath(self.file().as_raw_fd() as usize, &mut buf) {
+        if let Ok(count) = redox::fpath(self.file().as_raw_fd() as usize, &mut buf) {
             let path = unsafe { String::from_utf8_unchecked(Vec::from(&buf[..count])) };
             // orbital:/x/y/w/h/t
             let mut parts = path.split('/');
@@ -347,27 +349,25 @@ impl Window {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
-        let address = syscall::fmap(
-            self.file().as_raw_fd() as usize,
-            &syscall::Map {
-                offset: 0,
-                size: next_multiple_of(size * mem::size_of::<Color>(), syscall::PAGE_SIZE),
-                flags: syscall::PROT_READ | syscall::PROT_WRITE | syscall::MAP_SHARED,
-                address: 0,
-            },
-        )
-        .expect("orbclient: failed to map memory");
+        let address = redox::mmap(redox::MmapArgs {
+            fd: self.file().as_raw_fd() as usize,
+            offset: 0,
+            length: size * mem::size_of::<Color>(),
+            flags: flag::MAP_SHARED,
+            prot: flag::PROT_READ | flag::PROT_WRITE,
+            addr: core::ptr::null_mut(),
+        }).expect("orbclient: failed to map memory");
 
         self.data_opt = Some(
-            slice::from_raw_parts_mut(address as *mut Color, size)
+            slice::from_raw_parts_mut(address.cast::<Color>(), size)
         );
     }
 
     unsafe fn unmap(&mut self) {
         if let Some(data) = self.data_opt.take() {
-            syscall::funmap(
-                data.as_ptr() as usize,
-                next_multiple_of(data.len() * mem::size_of::<Color>(), syscall::PAGE_SIZE),
+            redox::munmap(
+                data.as_mut_ptr().cast(),
+                data.len() * mem::size_of::<Color>(),
             ).expect("orbclient: failed to unmap memory");
         }
     }
@@ -437,9 +437,4 @@ impl Iterator for EventIter {
         }
         None
     }
-}
-
-// TODO: Use libcore API once #![feature(int_roundings)] is stabilized.
-fn next_multiple_of(value: usize, size: usize) -> usize {
-    ((value + size - 1) / size) * size
 }
