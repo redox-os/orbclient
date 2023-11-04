@@ -24,8 +24,8 @@ sdl2-sys = { version = "0.35.2", optional = true }
 libc = { version = "0.2", optional = true }
 raw-window-handle = { version = "0.5.2", optional = true }
 
-[target.'cfg(target_os="redox")'.dependencies]
-redox_syscall = { version = "0.3.5" }
+[target.'cfg(target_os = "redox")'.dependencies]
+libredox = "0.0.2"
 
 [dev-dependencies]
 toml = "0.7"
