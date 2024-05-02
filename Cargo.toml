@@ -29,7 +29,7 @@ libredox = "0.0.2"
 
 [dev-dependencies]
 toml = "0.7"
-serde_derive = "1.0"
+serde_derive = "=1.0.197"
 
 [features]
 default = ["std", "sdl", "unifont"]
