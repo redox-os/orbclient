@@ -25,7 +25,7 @@ libc = { version = "0.2", optional = true }
 raw-window-handle = { version = "0.5.2", optional = true }
 
 [target.'cfg(target_os = "redox")'.dependencies]
-libredox = "0.0.2"
+libredox = "0.1"
 
 [dev-dependencies]
 toml = "0.7"
