@@ -263,13 +263,13 @@ pub const K_F11: u8 = 0x57;
 /// F12 key
 pub const K_F12: u8 = 0x58;
 /// SUPER/META/WIN Key
-pub const K_SUPER : u8 = 0x5B;
+pub const K_SUPER: u8 = 0x5B;
 /// Media Key for Volume toggle (mute/unmute)
-pub const K_VOLUME_TOGGLE : u8 = 0x80 + 0x20;
+pub const K_VOLUME_TOGGLE: u8 = 0x80 + 0x20;
 /// Media Key for Volume Down
-pub const K_VOLUME_DOWN : u8 = 0x80 + 0x2E;
+pub const K_VOLUME_DOWN: u8 = 0x80 + 0x2E;
 /// Media Key for Volume Up
-pub const K_VOLUME_UP : u8 = 0x80 + 0x30;
+pub const K_VOLUME_UP: u8 = 0x80 + 0x30;
 
 /// A key event (such as a pressed key)
 #[derive(Copy, Clone, Debug)]

@@ -769,7 +769,7 @@ pub trait Renderer {
         yend = y1 + gradient * (xend - x1);
         xgap = fpart(x1 + 0.5);
         let xpixel2 = xend as i32;
-        let ypixel2 = ipart(yend) ;
+        let ypixel2 = ipart(yend);
         if steep {
             self.pixel(
                 ypixel2,

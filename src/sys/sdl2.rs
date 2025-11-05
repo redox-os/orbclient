@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 use std::cell::{Cell, RefCell};
+use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
-use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 use crate::color::Color;
 use crate::event::*;
@@ -470,9 +470,7 @@ impl Window {
                 events.push(Event::new());
             }
             sdl2::event::Event::Window { win_event, .. } => match win_event {
-                sdl2::event::WindowEvent::Moved(x, y) => {
-                    events.push(MoveEvent { x, y }.to_event())
-                }
+                sdl2::event::WindowEvent::Moved(x, y) => events.push(MoveEvent { x, y }.to_event()),
                 sdl2::event::WindowEvent::Resized(w, h) => events.push(
                     ResizeEvent {
                         width: w as u32,
@@ -514,12 +512,7 @@ impl Window {
             }
             sdl2::event::Event::TextInput { text, .. } => {
                 for character in text.chars() {
-                    events.push(
-                        TextInputEvent {
-                            character,
-                        }
-                        .to_event(),
-                    );
+                    events.push(TextInputEvent { character }.to_event());
                 }
             }
             sdl2::event::Event::KeyDown { scancode, .. } => {

@@ -8,8 +8,8 @@ The struct MathColor is needed for the calculate with bigger numbers, the Color 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-use core::ops::{Add, AddAssign, Sub};
 use crate::color::Color;
+use core::ops::{Add, AddAssign, Sub};
 
 #[derive(Copy, Clone)]
 pub struct MathColor {
