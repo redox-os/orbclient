@@ -150,7 +150,9 @@ impl Window {
                 file_opt: Some(file),
                 data_opt: None,
             };
-            unsafe { window.remap(); }
+            unsafe {
+                window.remap();
+            }
             Some(window)
         } else {
             None
@@ -234,22 +236,30 @@ impl Window {
     /// Set async
     pub fn set_async(&mut self, is_async: bool) {
         self.window_async = is_async;
-        let _ = self.file_mut().write(if is_async { b"A,1" } else { b"A,0" });
+        let _ = self
+            .file_mut()
+            .write(if is_async { b"A,1" } else { b"A,0" });
     }
 
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
-        let _ = self.file_mut().write(if visible { b"M,C,1" } else { b"M,C,0" });
+        let _ = self
+            .file_mut()
+            .write(if visible { b"M,C,1" } else { b"M,C,0" });
     }
 
     /// Set mouse grabbing
     pub fn set_mouse_grab(&mut self, grab: bool) {
-        let _ = self.file_mut().write(if grab { b"M,G,1" } else { b"M,G,0" });
+        let _ = self
+            .file_mut()
+            .write(if grab { b"M,G,1" } else { b"M,G,0" });
     }
 
     /// Set mouse relative mode
     pub fn set_mouse_relative(&mut self, relative: bool) {
-        let _ = self.file_mut().write(if relative { b"M,R,1" } else { b"M,R,0" });
+        let _ = self
+            .file_mut()
+            .write(if relative { b"M,R,1" } else { b"M,R,0" });
     }
 
     /// Set position
@@ -261,14 +271,18 @@ impl Window {
     /// Set size
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
-        unsafe { self.unmap(); }
+        unsafe {
+            self.unmap();
+        }
 
         let _ = self
             .file_mut()
             .write(&format!("S,{},{}", width, height).as_bytes());
         self.sync_path();
 
-        unsafe { self.remap(); }
+        unsafe {
+            self.remap();
+        }
     }
 
     /// Set title
@@ -356,11 +370,10 @@ impl Window {
             flags: flag::MAP_SHARED,
             prot: flag::PROT_READ | flag::PROT_WRITE,
             addr: core::ptr::null_mut(),
-        }).expect("orbclient: failed to map memory");
+        })
+        .expect("orbclient: failed to map memory");
 
-        self.data_opt = Some(
-            slice::from_raw_parts_mut(address.cast::<Color>(), size)
-        );
+        self.data_opt = Some(slice::from_raw_parts_mut(address.cast::<Color>(), size));
     }
 
     unsafe fn unmap(&mut self) {
@@ -368,15 +381,17 @@ impl Window {
             redox::munmap(
                 data.as_mut_ptr().cast(),
                 data.len() * mem::size_of::<Color>(),
-            ).expect("orbclient: failed to unmap memory");
+            )
+            .expect("orbclient: failed to unmap memory");
         }
     }
-
 }
 
 impl Drop for Window {
     fn drop(&mut self) {
-        unsafe { self.unmap(); }
+        unsafe {
+            self.unmap();
+        }
     }
 }
 
@@ -545,9 +560,7 @@ impl Surface {
         })
         .expect("orbclient: failed to map memory");
 
-        self.data_opt = Some(
-            slice::from_raw_parts_mut(address.cast::<Color>(), size)
-        );
+        self.data_opt = Some(slice::from_raw_parts_mut(address.cast::<Color>(), size));
     }
 
     unsafe fn unmap(&mut self) {
