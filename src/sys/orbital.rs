@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 use std::cell::Cell;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::{env, mem, slice, thread};
 
 use libredox::{call as redox, flag};
@@ -508,9 +509,16 @@ impl Surface {
 
     /// Create a new surface with flags
     pub fn new_flags(w: u32, h: u32, _flags: &[SurfaceFlag]) -> Option<Self> {
-        let rand = redox::clock_gettime(4).unwrap();
-        let path = format!("/scheme/shm/surface_{}_{}_{}", rand.tv_nsec, w, h);
-        if let Ok(file) = File::open(&path) {
+        static SHM_COUNTER: AtomicU64 = AtomicU64::new(0);
+        let pid = redox::getpid().unwrap();
+        let counter = SHM_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = format!("/scheme/shm/surface_{}_{}", pid, counter);
+        if let Ok(file) = OpenOptions::new()
+            .create_new(true)
+            .read(true)
+            .write(true)
+            .open(&path)
+        {
             // drop as soon as file closed
             let _ = std::fs::remove_file(path);
             let mut surface = Surface {
