@@ -135,7 +135,7 @@ impl Window {
         }
 
         if let Ok(file) = File::open(&format!(
-            "orbital:{}/{}/{}/{}/{}/{}",
+            "/scheme/orbital/{}/{}/{}/{}/{}/{}",
             flag_str, x, y, w, h, title
         )) {
             let mut window = Window {
