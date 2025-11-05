@@ -3,6 +3,7 @@
 use std::cell::{Cell, RefCell};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
+use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 use crate::color::Color;
 use crate::event::*;
@@ -78,6 +79,24 @@ impl Drop for Window {
         unsafe {
             cleanup();
         }
+    }
+}
+
+impl AsRawFd for Window {
+    fn as_raw_fd(&self) -> RawFd {
+        unimplemented!()
+    }
+}
+
+impl FromRawFd for Window {
+    unsafe fn from_raw_fd(_fd: RawFd) -> Window {
+        unimplemented!()
+    }
+}
+
+impl IntoRawFd for Window {
+    fn into_raw_fd(self) -> RawFd {
+        unimplemented!()
     }
 }
 

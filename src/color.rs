@@ -141,7 +141,7 @@ mod tests {
         assert_eq!(20, core::mem::size_of::<[Color; 5]>());
     }
 
-    #[cfg(features = "serde")]
+    #[cfg(feature = "serde")]
     mod serde {
         use serde_derive::Deserialize;
         use toml;

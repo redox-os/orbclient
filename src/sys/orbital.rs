@@ -11,8 +11,8 @@ use libredox::{call as redox, flag};
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
-use crate::Mode;
 use crate::WindowFlag;
+use crate::{Mode, SurfaceFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = env::var("DISPLAY").or(Err("DISPLAY not set"))?;
@@ -436,5 +436,161 @@ impl Iterator for EventIter {
             return Some(self.events[i]);
         }
         None
+    }
+}
+
+// General surface
+pub struct Surface {
+    /// The width of the surface
+    w: u32,
+    /// The height of the surface
+    h: u32,
+    /// Drawing mode
+    mode: Cell<Mode>,
+    /// The shm scheme
+    file_opt: Option<File>,
+    /// Surface data
+    data_opt: Option<&'static mut [Color]>,
+}
+
+impl Renderer for Surface {
+    /// Get width
+    fn width(&self) -> u32 {
+        self.w
+    }
+
+    /// Get height
+    fn height(&self) -> u32 {
+        self.h
+    }
+
+    /// Access pixel buffer
+    fn data(&self) -> &[Color] {
+        self.data_opt.as_ref().unwrap()
+    }
+
+    /// Access pixel buffer mutably
+    fn data_mut(&mut self) -> &mut [Color] {
+        self.data_opt.as_mut().unwrap()
+    }
+
+    /// Flip the buffer
+    fn sync(&mut self) -> bool {
+        true
+    }
+
+    /// Set/get mode
+    fn mode(&self) -> &Cell<Mode> {
+        &self.mode
+    }
+}
+
+impl Surface {
+    /// Create a new surface
+    pub fn new(w: u32, h: u32) -> Option<Self> {
+        Surface::new_flags(w, h, &[])
+    }
+
+    /// Create a new surface with flags
+    pub fn new_flags(w: u32, h: u32, _flags: &[SurfaceFlag]) -> Option<Self> {
+        let rand = redox::clock_gettime(4).unwrap();
+        let path = format!("/scheme/shm/surface_{}_{}_{}", rand.tv_nsec, w, h);
+        if let Ok(file) = File::open(&path) {
+            // drop as soon as file closed
+            let _ = std::fs::remove_file(path);
+            let mut surface = Surface {
+                w,
+                h,
+                mode: Cell::new(Mode::Blend),
+                data_opt: None,
+                file_opt: Some(file),
+            };
+            unsafe {
+                surface.remap();
+            }
+            Some(surface)
+        } else {
+            None
+        }
+    }
+
+    fn file(&self) -> &File {
+        self.file_opt.as_ref().unwrap()
+    }
+
+    /// Set size
+    pub fn set_size(&mut self, width: u32, height: u32) {
+        //TODO: Improve safety and reliability
+        unsafe {
+            self.unmap();
+        }
+        self.w = width;
+        self.h = height;
+        unsafe {
+            self.remap();
+        }
+    }
+
+    unsafe fn remap(&mut self) {
+        self.unmap();
+
+        let size = (self.w * self.h) as usize;
+        let address = redox::mmap(redox::MmapArgs {
+            fd: self.file().as_raw_fd() as usize,
+            offset: 0,
+            length: size * mem::size_of::<Color>(),
+            flags: flag::MAP_SHARED,
+            prot: flag::PROT_READ | flag::PROT_WRITE,
+            addr: core::ptr::null_mut(),
+        })
+        .expect("orbclient: failed to map memory");
+
+        self.data_opt = Some(
+            slice::from_raw_parts_mut(address.cast::<Color>(), size)
+        );
+    }
+
+    unsafe fn unmap(&mut self) {
+        if let Some(data) = self.data_opt.take() {
+            redox::munmap(
+                data.as_mut_ptr().cast(),
+                data.len() * mem::size_of::<Color>(),
+            )
+            .expect("orbclient: failed to unmap memory");
+        }
+    }
+}
+
+impl Drop for Surface {
+    fn drop(&mut self) {
+        unsafe {
+            self.unmap();
+        }
+    }
+}
+
+impl AsRawFd for Surface {
+    fn as_raw_fd(&self) -> RawFd {
+        self.file().as_raw_fd()
+    }
+}
+
+impl FromRawFd for Surface {
+    unsafe fn from_raw_fd(fd: RawFd) -> Surface {
+        let mut window = Surface {
+            w: 0,
+            h: 0,
+            mode: Cell::new(Mode::Blend),
+            file_opt: Some(File::from_raw_fd(fd)),
+            data_opt: None,
+        };
+        window.remap();
+        window
+    }
+}
+
+impl IntoRawFd for Surface {
+    fn into_raw_fd(mut self) -> RawFd {
+        self.file_opt.take().unwrap().into_raw_fd()
     }
 }
