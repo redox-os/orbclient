@@ -36,14 +36,14 @@ pub trait Renderer {
             Mode::Blend => false,
             Mode::Overwrite => true,
         };
-        let w = self.width();
-        let h = self.height();
+        let w = self.width() as i32;
+        let h = self.height() as i32;
         let data = self.data_mut();
 
-        if x >= 0 && y >= 0 && x < w as i32 && y < h as i32 {
+        if x >= 0 && y >= 0 && x < w && y < h {
             let new = color.data;
             let alpha = (new >> 24) & 0xFF;
-            let old = &mut data[y as usize * w as usize + x as usize].data;
+            let old = &mut data[(y * w + x) as usize].data;
 
             if alpha >= 255 || replace {
                 *old = new;
@@ -566,59 +566,54 @@ pub trait Renderer {
         start_color: Color,
         end_color: Color,
     ) {
+
+        fn clamp(proj: f64) -> f64 {
+            if proj < 0.0 {
+                0.0
+            } else if proj > 1.0 {
+                1.0
+            } else {
+                proj
+            }
+        }
+
         if (start_x == end_x) && (start_y == end_y) {
             // Degenerate gradient
             self.rect(rect_x, rect_y, rect_width, rect_height, start_color);
         } else if start_x == end_x {
             // Vertical gradient
+            let y_factor = 1.0 / (end_y - start_y) as f64;
             for y in rect_y..(rect_y + rect_height as i32) {
-                let proj = (y as f64 - start_y as f64) / (end_y as f64 - start_y as f64);
-                let scale = if proj < 0.0 {
-                    0.0
-                } else if proj > 1.0 {
-                    1.0
-                } else {
-                    proj
-                };
+                let proj = (y - start_y) as f64 * y_factor;
+                let scale = clamp(proj);
                 let color = Color::interpolate(start_color, end_color, scale);
                 self.line(rect_x, y, rect_x + rect_width as i32 - 1, y, color);
             }
         } else if start_y == end_y {
             // Horizontal gradient
+            let x_factor = 1.0 / (end_x - start_x) as f64;
             for x in rect_x..(rect_x + rect_width as i32) {
-                let proj = (x as f64 - start_x as f64) / (end_x as f64 - start_x as f64);
-                let scale = if proj < 0.0 {
-                    0.0
-                } else if proj > 1.0 {
-                    1.0
-                } else {
-                    proj
-                };
+                let proj = (x - start_x) as f64 * x_factor;
+                let scale = clamp(proj);
                 let color = Color::interpolate(start_color, end_color, scale);
                 self.line(x, rect_y, x, rect_y + rect_height as i32 - 1, color);
             }
         } else {
             // Non axis-aligned gradient
             // Gradient vector
-            let grad_x = end_x as f64 - start_x as f64;
-            let grad_y = end_y as f64 - start_y as f64;
-            let grad_len = grad_x * grad_x + grad_y * grad_y;
+            let grad_x = (end_x - start_x )as f64;
+            let grad_y = (end_y - start_y) as f64;
+            let grad_len = 1.0 / (grad_x * grad_x + grad_y * grad_y);
 
             for y in rect_y..(rect_y + rect_height as i32) {
                 for x in rect_x..(rect_x + rect_width as i32) {
                     // Pixel vector
-                    let pix_x = x as f64 - start_x as f64;
-                    let pix_y = y as f64 - start_y as f64;
+                    let pix_x = (x - start_x) as f64;
+                    let pix_y = (y - start_y) as f64;
                     // Scalar projection
-                    let proj = (pix_x * grad_x + pix_y * grad_y) / grad_len;
+                    let proj = (pix_x * grad_x + pix_y * grad_y) * grad_len;
                     // Saturation
-                    let scale = if proj < 0.0 {
-                        0.0
-                    } else if proj > 1.0 {
-                        1.0
-                    } else {
-                        proj
-                    };
+                    let scale = clamp(proj);
                     // Interpolation
                     let color = Color::interpolate(start_color, end_color, scale);
                     self.pixel(x, y, color);
