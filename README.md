@@ -14,7 +14,7 @@ installed on your system.
 On macos you can install the SDL2 library using `brew install sdl2`
 
 ## Features
-The `std` feature is used to allow building `orbclient` with our without rust `std`.
+The `std` feature is used to allow building `orbclient` with or without rust `std`.
 This is to enable use by some UEFI apps (e.g. System76 firmware setup, System76 firmware updater) that don't have `std`.
 
 The `"unifont` feature (on by default is used to include the "unifont" font).
