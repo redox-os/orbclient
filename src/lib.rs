@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(unreachable_pub)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;

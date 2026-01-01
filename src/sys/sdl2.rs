@@ -438,13 +438,8 @@ impl Window {
     }
 
     fn get_mouse_position(&self) -> (i32, i32) {
-        unsafe {
-            let p_x: *mut i32 = libc::malloc(mem::size_of::<i32>()) as *mut i32;
-            let p_y: *mut i32 = libc::malloc(mem::size_of::<i32>()) as *mut i32;
-            sdl2_sys::SDL_GetMouseState(p_x, p_y);
-
-            (*p_x, *p_y)
-        }
+        let mouse_state = unsafe { &mut *EVENT_PUMP }.mouse_state();
+        (mouse_state.x(), mouse_state.y())
     }
 
     fn convert_event(&self, event: sdl2::event::Event) -> Vec<Event> {

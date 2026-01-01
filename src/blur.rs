@@ -12,14 +12,14 @@ use crate::color::Color;
 use core::ops::{Add, AddAssign, Sub};
 
 #[derive(Copy, Clone)]
-pub struct MathColor {
+struct MathColor {
     pub r: isize,
     pub g: isize,
     pub b: isize,
 }
 
 impl MathColor {
-    pub fn new(color: Color) -> Self {
+    fn new(color: Color) -> Self {
         MathColor {
             r: color.r() as isize,
             g: color.g() as isize,
@@ -27,7 +27,7 @@ impl MathColor {
         }
     }
 
-    pub fn get_multiplied_color(&mut self, iarr: f32) -> Color {
+    fn get_multiplied_color(&mut self, iarr: f32) -> Color {
         Color::rgb(
             (self.r as f32 * iarr).round() as u8,
             (self.g as f32 * iarr).round() as u8,
@@ -73,7 +73,7 @@ impl Sub for MathColor {
     }
 }
 
-pub fn gauss_blur(data: &mut [Color], w: u32, h: u32, r: f32) {
+pub(crate) fn gauss_blur(data: &mut [Color], w: u32, h: u32, r: f32) {
     let bxs = boxes_for_gauss(r, 3);
     let mut tcl = data.to_owned();
 
