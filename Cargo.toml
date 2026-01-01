@@ -27,14 +27,9 @@ raw-window-handle = { version = "0.5.2", optional = true }
 [target.'cfg(target_os = "redox")'.dependencies]
 libredox = "0.1"
 
-[dev-dependencies]
-toml = "0.7"
-serde_derive = "=1.0.197"
-
 [features]
 default = ["std", "sdl", "unifont"]
 std = []
 sdl = ["sdl2", "sdl2-sys", "libc"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link", "sdl2-sys/bundled", "sdl2-sys/static-link"]
 unifont = []
-serde = []
