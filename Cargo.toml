@@ -28,6 +28,6 @@ libredox = "0.1"
 [features]
 default = ["std", "sdl", "unifont"]
 std = []
-sdl = ["sdl2"]
+sdl = ["dep:sdl2"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link"]
 unifont = []
