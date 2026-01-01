@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 use std::cell::Cell;
-use std::fs::{File, OpenOptions};
+use std::ffi::CString;
+use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -512,29 +513,25 @@ impl Surface {
         static SHM_COUNTER: AtomicU64 = AtomicU64::new(0);
         let pid = redox::getpid().unwrap();
         let counter = SHM_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let path = format!("/scheme/shm/surface_{}_{}", pid, counter);
-        if let Ok(file) = OpenOptions::new()
-            .create_new(true)
-            .read(true)
-            .write(true)
-            .open(&path)
-        {
-            // drop as soon as file closed
-            let _ = std::fs::remove_file(path);
-            let mut surface = Surface {
-                w,
-                h,
-                mode: Cell::new(Mode::Blend),
-                data_opt: None,
-                file_opt: Some(file),
-            };
-            unsafe {
-                surface.remap();
-            }
-            Some(surface)
-        } else {
-            None
+        let shm_name = CString::new(format!("surface_{}_{}", pid, counter)).unwrap();
+        let shm = unsafe { libc::shm_open(shm_name.as_ptr(), libc::O_CREAT | libc::O_RDWR, 0o700) };
+        if shm == -1 {
+            return None;
         }
+        // drop as soon as file closed
+        unsafe { libc::shm_unlink(shm_name.as_ptr()) };
+
+        let mut surface = Surface {
+            w,
+            h,
+            mode: Cell::new(Mode::Blend),
+            data_opt: None,
+            file_opt: Some(unsafe { File::from_raw_fd(shm) }),
+        };
+        unsafe {
+            surface.remap();
+        }
+        Some(surface)
     }
 
     fn file(&self) -> &File {
