@@ -127,6 +127,10 @@ impl DerefMut for Event {
     }
 }
 
+// Mapped closely with scancodes from XT keyboard.
+// Unconventional ranges should be in 0x60-0x7F, 0x80 and above are for media keys
+// See https://aeb.win.tue.nl/linux/kbd/scancodes-10.html
+
 pub const K_A: u8 = 0x1E;
 pub const K_B: u8 = 0x30;
 pub const K_C: u8 = 0x2E;
@@ -164,7 +168,8 @@ pub const K_7: u8 = 0x08;
 pub const K_8: u8 = 0x09;
 pub const K_9: u8 = 0x0A;
 
-// Numpad keys (codes 0x70-0x79)
+// Numpad keys (codes 0x70-0x7f)
+
 pub const K_NUM_0: u8 = 0x70;
 pub const K_NUM_1: u8 = 0x71;
 pub const K_NUM_2: u8 = 0x72;
@@ -175,6 +180,12 @@ pub const K_NUM_6: u8 = 0x76;
 pub const K_NUM_7: u8 = 0x77;
 pub const K_NUM_8: u8 = 0x78;
 pub const K_NUM_9: u8 = 0x79;
+pub const K_NUM_PERIOD: u8 = 0x7a;
+pub const K_NUM_PLUS: u8 = 0x7c;
+pub const K_NUM_MINUS: u8 = 0x7b;
+pub const K_NUM_ASTERISK: u8 = 0x7d;
+pub const K_NUM_SLASH: u8 = 0x7e;
+pub const K_NUM_ENTER: u8 = 0x7f;
 
 /// Tick/tilde key
 pub const K_TICK: u8 = 0x29;
@@ -210,8 +221,12 @@ pub const K_CAPS: u8 = 0x3A;
 pub const K_LEFT_SHIFT: u8 = 0x2A;
 /// Right shift
 pub const K_RIGHT_SHIFT: u8 = 0x36;
-/// Control key
+/// Control key (deprecated)
 pub const K_CTRL: u8 = 0x1D;
+/// Left control key
+pub const K_LEFT_CTRL: u8 = 0x1D;
+/// Right control key
+pub const K_RIGHT_CTRL: u8 = 0x64;
 /// Alt key
 pub const K_ALT: u8 = 0x38;
 /// AltGr key
@@ -220,6 +235,8 @@ pub const K_ALT_GR: u8 = 0x64;
 pub const K_ENTER: u8 = 0x1C;
 /// Escape key
 pub const K_ESC: u8 = 0x01;
+/// Print screen key
+pub const K_PRTSC: u8 = 0x37;
 /// F1 key
 pub const K_F1: u8 = 0x3B;
 /// F2 key
@@ -240,6 +257,10 @@ pub const K_F8: u8 = 0x42;
 pub const K_F9: u8 = 0x43;
 /// F10 key
 pub const K_F10: u8 = 0x44;
+/// Num lock key
+pub const K_NUM: u8 = 0x45;
+/// Scroll lock key
+pub const K_SCROLL: u8 = 0x46;
 /// Home key
 pub const K_HOME: u8 = 0x47;
 /// Up key
@@ -256,20 +277,44 @@ pub const K_END: u8 = 0x4F;
 pub const K_DOWN: u8 = 0x50;
 /// Page down key
 pub const K_PGDN: u8 = 0x51;
+/// Insert key
+pub const K_INS: u8 = 0x52;
 /// Delete key
 pub const K_DEL: u8 = 0x53;
 /// F11 key
 pub const K_F11: u8 = 0x57;
 /// F12 key
 pub const K_F12: u8 = 0x58;
-/// SUPER/META/WIN Key
+/// SUPER/META/WIN Key (deprecated)
 pub const K_SUPER: u8 = 0x5B;
+/// SUPER/META/WIN Left Key
+pub const K_LEFT_SUPER: u8 = 0x5B;
+/// SUPER/META/WIN Right Key
+pub const K_RIGHT_SUPER: u8 = 0x5C;
+/// Application key
+pub const K_APP: u8 = 0x5D;
+/// Power off key
+pub const K_POWER: u8 = 0x5E;
+/// Sleep key
+pub const K_SLEEP: u8 = 0x5F;
+
+// Media keys are derived from MF II keyboards
+// See https://www.scs.stanford.edu/10wi-cs140/pintos/specs/kbd/scancodes-5.html
+
 /// Media Key for Volume toggle (mute/unmute)
 pub const K_VOLUME_TOGGLE: u8 = 0x80 + 0x20;
 /// Media Key for Volume Down
 pub const K_VOLUME_DOWN: u8 = 0x80 + 0x2E;
 /// Media Key for Volume Up
 pub const K_VOLUME_UP: u8 = 0x80 + 0x30;
+/// Media Key for Play/pause
+pub const K_MEDIA_PLAY_PAUSE: u8 = 0x80 + 0x22;
+/// Media Key for Stop
+pub const K_MEDIA_STOP: u8 = 0x80 + 0x24;
+/// Media Key for Fast forward/next track
+pub const K_MEDIA_FAST_FORWARD: u8 = 0x80 + 0x19;
+/// Media Key for Rewind/previous track
+pub const K_MEDIA_REWIND: u8 = 0x80 + 0x10;
 
 /// A key event (such as a pressed key)
 #[derive(Copy, Clone, Debug)]
