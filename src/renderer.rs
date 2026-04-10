@@ -566,7 +566,6 @@ pub trait Renderer {
         start_color: Color,
         end_color: Color,
     ) {
-
         fn clamp(proj: f64) -> f64 {
             if proj < 0.0 {
                 0.0
@@ -601,7 +600,7 @@ pub trait Renderer {
         } else {
             // Non axis-aligned gradient
             // Gradient vector
-            let grad_x = (end_x - start_x )as f64;
+            let grad_x = (end_x - start_x) as f64;
             let grad_y = (end_y - start_y) as f64;
             let grad_len = 1.0 / (grad_x * grad_x + grad_y * grad_y);
 
