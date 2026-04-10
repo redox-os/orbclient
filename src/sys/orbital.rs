@@ -100,15 +100,12 @@ impl Renderer for Window {
 
     /// Update the specified software buffer region
     fn update_rects(&mut self, rects: &[(i32, i32, u32, u32)]) -> bool {
-        let mut damage_buf = vec![b'Y', b','];
-        let damage_str: Vec<_> = rects
-            .iter()
-            .cloned()
-            .map(|(x, y, w, h)| format!("{},{},{},{}", x, y, w, h))
-            .collect();
-        damage_buf.extend_from_slice(damage_str.join(",").as_bytes());
-
-        self.file_mut().write(&damage_buf[..]).is_ok()
+        use std::fmt::Write;
+        let mut damage_buf = "Y".to_string();
+        for (x, y, w, h) in rects {
+            let _ = write!(damage_buf, ",{},{},{},{}", x, y, w, h);
+        }
+        self.file_mut().write(damage_buf.as_bytes()).is_ok()
     }
 
     /// Set/get mode
