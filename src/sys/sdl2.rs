@@ -6,10 +6,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
 use crate::color::Color;
-use crate::event::*;
 use crate::renderer::Renderer;
 use crate::Mode;
 use crate::WindowFlag;
+use crate::{event::*, SurfaceFlag};
 
 static SDL_USAGES: AtomicUsize = AtomicUsize::new(0);
 /// SDL2 Context
@@ -629,3 +629,145 @@ impl Iterator for EventIter {
         }
     }
 }
+
+// General surface
+pub struct Surface {
+    /// The width of the surface
+    w: u32,
+    /// The height of the surface
+    h: u32,
+    /// Drawing mode
+    mode: Cell<Mode>,
+    /// The surface object
+    file_opt: Option<sdl2::surface::Surface<'static>>,
+}
+
+impl Renderer for Surface {
+    /// Get width
+    fn width(&self) -> u32 {
+        self.w
+    }
+
+    /// Get height
+    fn height(&self) -> u32 {
+        self.h
+    }
+
+    /// Access pixel buffer
+    fn data(&self) -> &[Color] {
+        let raw = self.file().without_lock().unwrap();
+        unsafe {
+            let raw_pixels = core::ptr::from_ref(raw) as *const Color;
+            std::slice::from_raw_parts(raw_pixels, raw.len() / 4)
+        }
+    }
+
+    /// Access pixel buffer mutably
+    fn data_mut(&mut self) -> &mut [Color] {
+        let file = self.file_opt.as_mut().unwrap();
+        let raw = file.without_lock_mut().unwrap();
+        unsafe {
+            let raw_pixels = core::ptr::from_mut(raw) as *mut Color;
+            std::slice::from_raw_parts_mut(raw_pixels, raw.len() / 4)
+        }
+    }
+
+    /// Flip the buffer
+    fn sync(&mut self) -> bool {
+        true
+    }
+
+    /// Set/get mode
+    fn mode(&self) -> &Cell<Mode> {
+        &self.mode
+    }
+}
+
+impl Surface {
+    /// Create a new surface
+    pub fn new(w: u32, h: u32) -> Option<Self> {
+        Surface::new_flags(w, h, &[])
+    }
+
+    /// Create a new surface with flags
+    pub fn new_flags(w: u32, h: u32, _flags: &[SurfaceFlag]) -> Option<Self> {
+        let mut surface = Surface {
+            w,
+            h,
+            mode: Cell::new(Mode::Blend),
+            file_opt: None,
+        };
+        unsafe {
+            surface.remap();
+        }
+        if surface.file_opt.is_some() {
+            Some(surface)
+        } else {
+            None
+        }
+    }
+
+    fn file(&self) -> &sdl2::surface::Surface<'static> {
+        self.file_opt.as_ref().unwrap()
+    }
+
+    /// Set size
+    pub fn set_size(&mut self, width: u32, height: u32) {
+        // SAFETY: We hold mut here, so this is safe
+        unsafe {
+            self.unmap();
+        }
+        self.w = width;
+        self.h = height;
+        unsafe {
+            self.remap();
+        }
+    }
+
+    unsafe fn remap(&mut self) {
+        if let Ok(shm) =
+            sdl2::surface::Surface::new(self.w, self.h, sdl2::pixels::PixelFormatEnum::ARGB8888)
+        {
+            self.file_opt = Some(shm)
+        }
+    }
+
+    unsafe fn unmap(&mut self) {
+        self.file_opt.take();
+    }
+}
+
+impl Drop for Surface {
+    fn drop(&mut self) {
+        unsafe {
+            self.unmap();
+        }
+    }
+}
+
+/*
+impl AsRawFd for Surface {
+    fn as_raw_fd(&self) -> RawFd {
+        self.file().as_raw_fd()
+    }
+}
+
+impl FromRawFd for Surface {
+    unsafe fn from_raw_fd(fd: RawFd) -> Surface {
+        let mut window = Surface {
+            w: 0,
+            h: 0,
+            mode: Cell::new(Mode::Blend),
+            file_opt: Some(File::from_raw_fd(fd)),
+        };
+        window.remap();
+        window
+    }
+}
+
+impl IntoRawFd for Surface {
+    fn into_raw_fd(mut self) -> RawFd {
+        self.file_opt.take().unwrap().into_raw_fd()
+    }
+}
+*/
