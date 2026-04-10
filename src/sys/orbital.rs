@@ -93,6 +93,24 @@ impl Renderer for Window {
         self.file_mut().sync_data().is_ok()
     }
 
+    /// Update the software buffer
+    fn update(&mut self) -> bool {
+        self.sync()
+    }
+
+    /// Update the specified software buffer region
+    fn update_rects(&mut self, rects: &[(i32, i32, u32, u32)]) -> bool {
+        let mut damage_buf = vec![b'Y', b','];
+        let damage_str: Vec<_> = rects
+            .iter()
+            .cloned()
+            .map(|(x, y, w, h)| format!("{},{},{},{}", x, y, w, h))
+            .collect();
+        damage_buf.extend_from_slice(damage_str.join(",").as_bytes());
+
+        self.file_mut().write(&damage_buf[..]).is_ok()
+    }
+
     /// Set/get mode
     fn mode(&self) -> &Cell<Mode> {
         &self.mode
@@ -491,8 +509,18 @@ impl Renderer for Surface {
         self.data_opt.as_mut().unwrap()
     }
 
-    /// Flip the buffer
+    /// Flip the hardware buffer
     fn sync(&mut self) -> bool {
+        true
+    }
+
+    /// Update the software buffer
+    fn update(&mut self) -> bool {
+        true
+    }
+
+    /// Update the specified software buffer region
+    fn update_rects(&mut self, _rects: &[(i32, i32, u32, u32)]) -> bool {
         true
     }
 

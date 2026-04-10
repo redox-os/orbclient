@@ -35,7 +35,7 @@ fn main() {
     });
 
     time!("sync", {
-        window.sync();
+        window.update();
     });
 
     'events: loop {

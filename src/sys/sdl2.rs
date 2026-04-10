@@ -137,10 +137,32 @@ impl Renderer for Window {
         }
     }
 
-    /// Flip the window buffer
+    /// Update the window buffer
     fn sync(&mut self) -> bool {
         self.inner.present();
         true
+    }
+
+    /// Update the window buffer
+    fn update(&mut self) -> bool {
+        let window = self.inner.window_mut();
+        let surface = window.surface(unsafe { &*EVENT_PUMP }).unwrap();
+        surface.update_window().is_ok()
+    }
+
+    /// Update the window buffer
+    fn update_rects(&mut self, rects: &[(i32, i32, u32, u32)]) -> bool {
+        let window = self.inner.window_mut();
+        let surface = window.surface(unsafe { &*EVENT_PUMP }).unwrap();
+        surface
+            .update_window_rects(
+                &rects
+                    .iter()
+                    .cloned()
+                    .map(|(x, y, w, h)| sdl2::rect::Rect::new(x, y, w, h))
+                    .collect::<Vec<_>>()[..],
+            )
+            .is_ok()
     }
 
     /// Set/get mode
@@ -672,8 +694,18 @@ impl Renderer for Surface {
         }
     }
 
-    /// Flip the buffer
+    /// Flip the hardware buffer
     fn sync(&mut self) -> bool {
+        true
+    }
+
+    /// Update the software buffer
+    fn update(&mut self) -> bool {
+        true
+    }
+
+    /// Update the specified software buffer region
+    fn update_rects(&mut self, _rects: &[(i32, i32, u32, u32)]) -> bool {
         true
     }
 
