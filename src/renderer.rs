@@ -23,8 +23,14 @@ pub trait Renderer {
     /// Access the pixel buffer mutably
     fn data_mut(&mut self) -> &mut [Color];
 
-    /// Flip the buffer
+    /// Update the hardware buffer
     fn sync(&mut self) -> bool;
+
+    /// Update the software buffer
+    fn update(&mut self) -> bool;
+
+    /// Update the specified software buffer region (x, y, w, h)
+    fn update_rects(&mut self, rects: &[(i32, i32, u32, u32)]) -> bool;
 
     /// Set/get drawing mode
     fn mode(&self) -> &Cell<Mode>;
