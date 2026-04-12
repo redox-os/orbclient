@@ -1,12 +1,19 @@
 use crate::rect::Rect;
 use crate::{Color, Mode, Renderer};
 use core::cell::Cell;
+use core::num::NonZero;
 use core::{cmp, mem, ptr};
 
+#[cfg(not(feature = "std"))]
+use alloc::{boxed::Box, vec};
 #[cfg(feature = "image")]
 pub use image::ImageError;
 #[cfg(feature = "image")]
+pub use image::ImageFormat;
+#[cfg(feature = "image")]
 pub use resize::Type as ResizeType;
+#[cfg(feature = "image")]
+use std::path::Path;
 
 pub struct ImageRoiRows<'a> {
     rect: Rect,
@@ -232,33 +239,48 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(width: u32, height: u32) -> Image {
-        Image::from_color(width, height, Color::rgb(0, 0, 0))
+    pub fn new(width: u32, height: u32) -> Self {
+        Self::from_color(width, height, Color::rgb(0, 0, 0))
     }
 
-    pub fn from_color(width: u32, height: u32, color: Color) -> Image {
-        Image::from_data(
+    pub fn from_color(width: u32, height: u32, color: Color) -> Self {
+        Self::from_data_unchecked(
             width,
             height,
             vec![color; width as usize * height as usize].into_boxed_slice(),
         )
-        .expect("The boxed size should match")
     }
 
-    pub fn from_data(w: u32, h: u32, data: Box<[Color]>) -> Option<Image> {
+    pub fn from_data(w: u32, h: u32, data: Box<[Color]>) -> Option<Self> {
         if (w as usize * h as usize) != data.len() {
             return None;
         }
-        Some(Image {
+        Some(Self::from_data_unchecked(w, h, data))
+    }
+
+    fn from_data_unchecked(w: u32, h: u32, data: Box<[Color]>) -> Self {
+        Self {
             w,
             h,
             data,
             mode: Cell::new(Mode::Blend),
-        })
+        }
     }
 
     #[cfg(feature = "image")]
-    pub fn from_dynamic_image(
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, ImageError> {
+        let img = image::open(path);
+        Self::from_dynamic_image(img)
+    }
+
+    #[cfg(feature = "image")]
+    pub fn from_memory_with_format(data: &[u8], format: ImageFormat) -> Result<Self, ImageError> {
+        let img = image::load_from_memory_with_format(data, format);
+        Self::from_dynamic_image(img)
+    }
+
+    #[cfg(feature = "image")]
+    fn from_dynamic_image(
         d_img: image::ImageResult<image::DynamicImage>,
     ) -> Result<Self, ImageError> {
         let img = d_img?.to_rgba();
@@ -271,7 +293,7 @@ impl Image {
     }
 
     #[cfg(feature = "image")]
-    pub fn resize(&self, w: u32, h: u32, resize_type: ResizeType) -> Result<Self, ImageError> {
+    pub fn resize(&self, w: u32, h: u32, resize_type: ResizeType) -> Self {
         let mut dst_color = vec![Color { data: 0 }; w as usize * h as usize].into_boxed_slice();
 
         let src = unsafe {
@@ -292,32 +314,32 @@ impl Image {
         );
         resizer.resize(&src, &mut dst);
 
-        Image::from_data(w, h, dst_color).ok_or(ImageError::DimensionError)
+        Self::from_data_unchecked(w, h, dst_color)
     }
 
-    pub fn resize_exact(&self, scale: u32) -> Option<Self> {
-        match scale {
-            0 => return None,
-            1 => return Image::from_data(self.w, self.h, self.data.clone()),
-            _ => {}
+    pub fn resize_exact(&self, scale: NonZero<u32>) -> Self {
+        let scale = scale.get();
+        if scale == 1 {
+            return Self::from_data_unchecked(self.w, self.h, self.data.clone());
         }
-        let mut new_data = vec![Color::rgb(0, 0, 0); self.data.len() * (scale * scale) as usize]
-            .into_boxed_slice();
-
-        for y in 0..self.h {
-            for x in 0..self.w {
-                let i = y * self.w + x;
-                let value = self.data[i as usize].data;
-                for y_s in 0..scale {
-                    for x_s in 0..scale {
-                        let new_i = (y * scale + y_s) * self.w * scale + x * scale + x_s;
-                        new_data[new_i as usize].data = value;
+        let uscale = scale as usize;
+        let mut new_data =
+            vec![Color::rgb(0, 0, 0); self.data.len() * (uscale * uscale)].into_boxed_slice();
+        let w = self.w as usize;
+        for y in 0..self.h as usize {
+            for x in 0..w {
+                let i = y * w + x;
+                let value = self.data[i].data;
+                for y_s in 0..uscale {
+                    for x_s in 0..uscale {
+                        let new_i = (y * uscale + y_s) * w * uscale + x * uscale + x_s;
+                        new_data[new_i].data = value;
                     }
                 }
             }
         }
 
-        Image::from_data(self.w * scale, self.h * scale, new_data)
+        Self::from_data_unchecked(self.w * scale, self.h * scale, new_data)
     }
 
     pub fn width(&self) -> u32 {

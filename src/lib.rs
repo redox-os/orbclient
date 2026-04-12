@@ -14,6 +14,7 @@ mod sys;
 #[path = "sys/orbital.rs"]
 mod sys;
 
+#[cfg(feature = "std")]
 pub use sys::Surface;
 #[cfg(feature = "std")]
 pub use sys::{get_display_size, EventIter, Window};
