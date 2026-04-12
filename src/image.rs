@@ -153,6 +153,16 @@ impl<'a> ImageRef<'a> {
         }
     }
 
+    pub fn from_renderer(renderer: &'a mut impl Renderer) -> Self {
+        let mode = renderer.mode().clone();
+        ImageRef {
+            w: renderer.width(),
+            h: renderer.height(),
+            data: renderer.data_mut(),
+            mode,
+        }
+    }
+
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
             rect: *rect,
@@ -303,8 +313,8 @@ impl Renderer for Image {
 
 #[cfg(target_os = "redox")]
 pub struct ImageAligned {
-    w: i32,
-    h: i32,
+    w: u32,
+    h: u32,
     data: &'static mut [Color],
 }
 
@@ -319,7 +329,7 @@ impl Drop for ImageAligned {
 
 #[cfg(target_os = "redox")]
 impl ImageAligned {
-    pub fn new(w: i32, h: i32, align: usize) -> ImageAligned {
+    pub fn new(w: u32, h: u32, align: usize) -> ImageAligned {
         let size = (w * h) as usize;
         let size_bytes = size * mem::size_of::<Color>();
         let size_alignments = (size_bytes + align - 1) / align;
@@ -328,7 +338,7 @@ impl ImageAligned {
         unsafe {
             let ptr = libc::memalign(align, size_aligned);
             libc::memset(ptr, 0, size_aligned);
-            data = slice::from_raw_parts_mut(
+            data = core::slice::from_raw_parts_mut(
                 ptr as *mut Color,
                 size_aligned / mem::size_of::<Color>(),
             );
@@ -336,18 +346,18 @@ impl ImageAligned {
         ImageAligned { w, h, data }
     }
 
-    pub fn width(&self) -> i32 {
+    pub fn width(&self) -> u32 {
         self.w
     }
 
-    pub fn height(&self) -> i32 {
+    pub fn height(&self) -> u32 {
         self.h
     }
 
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
             rect: *rect,
-            w: self.w,
+            w: self.w as usize,
             data: self.data,
         }
     }
@@ -355,7 +365,7 @@ impl ImageAligned {
     pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
             rect: *rect,
-            w: self.w,
+            w: self.w as usize,
             data: self.data,
         }
     }
