@@ -195,12 +195,12 @@ impl<'a> ImageRef<'a> {
 impl<'a> Renderer for ImageRef<'a> {
     /// Get the width of the image in pixels
     fn width(&self) -> u32 {
-        self.w as u32
+        self.w
     }
 
     /// Get the height of the image in pixels
     fn height(&self) -> u32 {
-        self.h as u32
+        self.h
     }
 
     /// Return a reference to a slice of colors making up the image
@@ -370,12 +370,12 @@ impl Image {
 impl Renderer for Image {
     /// Get the width of the image in pixels
     fn width(&self) -> u32 {
-        self.w as u32
+        self.w
     }
 
     /// Get the height of the image in pixels
     fn height(&self) -> u32 {
-        self.h as u32
+        self.h
     }
 
     /// Return a reference to a slice of colors making up the image

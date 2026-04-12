@@ -9,13 +9,28 @@ pub struct Rect {
     h: u32,
 }
 
+pub enum RectAlignment {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
+pub enum RectEdge {
+    Top,
+    Left,
+    Right,
+    Bottom,
+}
+
 impl Rect {
     pub fn new(x: i32, y: i32, w: u32, h: u32) -> Rect {
         Rect { x, y, w, h }
     }
 
-    pub fn area(&self) -> u32 {
-        self.w * self.h
+    // usize to permit rect above 0xFFFF * 0xFFFF
+    pub fn area(&self) -> usize {
+        self.w as usize * self.h as usize
     }
 
     pub fn left(&self) -> i32 {
@@ -23,7 +38,7 @@ impl Rect {
     }
 
     pub fn right(&self) -> i32 {
-        self.left_offset(self.w)
+        self.x + self.iwidth()
     }
 
     pub fn top(&self) -> i32 {
@@ -31,7 +46,7 @@ impl Rect {
     }
 
     pub fn bottom(&self) -> i32 {
-        self.top_offset(self.h)
+        self.y + self.iheight()
     }
 
     pub fn width(&self) -> u32 {
@@ -42,12 +57,12 @@ impl Rect {
         self.h
     }
 
-    pub fn left_offset(&self, xoffset: u32) -> i32 {
-        self.x + xoffset.try_into().unwrap_or(0)
+    pub fn iwidth(&self) -> i32 {
+        self.w.try_into().unwrap_or(0)
     }
 
-    pub fn top_offset(&self, yoffset: u32) -> i32 {
-        self.y + yoffset.try_into().unwrap_or(0)
+    pub fn iheight(&self) -> i32 {
+        self.h.try_into().unwrap_or(0)
     }
 
     pub fn container(&self, other: &Rect) -> Rect {
@@ -62,7 +77,11 @@ impl Rect {
     }
 
     pub fn contains(&self, x: i32, y: i32) -> bool {
-        self.left() <= x && self.right() >= x && self.top() <= y && self.bottom() >= y
+        !self.is_empty()
+            && self.left() <= x
+            && self.right() >= x
+            && self.top() <= y
+            && self.bottom() >= y
     }
 
     pub fn is_empty(&self) -> bool {
@@ -80,7 +99,33 @@ impl Rect {
         Rect::new(left, top, width, height)
     }
 
-    pub fn offset(&self, x: i32, y: i32) -> Rect {
+    pub fn translate(self, x: i32, y: i32) -> Rect {
         Rect::new(self.x + x, self.y + y, self.w, self.h)
+    }
+
+    pub fn resize(self, w: u32, h: u32, align: RectAlignment) -> Rect {
+        let (x, y) = match align {
+            RectAlignment::TopLeft => (self.left(), self.top()),
+            RectAlignment::TopRight => (self.right().saturating_sub_unsigned(w), self.top()),
+            RectAlignment::BottomLeft => (self.left(), self.bottom().saturating_sub_unsigned(h)),
+            RectAlignment::BottomRight => (
+                self.right().saturating_sub_unsigned(w),
+                self.bottom().saturating_sub_unsigned(h),
+            ),
+        };
+        Rect::new(x, y, w, h)
+    }
+
+    pub fn edge(self, inset: u32, outset: u32, align: RectEdge) -> Rect {
+        let start = match align {
+            RectEdge::Top => self.top().saturating_sub_unsigned(outset),
+            RectEdge::Left => self.left().saturating_sub_unsigned(outset),
+            RectEdge::Right => self.right().saturating_sub_unsigned(inset),
+            RectEdge::Bottom => self.bottom().saturating_sub_unsigned(inset),
+        };
+        match align {
+            RectEdge::Top | RectEdge::Bottom => Rect::new(self.x, start, self.w, inset + outset),
+            RectEdge::Left | RectEdge::Right => Rect::new(start, self.y, inset + outset, self.h),
+        }
     }
 }
