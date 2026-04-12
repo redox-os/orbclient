@@ -3,6 +3,11 @@ use crate::{Color, Mode, Renderer};
 use core::cell::Cell;
 use core::{cmp, mem, ptr};
 
+#[cfg(feature = "image")]
+pub use image::ImageError;
+#[cfg(feature = "image")]
+pub use resize::Type as ResizeType;
+
 pub struct ImageRoiRows<'a> {
     rect: Rect,
     w: usize,
@@ -237,15 +242,82 @@ impl Image {
             height,
             vec![color; width as usize * height as usize].into_boxed_slice(),
         )
+        .expect("The boxed size should match")
     }
 
-    pub fn from_data(w: u32, h: u32, data: Box<[Color]>) -> Image {
-        Image {
+    pub fn from_data(w: u32, h: u32, data: Box<[Color]>) -> Option<Image> {
+        if (w as usize * h as usize) != data.len() {
+            return None;
+        }
+        Some(Image {
             w,
             h,
             data,
             mode: Cell::new(Mode::Blend),
+        })
+    }
+
+    #[cfg(feature = "image")]
+    pub fn from_dynamic_image(
+        d_img: image::ImageResult<image::DynamicImage>,
+    ) -> Result<Self, ImageError> {
+        let img = d_img?.to_rgba();
+        let data: Vec<_> = img
+            .pixels()
+            .map(|p| Color::rgba(p.data[0], p.data[1], p.data[2], p.data[3]))
+            .collect();
+        Self::from_data(img.width(), img.height(), data.into_boxed_slice())
+            .ok_or(ImageError::DimensionError)
+    }
+
+    #[cfg(feature = "image")]
+    pub fn resize(&self, w: u32, h: u32, resize_type: ResizeType) -> Result<Self, ImageError> {
+        let mut dst_color = vec![Color { data: 0 }; w as usize * h as usize].into_boxed_slice();
+
+        let src = unsafe {
+            core::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * 4)
+        };
+
+        let mut dst = unsafe {
+            core::slice::from_raw_parts_mut(dst_color.as_mut_ptr() as *mut u8, dst_color.len() * 4)
+        };
+
+        let mut resizer = resize::new(
+            self.w as usize,
+            self.h as usize,
+            w as usize,
+            h as usize,
+            resize::Pixel::RGBA,
+            resize_type,
+        );
+        resizer.resize(&src, &mut dst);
+
+        Image::from_data(w, h, dst_color).ok_or(ImageError::DimensionError)
+    }
+
+    pub fn resize_exact(&self, scale: u32) -> Option<Self> {
+        match scale {
+            0 => return None,
+            1 => return Image::from_data(self.w, self.h, self.data.clone()),
+            _ => {}
         }
+        let mut new_data = vec![Color::rgb(0, 0, 0); self.data.len() * (scale * scale) as usize]
+            .into_boxed_slice();
+
+        for y in 0..self.h {
+            for x in 0..self.w {
+                let i = y * self.w + x;
+                let value = self.data[i as usize].data;
+                for y_s in 0..scale {
+                    for x_s in 0..scale {
+                        let new_i = (y * scale + y_s) * self.w * scale + x * scale + x_s;
+                        new_data[new_i as usize].data = value;
+                    }
+                }
+            }
+        }
+
+        Image::from_data(self.w * scale, self.h * scale, new_data)
     }
 
     pub fn width(&self) -> u32 {
