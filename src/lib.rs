@@ -31,6 +31,8 @@ mod blur;
 pub mod color;
 pub mod event;
 pub mod graphicspath;
+pub mod image;
+pub mod rect;
 pub mod renderer;
 
 #[derive(Clone, Copy, Debug)]
