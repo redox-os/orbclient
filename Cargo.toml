@@ -18,6 +18,10 @@ keywords = [
 name = "orbclient"
 path = "src/lib.rs"
 
+[dependencies]
+image = { version = "0.21.0", optional = true }
+resize = { version = "0.3.0", optional = true }
+
 [target.'cfg(not(target_os = "redox"))'.dependencies]
 sdl2 = { version = "0.38.0", optional = true }
 raw-window-handle = { version = "0.5.2", optional = true }
@@ -28,6 +32,7 @@ libredox = "0.1"
 
 [features]
 default = ["std", "sdl", "unifont"]
+image = ["std", "dep:image", "dep:resize"]
 std = []
 sdl = ["dep:sdl2"]
 bundled = ["sdl", "sdl2/bundled", "sdl2/static-link"]

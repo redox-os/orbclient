@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-use orbclient::{Color, EventOption, Renderer, Window};
+use orbclient::{image::ImageRef, rect::Rect, Color, EventOption, Renderer, Window};
 
-const TIMES: usize = 10;
+const TIMES: usize = 100;
 
 macro_rules! time {
     ($msg:tt, $block: block) => ({
@@ -27,10 +27,10 @@ fn main() {
     window.set(Color::rgb(255, 255, 255));
 
     //create image data : a green square
-    let data = vec![Color::rgba(100, 200, 10, 20); 412500];
-    let data2 = vec![Color::rgba(200, 100, 10, 20); 412500];
-    let data3 = vec![Color::rgba(10, 100, 100, 20); 412500];
-    let data4 = vec![Color::rgba(10, 100, 200, 20); 480000];
+    let data = vec![Color::rgba(100, 200, 10, 3); 412500];
+    let mut data2 = vec![Color::rgba(200, 100, 10, 3); 412500];
+    let mut data3 = vec![Color::rgba(10, 100, 100, 3); 412500];
+    let data4 = vec![Color::rgba(10, 100, 200, 3); 480000];
 
     //draw image benchmarking
     println!("Benchmarking implementations to draw an image on window:");
@@ -38,6 +38,12 @@ fn main() {
     time!("image_legacy", {
         for _i in 0..TIMES {
             window.image_legacy(15, 15, 750, 550, &data[..]);
+        }
+    });
+
+    time!("image_over", {
+        for _i in 0..TIMES {
+            window.image_over(50, &data4[..360000]);
         }
     });
 
@@ -49,13 +55,25 @@ fn main() {
 
     time!("image_opaque", {
         for _i in 0..TIMES {
-            window.image_opaque(50, 50, 750, 550, &data3[..]);
+            window.image_opaque(30, 30, 750, 550, &data3[..]);
         }
     });
 
-    time!("image_over", {
+    time!("image_roi_mut_blend", {
+        let data2_roi = ImageRef::from_data(750, 550, &mut data2[..]);
         for _i in 0..TIMES {
-            window.image_over(50, &data4[..360000]);
+            ImageRef::from_renderer(&mut window)
+                .roi_mut(&Rect::new(40, 40, 750, 550))
+                .blend(&data2_roi.roi(&Rect::new(0, 0, 750, 550)));
+        }
+    });
+
+    time!("image_roi_mut_blit", {
+        let data3_roi = ImageRef::from_data(750, 550, &mut data3[..]);
+        for _i in 0..TIMES {
+            ImageRef::from_renderer(&mut window)
+                .roi_mut(&Rect::new(50, 50, 750, 550))
+                .blit(&data3_roi.roi(&Rect::new(0, 0, 750, 550)));
         }
     });
 
