@@ -10,6 +10,8 @@ use crate::graphicspath::GraphicsPath;
 use crate::graphicspath::PointType;
 use crate::Mode;
 
+/// The trait to allow rendering code to be placed.
+/// All rendering in this trait is done in software.
 pub trait Renderer {
     /// Get width
     fn width(&self) -> u32;

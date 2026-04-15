@@ -115,6 +115,7 @@ impl<'a> ImageRoiMut<'a> {
         }
     }
 
+    /// Draw another image on top with alpha blending.
     pub fn blend(&'a mut self, other: &ImageRoi) {
         for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
             for (old, new) in self_row.iter_mut().zip(other_row.iter()) {
@@ -138,6 +139,7 @@ impl<'a> ImageRoiMut<'a> {
         }
     }
 
+    /// Draw another image on top without alpha blending.
     pub fn blit(&'a mut self, other: &ImageRoi) {
         for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
             let len = cmp::min(self_row.len(), other_row.len());
@@ -148,6 +150,7 @@ impl<'a> ImageRoiMut<'a> {
     }
 }
 
+/// A structure to borrow an existing image in software memory.
 pub struct ImageRef<'a> {
     w: u32,
     h: u32,
@@ -230,6 +233,8 @@ impl<'a> Renderer for ImageRef<'a> {
     }
 }
 
+/// A structure to hold an image in owned software memory.
+/// If `image` feature enabled, it allows loading from file and more dynamic resize algorithm.
 #[derive(Clone)]
 pub struct Image {
     w: u32,
@@ -350,6 +355,7 @@ impl Image {
         self.h
     }
 
+    /// Read a specified rect of the image
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
             rect: *rect,
@@ -358,6 +364,7 @@ impl Image {
         }
     }
 
+    /// Read or write a specified rect of the image
     pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
             rect: *rect,
