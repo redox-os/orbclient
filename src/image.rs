@@ -17,6 +17,7 @@ use std::path::Path;
 
 pub struct ImageRoiRows<'a> {
     rect: Rect,
+    /// Stride to next iteration
     w: usize,
     data: &'a [Color],
     i: usize,
@@ -38,6 +39,7 @@ impl<'a> Iterator for ImageRoiRows<'a> {
 
 pub struct ImageRoiRowsMut<'a> {
     rect: Rect,
+    /// Stride to next iteration
     w: usize,
     data: &'a mut [Color],
     i: usize,
@@ -141,10 +143,33 @@ impl<'a> ImageRoiMut<'a> {
 
     /// Draw another image on top without alpha blending.
     pub fn blit(&'a mut self, other: &ImageRoi) {
-        for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
-            let len = cmp::min(self_row.len(), other_row.len());
+        if other.w == self.w
+            && self.rect.left() == 0
+            && other.rect.left() == 0
+            && self.rect.width() as usize == self.w
+            && other.rect.width() as usize == other.w
+        {
+            // very fast blit path which will benefit fullscreen window
             unsafe {
-                ptr::copy(other_row.as_ptr(), self_row.as_mut_ptr(), len);
+                let len = cmp::min(self.rect.area(), other.rect.area());
+                let other_ptr = other
+                    .data
+                    .split_at(other.w * (other.rect.top() as usize))
+                    .1
+                    .as_ptr();
+                let self_ptr = self
+                    .data
+                    .split_at_mut(other.w * (self.rect.top() as usize))
+                    .1
+                    .as_mut_ptr();
+                ptr::copy(other_ptr, self_ptr, len);
+            }
+        } else {
+            for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
+                let len = cmp::min(self_row.len(), other_row.len());
+                unsafe {
+                    ptr::copy(other_row.as_ptr(), self_row.as_mut_ptr(), len);
+                }
             }
         }
     }
