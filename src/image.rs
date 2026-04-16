@@ -16,9 +16,11 @@ pub use resize::Type as ResizeType;
 use std::path::Path;
 
 pub struct ImageRoiRows<'a> {
-    rect: Rect,
-    /// Stride to next iteration
-    w: usize,
+    height: usize,
+    top: usize,
+    left: usize,
+    width: usize,
+    stride: usize,
     data: &'a [Color],
     i: usize,
 }
@@ -26,9 +28,9 @@ pub struct ImageRoiRows<'a> {
 impl<'a> Iterator for ImageRoiRows<'a> {
     type Item = &'a [Color];
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i < self.rect.height() as usize {
-            let start = (self.rect.top() as usize + self.i) * self.w + self.rect.left() as usize;
-            let end = start + self.rect.width() as usize;
+        if self.i < self.height {
+            let start = (self.top + self.i) * self.stride + self.left;
+            let end = start + self.width;
             self.i += 1;
             Some(&self.data[start..end])
         } else {
@@ -38,9 +40,11 @@ impl<'a> Iterator for ImageRoiRows<'a> {
 }
 
 pub struct ImageRoiRowsMut<'a> {
-    rect: Rect,
-    /// Stride to next iteration
-    w: usize,
+    height: usize,
+    top: usize,
+    left: usize,
+    width: usize,
+    stride: usize,
     data: &'a mut [Color],
     i: usize,
 }
@@ -48,24 +52,26 @@ pub struct ImageRoiRowsMut<'a> {
 impl<'a> Iterator for ImageRoiRowsMut<'a> {
     type Item = &'a mut [Color];
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i < self.rect.height() as usize {
-            let mut data = mem::take(&mut self.data);
-
-            // skip section of data above top of rect
-            if self.i == 0 {
-                data = data.split_at_mut(self.rect.top() as usize * self.w).1
-            };
-
-            // split after next row
-            let (row, tail) = data.split_at_mut(self.w);
-            self.data = tail; // make data point to the remaining rows
-            let start = self.rect.left() as usize;
-            let end = self.rect.right() as usize;
-            self.i += 1;
-            Some(&mut row[start..end]) // return the rect part of the row
-        } else {
-            None
+        if self.i >= self.height {
+            return None;
         }
+        let data = mem::take(&mut self.data);
+
+        // skip section of data above top of rect
+        let data = if self.i == 0 {
+            let skip = self.top * self.stride;
+            &mut data[skip..]
+        } else {
+            data
+        };
+
+        // split after next row
+        let (row, tail) = data.split_at_mut(self.stride);
+        self.data = tail; // make data point to the remaining rows
+        let start = self.left;
+        let end = self.left + self.width;
+        self.i += 1;
+        Some(&mut row[start..end]) // return the rect part of the row
     }
 }
 
@@ -73,19 +79,29 @@ impl<'a> Iterator for ImageRoiRowsMut<'a> {
 // `rect` defined the area within the larger image, we need to know the width of the image (`w`)
 // to move through the data by rows, and `data` is a reference to the data in the actual image
 pub struct ImageRoi<'a> {
-    rect: Rect,
-    w: usize,
+    height: usize,
+    top: usize,
+    left: usize,
+    width: usize,
+    stride: usize,
     data: &'a [Color],
 }
 
 impl<'a> ImageRoi<'a> {
     pub fn rows(&'a self) -> ImageRoiRows<'a> {
         ImageRoiRows {
-            rect: self.rect,
-            w: self.w,
+            height: self.height,
+            top: self.top,
+            left: self.left,
+            width: self.width,
+            stride: self.stride,
             data: self.data,
             i: 0,
         }
+    }
+
+    pub fn cells(&self) -> impl Iterator<Item = &Color> {
+        self.rows().flatten()
     }
 }
 
@@ -93,16 +109,22 @@ impl<'a> ImageRoi<'a> {
 // `rect` defined the area within the larger image, we need to know the width of the image (`w`)
 // to move through the data by rows, and `data` is a reference to the data in the actual image
 pub struct ImageRoiMut<'a> {
-    pub rect: Rect,
-    pub w: usize,
-    pub data: &'a mut [Color],
+    height: usize,
+    top: usize,
+    left: usize,
+    width: usize,
+    stride: usize,
+    data: &'a mut [Color],
 }
 
 impl<'a> ImageRoiMut<'a> {
     pub fn rows(&'a self) -> ImageRoiRows<'a> {
         ImageRoiRows {
-            rect: self.rect,
-            w: self.w,
+            height: self.height,
+            top: self.top,
+            left: self.left,
+            width: self.width,
+            stride: self.stride,
             data: self.data,
             i: 0,
         }
@@ -110,8 +132,11 @@ impl<'a> ImageRoiMut<'a> {
 
     pub fn rows_mut(&'a mut self) -> ImageRoiRowsMut<'a> {
         ImageRoiRowsMut {
-            rect: self.rect,
-            w: self.w,
+            height: self.height,
+            top: self.top,
+            left: self.left,
+            width: self.width,
+            stride: self.stride,
             data: self.data,
             i: 0,
         }
@@ -143,23 +168,19 @@ impl<'a> ImageRoiMut<'a> {
 
     /// Draw another image on top without alpha blending.
     pub fn blit(&'a mut self, other: &ImageRoi) {
-        if other.w == self.w
-            && self.rect.left() == 0
-            && other.rect.left() == 0
-            && self.rect.width() as usize == self.w
-            && other.rect.width() as usize == other.w
+        if other.stride == self.stride
+            && self.left == 0
+            && other.left == 0
+            && self.width == self.stride
+            && other.width == other.stride
         {
             // very fast blit path which will benefit fullscreen window
             unsafe {
-                let len = cmp::min(self.rect.area(), other.rect.area());
-                let other_ptr = other
-                    .data
-                    .split_at(other.w * (other.rect.top() as usize))
-                    .1
-                    .as_ptr();
+                let len = cmp::min(self.width * self.height, other.width * other.height);
+                let other_ptr = other.data.split_at(other.stride * other.top).1.as_ptr();
                 let self_ptr = self
                     .data
-                    .split_at_mut(other.w * (self.rect.top() as usize))
+                    .split_at_mut(other.stride * self.top)
                     .1
                     .as_mut_ptr();
                 ptr::copy(other_ptr, self_ptr, len);
@@ -205,16 +226,22 @@ impl<'a> ImageRef<'a> {
 
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: self.data,
         }
     }
 
     pub fn roi_mut(self, rect: &Rect) -> ImageRoiMut<'a> {
         ImageRoiMut {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: self.data,
         }
     }
@@ -383,8 +410,11 @@ impl Image {
     /// Read a specified rect of the image
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: &self.data,
         }
     }
@@ -392,8 +422,11 @@ impl Image {
     /// Read or write a specified rect of the image
     pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: &mut self.data,
         }
     }
