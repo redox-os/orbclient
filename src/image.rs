@@ -526,16 +526,22 @@ impl ImageAligned {
 
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: self.data,
         }
     }
 
     pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
-            rect: *rect,
-            w: self.w as usize,
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
             data: self.data,
         }
     }
