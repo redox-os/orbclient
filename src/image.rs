@@ -166,6 +166,17 @@ impl<'a> ImageRoiMut<'a> {
         }
     }
 
+    /// Draw another image on top with alpha masking.
+    pub fn blit_mask(&'a mut self, other: &ImageRoi) {
+        for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
+            for (old, new) in self_row.iter_mut().zip(other_row.iter()) {
+                if new.data >> 24 >= 128 {
+                    old.data = new.data;
+                }
+            }
+        }
+    }
+
     /// Draw another image on top without alpha blending.
     pub fn blit(&'a mut self, other: &ImageRoi) {
         if other.stride == self.stride

@@ -68,6 +68,15 @@ fn main() {
         }
     });
 
+    time!("image_roi_mut_blit_mask", {
+        let data2_roi = ImageRef::from_data(750, 550, &mut data2[..]);
+        for _i in 0..TIMES {
+            ImageRef::from_renderer(&mut window)
+                .roi_mut(&Rect::new(40, 40, 750, 550))
+                .blit_mask(&data2_roi.roi(&Rect::new(0, 0, 750, 550)));
+        }
+    });
+
     time!("image_roi_mut_blit", {
         let data3_roi = ImageRef::from_data(750, 550, &mut data3[..]);
         for _i in 0..TIMES {
