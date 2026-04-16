@@ -1,19 +1,17 @@
-build:linux:
-  image: "redoxos/redoxer"
-  before_script:
-    - apt-get update
-    - apt-get install cmake libsdl2-dev -y
-  script:
-    - cargo +nightly build --all-features
-    - cargo +nightly build --examples
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PROJECT_NAMESPACE == "redox-os"'
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
 
-test:linux:
-  image: "redoxos/redoxer"
+build:linux:
+  image: "rust:slim"
   before_script:
     - apt-get update
-    - apt-get install cmake -y
+    - apt-get install cmake libsdl2-dev build-essential --no-install-recommends -y
   script:
-    - cargo +nightly test --all-features
+    - cargo build --all-features
+    - cargo test --all-features
+    - cargo build --examples
 
 build:redox:
   image: "redoxos/redoxer"
@@ -21,9 +19,8 @@ build:redox:
     - redoxer build
 
 build:no_std:
-  image: "rust:latest"
+  image: "rust:slim"
   before_script:
-    - rustup toolchain add nightly
-    - rustup target add thumbv6m-none-eabi --toolchain nightly
+    - rustup target add thumbv6m-none-eabi
   script:
-    - cargo +nightly build --no-default-features --target thumbv6m-none-eabi
+    - cargo build --no-default-features --target thumbv6m-none-eabi
