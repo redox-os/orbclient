@@ -1,6 +1,7 @@
 use crate::rect::Rect;
 use crate::{Color, Mode, Renderer};
 use core::cell::Cell;
+use core::fmt::Display;
 use core::num::NonZero;
 use core::{cmp, mem, ptr};
 
@@ -32,7 +33,7 @@ impl<'a> Iterator for ImageRoiRows<'a> {
             let start = (self.top + self.i) * self.stride + self.left;
             let end = start + self.width;
             self.i += 1;
-            Some(&self.data[start..end])
+            Some(&self.data.get(start..end)?)
         } else {
             None
         }
@@ -60,7 +61,7 @@ impl<'a> Iterator for ImageRoiRowsMut<'a> {
         // skip section of data above top of rect
         let data = if self.i == 0 {
             let skip = self.top * self.stride;
-            &mut data[skip..]
+            data.get_mut(skip..)?
         } else {
             data
         };
@@ -71,7 +72,7 @@ impl<'a> Iterator for ImageRoiRowsMut<'a> {
         let start = self.left;
         let end = self.left + self.width;
         self.i += 1;
-        Some(&mut row[start..end]) // return the rect part of the row
+        row.get_mut(start..end) // return the rect part of the row
     }
 }
 
@@ -102,6 +103,21 @@ impl<'a> ImageRoi<'a> {
 
     pub fn cells(&self) -> impl Iterator<Item = &Color> {
         self.rows().flatten()
+    }
+}
+
+impl<'a> Display for ImageRoi<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}+{}..{}x{} of {}x{}",
+            self.left,
+            self.top,
+            self.width,
+            self.height,
+            self.stride,
+            self.data.len() / self.stride
+        )
     }
 }
 
@@ -186,14 +202,17 @@ impl<'a> ImageRoiMut<'a> {
             && other.width == other.stride
         {
             // very fast blit path which will benefit fullscreen window
+            let width = self.width;
+            let len = width * cmp::min(self.height, other.height);
+            let Some(other_data) = other.data.split_at_checked(width * other.top) else {
+                return;
+            };
+            let Some(self_data) = self.data.split_at_mut_checked(width * self.top) else {
+                return;
+            };
             unsafe {
-                let len = cmp::min(self.width * self.height, other.width * other.height);
-                let other_ptr = other.data.split_at(other.stride * other.top).1.as_ptr();
-                let self_ptr = self
-                    .data
-                    .split_at_mut(other.stride * self.top)
-                    .1
-                    .as_mut_ptr();
+                let other_ptr = other_data.1.as_ptr();
+                let self_ptr = self_data.1.as_mut_ptr();
                 ptr::copy(other_ptr, self_ptr, len);
             }
         } else {
@@ -207,6 +226,20 @@ impl<'a> ImageRoiMut<'a> {
     }
 }
 
+impl<'a> Display for ImageRoiMut<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}+{}..{}x{} of {}x{}",
+            self.left,
+            self.top,
+            self.width,
+            self.height,
+            self.stride,
+            self.data.len() / self.stride
+        )
+    }
+}
 /// A structure to borrow an existing image in software memory.
 pub struct ImageRef<'a> {
     w: u32,
