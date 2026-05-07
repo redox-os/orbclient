@@ -3,7 +3,7 @@ The Orbital Client Library. Compatible with Redox and SDL2 (on Linux and Macos).
 
 [![Build status](https://gitlab.redox-os.org/redox-os/orbclient/badges/master/pipeline.svg)](https://gitlab.redox-os.org/redox-os/orbclient/pipelines)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/orbclient)](https://crates.io/crates/orbclient)
+[![crates.io](https://img.shields.io/crates/v/orbclient)](https://crates.io/crates/orbclient)
 [![docs.rs](https://docs.rs/orbclient/badge.svg)](https://docs.rs/orbclient)
 
 ## Dependencies
