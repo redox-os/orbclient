@@ -16,7 +16,9 @@ build:linux:
 build:redox:
   image: "redoxos/redoxer"
   script:
+    - redoxer build --no-default-features
     - redoxer build
+    - redoxer build --all-features
 
 build:no_std:
   image: "rust:slim"
