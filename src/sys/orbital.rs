@@ -167,6 +167,7 @@ impl Window {
                 file_opt: Some(file),
                 data_opt: None,
             };
+            window.sync_path();
             unsafe {
                 window.remap();
             }
