@@ -17,7 +17,7 @@ use crate::WindowFlag;
 use crate::{Mode, SurfaceFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
-    let display_path = env::var("DISPLAY").or(Err("DISPLAY not set"))?;
+    let display_path = env::var("DISPLAY").unwrap_or("/scheme/orbital/99.0".into());
     match File::open(&display_path) {
         Ok(display) => {
             let mut buf: [u8; 4096] = [0; 4096];
