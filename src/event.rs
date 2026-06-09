@@ -277,8 +277,10 @@ pub const K_END: u8 = 0x4F;
 pub const K_DOWN: u8 = 0x50;
 /// Page down key
 pub const K_PGDN: u8 = 0x51;
-/// Insert key
+/// Insert key (deprecated)
 pub const K_INS: u8 = 0x52;
+/// Insert key
+pub const K_INSERT: u8 = 0x52;
 /// Delete key
 pub const K_DEL: u8 = 0x53;
 /// F11 key
