@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 
 use std::cell::{Cell, RefCell};
+use std::ffi::CString;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
 use crate::color::Color;
 use crate::renderer::Renderer;
+use crate::MediaKind;
 use crate::Mode;
 use crate::WindowDragKind;
 use crate::WindowFlag;
@@ -259,31 +261,21 @@ impl Window {
         self.sdl().event().unwrap().event_sender()
     }
 
-    pub fn clipboard(&self) -> String {
-        let result = self.video().clipboard().clipboard_text();
-
-        match result {
-            Ok(value) => return value,
-            Err(message) => println!("{}", message),
-        }
-
-        String::default()
+    pub fn clipboard(&self) -> Option<(MediaKind, String)> {
+        self.video()
+            .clipboard()
+            .clipboard_text()
+            .ok()
+            .map(|s| (MediaKind::Text, s))
     }
 
-    pub fn set_clipboard(&mut self, text: &str) {
-        let result = self.video().clipboard().set_clipboard_text(text);
-
-        if let Err(message) = result {
-            println!("{}", message);
-        }
+    pub fn clipboard_c(&self) -> Option<(MediaKind, CString)> {
+        self.clipboard()
+            .and_then(|(k, s)| Some((k, CString::new(s).ok()?)))
     }
 
-    /// Pops the content of the last drop event from the window.
-    pub fn pop_drop_content(&self) -> Option<String> {
-        let result = self.drop_content.borrow().clone();
-        *self.drop_content.borrow_mut() = None;
-
-        result
+    pub fn set_clipboard(&mut self, text: &str, _kind: MediaKind) -> bool {
+        self.video().clipboard().set_clipboard_text(text).is_ok()
     }
 
     pub fn sync_path(&mut self) {

@@ -144,3 +144,88 @@ impl FromStr for WindowDragKind {
         }
     }
 }
+
+/// A type of media that registered into clipboard or DND system.
+/// Text, File, Uri is designed for simple implementation.
+/// For programs that wants to send custom MIME, use Data.
+/// Cannot support multiple kind of data at the moment.
+#[derive(Clone, Copy, Debug)]
+pub enum MediaKind {
+    /// A regular text
+    Text,
+    /// A file path (can be multiple, \n separated)
+    File,
+    /// A URI path (HTTP or internal identifier)
+    Uri,
+    /// A data URI
+    Data,
+    /// Do not use
+    Any,
+}
+
+impl MediaKind {
+    pub fn from_i64(val: i64) -> Self {
+        match val {
+            1 => MediaKind::Text,
+            2 => MediaKind::File,
+            3 => MediaKind::Uri,
+            4 => MediaKind::Data,
+            _ => MediaKind::Any,
+        }
+    }
+    pub fn to_i64(&self) -> i64 {
+        match self {
+            MediaKind::Text => 1,
+            MediaKind::File => 2,
+            MediaKind::Uri => 3,
+            MediaKind::Data => 4,
+            MediaKind::Any => 1,
+        }
+    }
+    pub fn to_mime(&self, data: &str) -> String {
+        const DEFAULT_MIME: &str = "application/octet-stream";
+        match self {
+            MediaKind::Text => "text/plain".into(),
+            MediaKind::File => "text/uri-list".into(),
+            MediaKind::Uri => "text/x-uri".into(),
+            MediaKind::Data => {
+                if let Some(rest) = data.strip_prefix("data:") {
+                    if let Some((prefix, _)) = rest.split_once(&[';', ',', '\n']) {
+                        if prefix.len() < 100 {
+                            return prefix.into();
+                        }
+                    }
+                }
+                DEFAULT_MIME.into()
+            }
+            MediaKind::Any => DEFAULT_MIME.into(),
+        }
+    }
+}
+
+impl Display for MediaKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            MediaKind::Text => write!(f, "t"),
+            MediaKind::File => write!(f, "f"),
+            MediaKind::Uri => write!(f, "u"),
+            MediaKind::Data => write!(f, "d"),
+            MediaKind::Any => write!(f, " "),
+        }
+    }
+}
+
+impl FromStr for MediaKind {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "t" => Ok(MediaKind::Text),
+            "f" => Ok(MediaKind::File),
+            "u" => Ok(MediaKind::Uri),
+            "d" => Ok(MediaKind::Data),
+            " " => Ok(MediaKind::Any),
+            _ => Err(s.into()),
+        }
+    }
+}

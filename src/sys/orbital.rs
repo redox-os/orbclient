@@ -5,6 +5,7 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::{env, mem, slice, thread};
 
@@ -13,7 +14,7 @@ use libredox::{call as redox, flag};
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
-use crate::{Mode, SurfaceFlag};
+use crate::{MediaKind, Mode, SurfaceFlag};
 use crate::{WindowDragKind, WindowFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
@@ -177,22 +178,33 @@ impl Window {
         }
     }
 
-    pub fn clipboard(&self) -> String {
-        let mut text = String::new();
+    pub fn clipboard(&self) -> Option<(MediaKind, String)> {
         let window_fd = self.file().as_raw_fd();
-        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
-            let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
-            let _ = clipboard_file.read_to_string(&mut text);
-        }
-        text
+        let clipboard_fd = redox::dup(window_fd as usize, b"clipboard").ok()?;
+        let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+        let mut kind = [0; 1];
+        clipboard_file.read_exact(&mut kind).ok()?;
+        let kind = MediaKind::from_str(str::from_utf8(&kind).ok()?).ok()?;
+        let mut text = String::new();
+        clipboard_file.read_to_string(&mut text).ok()?;
+        return Some((kind, text));
     }
 
-    pub fn set_clipboard(&mut self, text: &str) {
+    pub fn clipboard_c(&self) -> Option<(MediaKind, CString)> {
+        let (kind, mut text) = self.clipboard()?;
+        text.push('\0');
+        let text = CString::from_vec_with_nul(text.into_bytes()).ok()?;
+        return Some((kind, text));
+    }
+
+    pub fn set_clipboard(&mut self, content: &str, kind: MediaKind) -> bool {
         let window_fd = self.file().as_raw_fd();
         if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
-            let _ = clipboard_file.write(text.as_bytes());
+            let _ = write!(&mut clipboard_file, "{}", kind);
+            return clipboard_file.write(content.as_bytes()).is_ok();
         }
+        false
     }
 
     /// Not yet available on Redox OS.
