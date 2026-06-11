@@ -254,3 +254,31 @@ impl ClipboardAction {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub enum DragAction {
+    Copy,
+    Move,
+    Link,
+    None,
+}
+
+impl DragAction {
+    pub fn from_u8(val: u8) -> Option<Self> {
+        match val {
+            1 => Some(DragAction::Copy),
+            2 => Some(DragAction::Move),
+            4 => Some(DragAction::Link),
+            0 => Some(DragAction::None),
+            _ => None,
+        }
+    }
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            DragAction::Copy => 1,
+            DragAction::Move => 2,
+            DragAction::Link => 4,
+            DragAction::None => 0,
+        }
+    }
+}

@@ -207,9 +207,57 @@ impl Window {
         false
     }
 
-    /// Not yet available on Redox OS.
-    pub fn pop_drop_content(&self) -> Option<String> {
-        None
+    /// Register a content to drag. It's up to the receiver how to handles it.
+    /// Invalid when called during dragging from other window.
+    pub fn push_drag_content(&self, content: &str, kind: MediaKind) -> bool {
+        if content.len() == 0 {
+            // can be mixed up with peek_drop_content
+            return false;
+        }
+        let window_fd = self.file().as_raw_fd();
+        // unlike clipboard handle, the dnd handle automatically disposes the resource for any window after read
+        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"dnd") {
+            let mut dnd_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+            let _ = write!(&mut dnd_file, "{}", kind);
+            return dnd_file.write(content.as_bytes()).is_ok();
+        }
+        false
+    }
+
+    /// See the DND content. Must be called at DragEnter to subscribe the DND event for the session.
+    pub fn peek_drop_content(&self) -> Option<(MediaKind, String)> {
+        let window_fd = self.file().as_raw_fd();
+        if let Ok(dnd_fd) = redox::dup(window_fd as usize, b"dnd") {
+            let mut dnd_file = unsafe { File::from_raw_fd(dnd_fd as RawFd) };
+            let mut kind = [0; 1];
+            dnd_file.read_exact(&mut kind).ok()?;
+            let kind = MediaKind::from_str(str::from_utf8(&kind).ok()?).ok()?;
+            let mut text = String::new();
+            dnd_file.read_to_string(&mut text).ok()?;
+            return Some((kind, text));
+        }
+        return None;
+    }
+
+    pub fn peek_drop_content_c(&self) -> Option<(MediaKind, CString)> {
+        let (kind, mut text) = self.peek_drop_content()?;
+        text.push('\0');
+        let text = CString::from_vec_with_nul(text.into_bytes()).ok()?;
+        return Some((kind, text));
+    }
+
+    /// Drop the DND content and stop receiving DND events for the session.
+    /// If called before DropEvent, assumed to refuse, otherwise accept.
+    pub fn pop_drop_content(&mut self) -> bool {
+        self.file_mut().write(b"N,D").is_ok()
+    }
+
+    /// Give the DND session a visual cue whether it will be accepted or not.
+    /// Use pop_drop_content to unsubscribe from the event.
+    pub fn set_drop_accept(&mut self, accept: bool) -> bool {
+        self.file_mut()
+            .write(if accept { b"N,Y" } else { b"N,N" })
+            .is_ok()
     }
 
     // TODO: Replace with smarter mechanism, maybe a move event?

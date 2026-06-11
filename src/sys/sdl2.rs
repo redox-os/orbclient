@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, Ref, RefCell};
 use std::ffi::CString;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
 use crate::color::Color;
 use crate::renderer::Renderer;
+use crate::DragAction;
 use crate::MediaKind;
 use crate::Mode;
 use crate::WindowDragKind;
@@ -74,7 +76,7 @@ pub struct Window {
     /// Mouse in relative mode
     mouse_relative: bool,
     /// Content of the last drop (file | text) operation
-    drop_content: RefCell<Option<String>>,
+    drop_content: RefCell<Option<(MediaKind, String)>>,
 }
 
 impl Drop for Window {
@@ -276,6 +278,26 @@ impl Window {
 
     pub fn set_clipboard(&mut self, text: &str, _kind: MediaKind) -> bool {
         self.video().clipboard().set_clipboard_text(text).is_ok()
+    }
+
+    pub fn push_drag_content(&self, _content: &str, _kind: MediaKind) -> bool {
+        // SDL2 crate does not support dragging
+        false
+    }
+
+    pub fn peek_drop_content(&self) -> Ref<'_, Option<(MediaKind, String)>> {
+        self.drop_content.borrow()
+    }
+
+    pub fn peek_drop_content_c(&self) -> Option<(MediaKind, CString)> {
+        self.drop_content
+            .borrow()
+            .as_ref()
+            .and_then(|(k, s)| Some((*k, CString::from_str(s.as_str()).ok()?)))
+    }
+
+    pub fn pop_drop_content(&self) -> Option<(MediaKind, String)> {
+        self.drop_content.borrow_mut().take()
     }
 
     pub fn sync_path(&mut self) {
@@ -551,21 +573,38 @@ impl Window {
                 }
             }
             sdl2::event::Event::DropFile { filename, .. } => {
-                *self.drop_content.borrow_mut() = Some(filename);
+                *self.drop_content.borrow_mut() = Some((MediaKind::File, filename));
 
                 let (x, y) = self.get_mouse_position();
 
                 events.push(MouseEvent { x, y }.to_event());
 
-                events.push(DropEvent { kind: DROP_FILE }.to_event())
+                events.push(
+                    DropEvent {
+                        kind: DragAction::Copy,
+                        size: 0, // TODO
+                        x,
+                        y,
+                    }
+                    .to_event(),
+                )
             }
             sdl2::event::Event::DropText { filename, .. } => {
-                *self.drop_content.borrow_mut() = Some(filename);
+                let size = filename.len();
+                *self.drop_content.borrow_mut() = Some((MediaKind::Text, filename));
 
                 let (x, y) = self.get_mouse_position();
 
                 events.push(MouseEvent { x, y }.to_event());
-                events.push(DropEvent { kind: DROP_TEXT }.to_event())
+                events.push(
+                    DropEvent {
+                        kind: DragAction::Copy,
+                        size,
+                        x,
+                        y,
+                    }
+                    .to_event(),
+                )
             }
             sdl2::event::Event::KeyUp { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {

@@ -3,7 +3,7 @@
 use core::ops::{Deref, DerefMut};
 use core::{char, mem, slice};
 
-use crate::ClipboardAction;
+use crate::{ClipboardAction, DragAction};
 
 pub const EVENT_NONE: i64 = 0;
 pub const EVENT_KEY: i64 = 1;
@@ -22,6 +22,9 @@ pub const EVENT_TEXT_INPUT: i64 = 13;
 pub const EVENT_CLIPBOARD_UPDATE: i64 = 14;
 pub const EVENT_HOVER: i64 = 15;
 pub const EVENT_SCALE: i64 = 16;
+pub const EVENT_DRAG_ENTER: i64 = 17;
+pub const EVENT_DRAG_MOVE: i64 = 18;
+pub const EVENT_DRAG_LEAVE: i64 = 19;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -54,7 +57,13 @@ pub enum EventOption {
     Clipboard(ClipboardEvent),
     /// A clipboard update event
     ClipboardUpdate(ClipboardUpdateEvent),
-    /// A drop file / text event (available on linux, windows and macOS)
+    /// A drag enter event
+    DragEnter(DragEnterEvent),
+    /// A drag move event
+    DragMove(DragMoveEvent),
+    /// A drag leave event
+    DragLeave(DragLeaveEvent),
+    /// A drop event
     Drop(DropEvent),
     /// A hover event
     Hover(HoverEvent),
@@ -109,6 +118,9 @@ impl Event {
             EVENT_DROP => EventOption::Drop(DropEvent::from_event(self)),
             EVENT_HOVER => EventOption::Hover(HoverEvent::from_event(self)),
             EVENT_SCALE => EventOption::Scale(ScaleEvent::from_event(self)),
+            EVENT_DRAG_ENTER => EventOption::DragEnter(DragEnterEvent::from_event(self)),
+            EVENT_DRAG_MOVE => EventOption::DragMove(DragMoveEvent::from_event(self)),
+            EVENT_DRAG_LEAVE => EventOption::DragLeave(DragLeaveEvent::from_event(self)),
             _ => EventOption::Unknown(self),
         }
     }
@@ -353,8 +365,12 @@ impl KeyEvent {
     }
 }
 
+/// A supplement to KeyEvent that report a character.
+/// Affected by modifier keys and keyboard layout.
+/// Control character (e.g. Backspace and Enter key) does not count as a TextInputEvent.
 #[derive(Copy, Clone, Debug)]
 pub struct TextInputEvent {
+    /// Character being sent.
     pub character: char,
 }
 
@@ -534,7 +550,9 @@ impl FocusEvent {
 /// A move event
 #[derive(Copy, Clone, Debug)]
 pub struct MoveEvent {
+    /// New window X position
     pub x: i32,
+    /// New window Y position
     pub y: i32,
 }
 
@@ -558,7 +576,9 @@ impl MoveEvent {
 /// A resize event
 #[derive(Copy, Clone, Debug)]
 pub struct ResizeEvent {
+    /// New window width
     pub width: u32,
+    /// New window height
     pub height: u32,
 }
 
@@ -582,7 +602,9 @@ impl ResizeEvent {
 /// A screen report event
 #[derive(Copy, Clone, Debug)]
 pub struct ScreenEvent {
+    /// New screen width
     pub width: u32,
+    /// New screen height
     pub height: u32,
 }
 
@@ -645,28 +667,112 @@ impl ClipboardEvent {
     }
 }
 
-pub const DROP_FILE: u8 = 0;
-pub const DROP_TEXT: u8 = 1;
-
-/// A drop file event.
-#[derive(Copy, Clone, Debug)]
-pub struct DropEvent {
-    pub kind: u8,
+fn pack_dnd(kind: DragAction, size: usize, x: i32, y: i32) -> (i64, i64) {
+    (
+        (kind.to_u8() as i64) | (size as i64) << 8,
+        (x as i64) | (y as i64) << 32,
+    )
 }
 
-impl DropEvent {
+fn unpack_dnd(ev: Event) -> (DragAction, usize, i32, i32) {
+    (
+        DragAction::from_u8((ev.a & 0xFF) as u8).unwrap_or(DragAction::Copy),
+        (ev.a >> 8) as usize,
+        ev.b as i32,
+        (ev.b >> 32) as i32,
+    )
+}
+
+/// A drag enter file event.
+/// App must call peek_drop_content to receive DragMoveEvent, DragLeaveEvent, DropEvent.
+/// App can ignore DND by doing nothing or peek_drop_content + pop_drop_content before DropEvent.
+#[derive(Copy, Clone, Debug)]
+pub struct DragEnterEvent {
+    pub kind: DragAction,
+    pub size: usize,
+}
+
+impl DragEnterEvent {
+    pub fn to_event(&self) -> Event {
+        let (a, b) = pack_dnd(self.kind, self.size, 0, 0);
+        Event {
+            code: EVENT_DRAG_ENTER,
+            a,
+            b,
+        }
+    }
+
+    pub fn from_event(event: Event) -> Self {
+        let (kind, size, _, _) = unpack_dnd(event);
+        Self { kind, size }
+    }
+}
+
+/// A DND drag move event.
+#[derive(Copy, Clone, Debug)]
+pub struct DragMoveEvent {
+    pub kind: DragAction,
+    pub size: usize,
+    pub x: i32,
+    pub y: i32,
+}
+
+impl DragMoveEvent {
+    pub fn to_event(&self) -> Event {
+        let (a, b) = pack_dnd(self.kind, self.size, self.x, self.y);
+        Event {
+            code: EVENT_DRAG_MOVE,
+            a,
+            b,
+        }
+    }
+
+    pub fn from_event(event: Event) -> Self {
+        let (kind, size, x, y) = unpack_dnd(event);
+        Self { kind, size, x, y }
+    }
+}
+
+/// A DND drag move event.
+#[derive(Copy, Clone, Debug)]
+pub struct DragLeaveEvent {}
+
+impl DragLeaveEvent {
     pub fn to_event(&self) -> Event {
         Event {
-            code: EVENT_DROP,
-            a: self.kind as i64,
+            code: EVENT_DRAG_LEAVE,
+            a: 0,
             b: 0,
         }
     }
 
-    pub fn from_event(event: Event) -> DropEvent {
-        DropEvent {
-            kind: event.a as u8,
+    pub fn from_event(_event: Event) -> Self {
+        Self {}
+    }
+}
+
+/// A DND drop event.
+#[derive(Copy, Clone, Debug)]
+pub struct DropEvent {
+    pub kind: DragAction,
+    pub size: usize,
+    pub x: i32,
+    pub y: i32,
+}
+
+impl DropEvent {
+    pub fn to_event(&self) -> Event {
+        let (a, b) = pack_dnd(self.kind, self.size, self.x, self.y);
+        Event {
+            code: EVENT_DROP,
+            a,
+            b,
         }
+    }
+
+    pub fn from_event(event: Event) -> Self {
+        let (kind, size, x, y) = unpack_dnd(event);
+        Self { kind, size, x, y }
     }
 }
 
