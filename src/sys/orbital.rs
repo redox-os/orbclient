@@ -381,8 +381,9 @@ impl Window {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
+        let fd = self.file().as_raw_fd() as usize;
         let address = redox::mmap(redox::MmapArgs {
-            fd: self.file().as_raw_fd() as usize,
+            fd,
             offset: 0,
             length: size * mem::size_of::<Color>(),
             flags: flag::MAP_SHARED,
@@ -581,8 +582,10 @@ impl Surface {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
+        let fd = self.file().as_raw_fd() as usize;
+        let _ = redox::ftruncate(fd, size * mem::size_of::<Color>());
         let address = redox::mmap(redox::MmapArgs {
-            fd: self.file().as_raw_fd() as usize,
+            fd,
             offset: 0,
             length: size * mem::size_of::<Color>(),
             flags: flag::MAP_SHARED,
@@ -621,15 +624,15 @@ impl AsRawFd for Surface {
 
 impl FromRawFd for Surface {
     unsafe fn from_raw_fd(fd: RawFd) -> Surface {
-        let mut window = Surface {
+        let mut surface = Surface {
             w: 0,
             h: 0,
             mode: Cell::new(Mode::Blend),
             file_opt: Some(File::from_raw_fd(fd)),
             data_opt: None,
         };
-        window.remap();
-        window
+        surface.remap();
+        surface
     }
 }
 
