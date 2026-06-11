@@ -3,6 +3,8 @@
 use core::ops::{Deref, DerefMut};
 use core::{char, mem, slice};
 
+use crate::ClipboardAction;
+
 pub const EVENT_NONE: i64 = 0;
 pub const EVENT_KEY: i64 = 1;
 pub const EVENT_MOUSE: i64 = 2;
@@ -323,7 +325,7 @@ pub const K_MEDIA_REWIND: u8 = 0x80 + 0x10;
 /// A key event (such as a pressed key)
 #[derive(Copy, Clone, Debug)]
 pub struct KeyEvent {
-    /// The character of the key
+    /// Deprecated, always zero. use TextInputEvent instead
     pub character: char,
     /// The scancode of the key
     pub scancode: u8,
@@ -601,11 +603,7 @@ impl ScreenEvent {
     }
 }
 
-pub const CLIPBOARD_COPY: u8 = 0;
-pub const CLIPBOARD_CUT: u8 = 1;
-pub const CLIPBOARD_PASTE: u8 = 2;
-
-/// A clipboard event
+/// Not used
 #[derive(Copy, Clone, Debug)]
 pub struct ClipboardUpdateEvent;
 
@@ -626,7 +624,7 @@ impl ClipboardUpdateEvent {
 /// A clipboard event
 #[derive(Copy, Clone, Debug)]
 pub struct ClipboardEvent {
-    pub kind: u8,
+    pub kind: ClipboardAction,
     pub size: usize,
 }
 
@@ -634,14 +632,14 @@ impl ClipboardEvent {
     pub fn to_event(&self) -> Event {
         Event {
             code: EVENT_CLIPBOARD,
-            a: self.kind as i64,
+            a: self.kind.to_u8() as i64,
             b: self.size as i64,
         }
     }
 
     pub fn from_event(event: Event) -> ClipboardEvent {
         ClipboardEvent {
-            kind: event.a as u8,
+            kind: ClipboardAction::from_u8(event.a as u8).unwrap_or(ClipboardAction::Copy),
             size: event.b as usize,
         }
     }

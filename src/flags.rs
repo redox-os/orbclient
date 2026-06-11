@@ -229,3 +229,28 @@ impl FromStr for MediaKind {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub enum ClipboardAction {
+    Copy,
+    Cut,
+    Paste,
+}
+
+impl ClipboardAction {
+    pub fn from_u8(val: u8) -> Option<Self> {
+        match val {
+            1 => Some(ClipboardAction::Copy),
+            2 => Some(ClipboardAction::Cut),
+            3 => Some(ClipboardAction::Paste),
+            _ => None,
+        }
+    }
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            ClipboardAction::Copy => 1,
+            ClipboardAction::Cut => 2,
+            ClipboardAction::Paste => 3,
+        }
+    }
+}
