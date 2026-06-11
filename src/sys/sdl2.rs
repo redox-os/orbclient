@@ -8,6 +8,7 @@ use std::{mem, ptr, slice};
 use crate::color::Color;
 use crate::renderer::Renderer;
 use crate::Mode;
+use crate::WindowDragKind;
 use crate::WindowFlag;
 use crate::{event::*, SurfaceFlag};
 
@@ -246,12 +247,20 @@ impl Window {
         }
     }
 
+    fn sdl(&self) -> &mut sdl2::Sdl {
+        unsafe { &mut *SDL_CTX }
+    }
+
+    fn video(&self) -> &mut sdl2::VideoSubsystem {
+        unsafe { &mut *VIDEO_CTX }
+    }
+
     pub fn event_sender(&self) -> sdl2::event::EventSender {
-        unsafe { &mut *SDL_CTX }.event().unwrap().event_sender()
+        self.sdl().event().unwrap().event_sender()
     }
 
     pub fn clipboard(&self) -> String {
-        let result = unsafe { &*VIDEO_CTX }.clipboard().clipboard_text();
+        let result = self.video().clipboard().clipboard_text();
 
         match result {
             Ok(value) => return value,
@@ -262,7 +271,7 @@ impl Window {
     }
 
     pub fn set_clipboard(&mut self, text: &str) {
-        let result = unsafe { &*VIDEO_CTX }.clipboard().set_clipboard_text(text);
+        let result = self.video().clipboard().set_clipboard_text(text);
 
         if let Err(message) = result {
             println!("{}", message);
@@ -318,12 +327,17 @@ impl Window {
 
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
-        unsafe { &mut *SDL_CTX }.mouse().show_cursor(visible);
+        self.sdl().mouse().show_cursor(visible);
     }
 
     /// Set mouse grabbing
     pub fn set_mouse_grab(&mut self, grab: bool) {
-        unsafe { &mut *SDL_CTX }.mouse().capture(grab);
+        self.sdl().mouse().capture(grab);
+    }
+
+    /// Set window dragging
+    pub fn set_window_drag(&mut self, _kind: WindowDragKind) {
+        // TODO: SDL_SetWindowHitTest only accept callback
     }
 
     /// Set mouse relative mode

@@ -13,8 +13,8 @@ use libredox::{call as redox, flag};
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
-use crate::WindowFlag;
 use crate::{Mode, SurfaceFlag};
+use crate::{WindowDragKind, WindowFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = env::var("DISPLAY").unwrap_or("/scheme/orbital/99.0".into());
@@ -259,14 +259,14 @@ impl Window {
             .write(if is_async { b"A,1" } else { b"A,0" });
     }
 
-    /// Set cursor visibility
+    /// Set cursor visibility upon the window
     pub fn set_mouse_cursor(&mut self, visible: bool) {
         let _ = self
             .file_mut()
             .write(if visible { b"M,C,1" } else { b"M,C,0" });
     }
 
-    /// Set mouse grabbing
+    /// Set mouse grabbing (locking mouse inside window)
     pub fn set_mouse_grab(&mut self, grab: bool) {
         let _ = self
             .file_mut()
@@ -280,13 +280,20 @@ impl Window {
             .write(if relative { b"M,R,1" } else { b"M,R,0" });
     }
 
-    /// Set position
+    /// Set window dragging (to allow mouse act like grabbing window title or borders).
+    /// Only work if mouse is already hovering.
+    /// Automatically set to None on button release, or re-call with WindowDragKind::None.
+    pub fn set_window_drag(&mut self, kind: WindowDragKind) {
+        let _ = self.file_mut().write(kind.to_orbital_cmd());
+    }
+
+    /// Set window position
     pub fn set_pos(&mut self, x: i32, y: i32) {
         let _ = self.file_mut().write(&format!("P,{},{}", x, y).as_bytes());
         self.sync_path();
     }
 
-    /// Set size
+    /// Set window size
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
         unsafe {

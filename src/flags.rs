@@ -73,3 +73,74 @@ pub enum Mode {
     Blend,     //Composite
     Overwrite, //Replace
 }
+
+pub enum WindowDragKind {
+    None,
+    Move,
+    ResizeLeft,
+    ResizeRight,
+    ResizeBottom,
+    ResizeTop,
+}
+
+impl Display for WindowDragKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            WindowDragKind::Move => write!(f, "m"),
+            WindowDragKind::ResizeLeft => write!(f, "l"),
+            WindowDragKind::ResizeRight => write!(f, "r"),
+            WindowDragKind::ResizeBottom => write!(f, "b"),
+            WindowDragKind::ResizeTop => write!(f, "t"),
+            WindowDragKind::None => write!(f, "0"),
+        }
+    }
+}
+
+impl WindowDragKind {
+    pub fn from_u8(val: i64) -> Option<Self> {
+        match val {
+            0 => Some(WindowDragKind::None),
+            1 => Some(WindowDragKind::Move),
+            2 => Some(WindowDragKind::ResizeLeft),
+            3 => Some(WindowDragKind::ResizeRight),
+            4 => Some(WindowDragKind::ResizeBottom),
+            5 => Some(WindowDragKind::ResizeTop),
+            _ => None,
+        }
+    }
+    pub fn to_u8(&self) -> i64 {
+        match self {
+            WindowDragKind::None => 0,
+            WindowDragKind::Move => 1,
+            WindowDragKind::ResizeLeft => 2,
+            WindowDragKind::ResizeRight => 3,
+            WindowDragKind::ResizeBottom => 4,
+            WindowDragKind::ResizeTop => 5,
+        }
+    }
+    #[allow(unused)]
+    pub(crate) fn to_orbital_cmd(&self) -> &'static [u8] {
+        match self {
+            WindowDragKind::None => b"D,0",
+            WindowDragKind::Move => b"D,m",
+            WindowDragKind::ResizeLeft => b"D,l",
+            WindowDragKind::ResizeRight => b"D,r",
+            WindowDragKind::ResizeBottom => b"D,b",
+            WindowDragKind::ResizeTop => b"D,t",
+        }
+    }
+}
+impl FromStr for WindowDragKind {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "m" => Ok(WindowDragKind::Move),
+            "l" => Ok(WindowDragKind::ResizeLeft),
+            "r" => Ok(WindowDragKind::ResizeRight),
+            "b" => Ok(WindowDragKind::ResizeBottom),
+            "t" => Ok(WindowDragKind::ResizeTop),
+            _ => Err(s.into()),
+        }
+    }
+}
