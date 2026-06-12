@@ -14,7 +14,7 @@ use libredox::{call as redox, flag};
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
-use crate::{MediaKind, Mode, SurfaceFlag};
+use crate::{MediaKind, Mode, SurfaceFlag, WindowFlags};
 use crate::{WindowDragKind, WindowFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
@@ -130,25 +130,20 @@ impl Window {
         title: &str,
         flags: &[WindowFlag],
     ) -> Option<Self> {
-        let mut flag_str = String::new();
+        let mut flag_str = WindowFlags::default();
 
         let mut window_async = false;
         let mut resizable = false;
         for &flag in flags.iter() {
+            flag_str.push(flag);
             match flag {
                 WindowFlag::Async => {
                     window_async = true;
-                    flag_str.push('a');
                 }
-                WindowFlag::Back => flag_str.push('b'),
-                WindowFlag::Front => flag_str.push('f'),
-                WindowFlag::Borderless => flag_str.push('l'),
                 WindowFlag::Resizable => {
                     resizable = true;
-                    flag_str.push('r');
                 }
-                WindowFlag::Transparent => flag_str.push('t'),
-                WindowFlag::Unclosable => flag_str.push('u'),
+                _ => {}
             }
         }
 

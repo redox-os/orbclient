@@ -1,9 +1,10 @@
-use core::fmt::Display;
-use core::str::FromStr;
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
+use core::fmt::Display;
+use core::fmt::Write;
+use core::str::FromStr;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum WindowFlag {
     /// Asynchronous Event
     Async,
@@ -11,8 +12,14 @@ pub enum WindowFlag {
     Back,
     /// Always on top, even taskbar
     Front,
+    /// Hide the window
+    Hidden,
     /// Hide window border, handle your own window dragging API
     Borderless,
+    /// Maximize the window
+    Maximized,
+    /// Full screen the window
+    Fullscreen,
     /// Window manager can resize the window
     Resizable,
     /// Apply blending with window behind (slower)
@@ -21,6 +28,7 @@ pub enum WindowFlag {
     Unclosable,
 }
 
+#[derive(Debug, Default, Clone)]
 pub struct WindowFlags(String, usize);
 
 impl Display for WindowFlag {
@@ -29,7 +37,10 @@ impl Display for WindowFlag {
             WindowFlag::Async => write!(f, "a"),
             WindowFlag::Back => write!(f, "b"),
             WindowFlag::Front => write!(f, "f"),
+            WindowFlag::Hidden => write!(f, "h"),
             WindowFlag::Borderless => write!(f, "l"),
+            WindowFlag::Maximized => write!(f, "m"),
+            WindowFlag::Fullscreen => write!(f, "M"),
             WindowFlag::Resizable => write!(f, "r"),
             WindowFlag::Transparent => write!(f, "t"),
             WindowFlag::Unclosable => write!(f, "u"),
@@ -37,11 +48,29 @@ impl Display for WindowFlag {
     }
 }
 
-impl FromStr for WindowFlags {
-    type Err = String;
+impl WindowFlags {
+    pub fn new(flags: String) -> Self {
+        Self(flags, 0)
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(s.into(), 0))
+    pub fn reset(&mut self) {
+        self.1 = 0;
+    }
+
+    pub fn push(&mut self, flag: WindowFlag) {
+        let _ = write!(self.0, "{}", flag);
+    }
+}
+
+impl Display for WindowFlags {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Into<String> for WindowFlags {
+    fn into(self) -> String {
+        self.0
     }
 }
 
@@ -56,9 +85,12 @@ impl Iterator for WindowFlags {
         self.1 += 1;
         match self.0.as_bytes()[i] {
             b'a' => Some(WindowFlag::Async),
-            b'b' => Some(WindowFlag::Borderless),
+            b'b' => Some(WindowFlag::Back),
             b'f' => Some(WindowFlag::Front),
+            b'h' => Some(WindowFlag::Hidden),
             b'l' => Some(WindowFlag::Borderless),
+            b'm' => Some(WindowFlag::Maximized),
+            b'M' => Some(WindowFlag::Fullscreen),
             b'r' => Some(WindowFlag::Resizable),
             b't' => Some(WindowFlag::Transparent),
             b'u' => Some(WindowFlag::Unclosable),
@@ -88,11 +120,11 @@ pub enum WindowDragKind {
 impl Display for WindowDragKind {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            WindowDragKind::Move => write!(f, "m"),
-            WindowDragKind::ResizeLeft => write!(f, "l"),
-            WindowDragKind::ResizeRight => write!(f, "r"),
-            WindowDragKind::ResizeBottom => write!(f, "b"),
-            WindowDragKind::ResizeTop => write!(f, "t"),
+            WindowDragKind::Move => write!(f, "M"),
+            WindowDragKind::ResizeLeft => write!(f, "L"),
+            WindowDragKind::ResizeRight => write!(f, "R"),
+            WindowDragKind::ResizeBottom => write!(f, "B"),
+            WindowDragKind::ResizeTop => write!(f, "T"),
             WindowDragKind::None => write!(f, "0"),
         }
     }
@@ -124,11 +156,11 @@ impl WindowDragKind {
     pub(crate) fn to_orbital_cmd(&self) -> &'static [u8] {
         match self {
             WindowDragKind::None => b"D,0",
-            WindowDragKind::Move => b"D,m",
-            WindowDragKind::ResizeLeft => b"D,l",
-            WindowDragKind::ResizeRight => b"D,r",
-            WindowDragKind::ResizeBottom => b"D,b",
-            WindowDragKind::ResizeTop => b"D,t",
+            WindowDragKind::Move => b"D,M",
+            WindowDragKind::ResizeLeft => b"D,L",
+            WindowDragKind::ResizeRight => b"D,R",
+            WindowDragKind::ResizeBottom => b"D,B",
+            WindowDragKind::ResizeTop => b"D,T",
         }
     }
 }
@@ -137,11 +169,11 @@ impl FromStr for WindowDragKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "m" => Ok(WindowDragKind::Move),
-            "l" => Ok(WindowDragKind::ResizeLeft),
-            "r" => Ok(WindowDragKind::ResizeRight),
-            "b" => Ok(WindowDragKind::ResizeBottom),
-            "t" => Ok(WindowDragKind::ResizeTop),
+            "" | "M" => Ok(WindowDragKind::Move),
+            "L" => Ok(WindowDragKind::ResizeLeft),
+            "R" => Ok(WindowDragKind::ResizeRight),
+            "B" => Ok(WindowDragKind::ResizeBottom),
+            "T" => Ok(WindowDragKind::ResizeTop),
             _ => Err(s.into()),
         }
     }

@@ -197,9 +197,12 @@ impl Window {
         let mut window_async = false;
         //TODO: Use z-order
         let mut _back = false;
-        let mut _front = false;
+        let mut front = false;
         let mut borderless = false;
         let mut resizable = false;
+        let mut maximized = false;
+        let mut fullscreen = false;
+        let mut hidden = false;
         //TODO: Transparent
         let mut _transparent = false;
         //TODO: Hide exit button
@@ -208,9 +211,12 @@ impl Window {
             match flag {
                 WindowFlag::Async => window_async = true,
                 WindowFlag::Back => _back = true,
-                WindowFlag::Front => _front = true,
+                WindowFlag::Front => front = true,
                 WindowFlag::Borderless => borderless = true,
+                WindowFlag::Maximized => maximized = true,
+                WindowFlag::Fullscreen => fullscreen = true,
                 WindowFlag::Resizable => resizable = true,
+                WindowFlag::Hidden => hidden = true,
                 WindowFlag::Transparent => _transparent = true,
                 WindowFlag::Unclosable => _unclosable = true,
             }
@@ -228,6 +234,20 @@ impl Window {
 
         if resizable {
             builder.resizable();
+        }
+
+        if hidden {
+            builder.hidden();
+        }
+
+        if fullscreen {
+            builder.fullscreen();
+        } else if maximized {
+            builder.maximized();
+        }
+
+        if front {
+            builder.always_on_top();
         }
 
         if x >= 0 || y >= 0 {
