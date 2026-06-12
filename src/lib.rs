@@ -31,27 +31,9 @@ pub use renderer::Renderer;
 mod blur;
 pub mod color;
 pub mod event;
+mod flags;
 pub mod graphicspath;
 pub mod image;
 pub mod rect;
 pub mod renderer;
-
-#[derive(Clone, Copy, Debug)]
-pub enum WindowFlag {
-    Async,
-    Back,
-    Front,
-    Borderless,
-    Resizable,
-    Transparent,
-    Unclosable,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum SurfaceFlag {}
-
-#[derive(Clone, Copy, Debug)]
-pub enum Mode {
-    Blend,     //Composite
-    Overwrite, //Replace
-}
+pub use flags::*;

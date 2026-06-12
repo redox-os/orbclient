@@ -5,6 +5,7 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::{env, mem, slice, thread};
 
@@ -13,8 +14,8 @@ use libredox::{call as redox, flag};
 use crate::color::Color;
 use crate::event::{Event, EVENT_RESIZE};
 use crate::renderer::Renderer;
-use crate::WindowFlag;
-use crate::{Mode, SurfaceFlag};
+use crate::{MediaKind, Mode, SurfaceFlag, WindowFlags};
+use crate::{WindowDragKind, WindowFlag};
 
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = env::var("DISPLAY").unwrap_or("/scheme/orbital/99.0".into());
@@ -129,25 +130,20 @@ impl Window {
         title: &str,
         flags: &[WindowFlag],
     ) -> Option<Self> {
-        let mut flag_str = String::new();
+        let mut flag_str = WindowFlags::default();
 
         let mut window_async = false;
         let mut resizable = false;
         for &flag in flags.iter() {
+            flag_str.push(flag);
             match flag {
                 WindowFlag::Async => {
                     window_async = true;
-                    flag_str.push('a');
                 }
-                WindowFlag::Back => flag_str.push('b'),
-                WindowFlag::Front => flag_str.push('f'),
-                WindowFlag::Borderless => flag_str.push('l'),
                 WindowFlag::Resizable => {
                     resizable = true;
-                    flag_str.push('r');
                 }
-                WindowFlag::Transparent => flag_str.push('t'),
-                WindowFlag::Unclosable => flag_str.push('u'),
+                _ => {}
             }
         }
 
@@ -177,27 +173,86 @@ impl Window {
         }
     }
 
-    pub fn clipboard(&self) -> String {
+    pub fn clipboard(&self) -> Option<(MediaKind, String)> {
+        let window_fd = self.file().as_raw_fd();
+        let clipboard_fd = redox::dup(window_fd as usize, b"clipboard").ok()?;
+        let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+        let mut kind = [0; 1];
+        clipboard_file.read_exact(&mut kind).ok()?;
+        let kind = MediaKind::from_str(str::from_utf8(&kind).ok()?).ok()?;
         let mut text = String::new();
+        clipboard_file.read_to_string(&mut text).ok()?;
+        return Some((kind, text));
+    }
+
+    pub fn clipboard_c(&self) -> Option<(MediaKind, CString)> {
+        let (kind, mut text) = self.clipboard()?;
+        text.push('\0');
+        let text = CString::from_vec_with_nul(text.into_bytes()).ok()?;
+        return Some((kind, text));
+    }
+
+    pub fn set_clipboard(&mut self, content: &str, kind: MediaKind) -> bool {
         let window_fd = self.file().as_raw_fd();
         if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
             let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
-            let _ = clipboard_file.read_to_string(&mut text);
+            let _ = write!(&mut clipboard_file, "{}", kind);
+            return clipboard_file.write(content.as_bytes()).is_ok();
         }
-        text
+        false
     }
 
-    pub fn set_clipboard(&mut self, text: &str) {
+    /// Register a content to drag. It's up to the receiver how to handles it.
+    /// Invalid when called during dragging from other window.
+    pub fn push_drag_content(&self, content: &str, kind: MediaKind) -> bool {
+        if content.len() == 0 {
+            // can be mixed up with peek_drop_content
+            return false;
+        }
         let window_fd = self.file().as_raw_fd();
-        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"clipboard") {
-            let mut clipboard_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
-            let _ = clipboard_file.write(text.as_bytes());
+        // unlike clipboard handle, the dnd handle automatically disposes the resource for any window after read
+        if let Ok(clipboard_fd) = redox::dup(window_fd as usize, b"dnd") {
+            let mut dnd_file = unsafe { File::from_raw_fd(clipboard_fd as RawFd) };
+            let _ = write!(&mut dnd_file, "{}", kind);
+            return dnd_file.write(content.as_bytes()).is_ok();
         }
+        false
     }
 
-    /// Not yet available on Redox OS.
-    pub fn pop_drop_content(&self) -> Option<String> {
-        None
+    /// See the DND content. Must be called at DragEnter to subscribe the DND event for the session.
+    pub fn peek_drop_content(&self) -> Option<(MediaKind, String)> {
+        let window_fd = self.file().as_raw_fd();
+        if let Ok(dnd_fd) = redox::dup(window_fd as usize, b"dnd") {
+            let mut dnd_file = unsafe { File::from_raw_fd(dnd_fd as RawFd) };
+            let mut kind = [0; 1];
+            dnd_file.read_exact(&mut kind).ok()?;
+            let kind = MediaKind::from_str(str::from_utf8(&kind).ok()?).ok()?;
+            let mut text = String::new();
+            dnd_file.read_to_string(&mut text).ok()?;
+            return Some((kind, text));
+        }
+        return None;
+    }
+
+    pub fn peek_drop_content_c(&self) -> Option<(MediaKind, CString)> {
+        let (kind, mut text) = self.peek_drop_content()?;
+        text.push('\0');
+        let text = CString::from_vec_with_nul(text.into_bytes()).ok()?;
+        return Some((kind, text));
+    }
+
+    /// Drop the DND content and stop receiving DND events for the session.
+    /// If called before DropEvent, assumed to refuse, otherwise accept.
+    pub fn pop_drop_content(&mut self) -> bool {
+        self.file_mut().write(b"N,D").is_ok()
+    }
+
+    /// Give the DND session a visual cue whether it will be accepted or not.
+    /// Use pop_drop_content to unsubscribe from the event.
+    pub fn set_drop_accept(&mut self, accept: bool) -> bool {
+        self.file_mut()
+            .write(if accept { b"N,Y" } else { b"N,N" })
+            .is_ok()
     }
 
     // TODO: Replace with smarter mechanism, maybe a move event?
@@ -259,14 +314,14 @@ impl Window {
             .write(if is_async { b"A,1" } else { b"A,0" });
     }
 
-    /// Set cursor visibility
+    /// Set cursor visibility upon the window
     pub fn set_mouse_cursor(&mut self, visible: bool) {
         let _ = self
             .file_mut()
             .write(if visible { b"M,C,1" } else { b"M,C,0" });
     }
 
-    /// Set mouse grabbing
+    /// Set mouse grabbing (locking mouse inside window)
     pub fn set_mouse_grab(&mut self, grab: bool) {
         let _ = self
             .file_mut()
@@ -280,13 +335,20 @@ impl Window {
             .write(if relative { b"M,R,1" } else { b"M,R,0" });
     }
 
-    /// Set position
+    /// Set window dragging (to allow mouse act like grabbing window title or borders).
+    /// Only work if mouse is already hovering.
+    /// Automatically set to None on button release, or re-call with WindowDragKind::None.
+    pub fn set_window_drag(&mut self, kind: WindowDragKind) {
+        let _ = self.file_mut().write(kind.to_orbital_cmd());
+    }
+
+    /// Set window position
     pub fn set_pos(&mut self, x: i32, y: i32) {
         let _ = self.file_mut().write(&format!("P,{},{}", x, y).as_bytes());
         self.sync_path();
     }
 
-    /// Set size
+    /// Set window size
     pub fn set_size(&mut self, width: u32, height: u32) {
         //TODO: Improve safety and reliability
         unsafe {
@@ -381,8 +443,9 @@ impl Window {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
+        let fd = self.file().as_raw_fd() as usize;
         let address = redox::mmap(redox::MmapArgs {
-            fd: self.file().as_raw_fd() as usize,
+            fd,
             offset: 0,
             length: size * mem::size_of::<Color>(),
             flags: flag::MAP_SHARED,
@@ -581,8 +644,10 @@ impl Surface {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
+        let fd = self.file().as_raw_fd() as usize;
+        let _ = redox::ftruncate(fd, size * mem::size_of::<Color>());
         let address = redox::mmap(redox::MmapArgs {
-            fd: self.file().as_raw_fd() as usize,
+            fd,
             offset: 0,
             length: size * mem::size_of::<Color>(),
             flags: flag::MAP_SHARED,
@@ -621,15 +686,15 @@ impl AsRawFd for Surface {
 
 impl FromRawFd for Surface {
     unsafe fn from_raw_fd(fd: RawFd) -> Surface {
-        let mut window = Surface {
+        let mut surface = Surface {
             w: 0,
             h: 0,
             mode: Cell::new(Mode::Blend),
             file_opt: Some(File::from_raw_fd(fd)),
             data_opt: None,
         };
-        window.remap();
-        window
+        surface.remap();
+        surface
     }
 }
 

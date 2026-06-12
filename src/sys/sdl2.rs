@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, Ref, RefCell};
+use std::ffi::CString;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{mem, ptr, slice};
 
 use crate::color::Color;
 use crate::renderer::Renderer;
+use crate::DragAction;
+use crate::MediaKind;
 use crate::Mode;
+use crate::WindowDragKind;
 use crate::WindowFlag;
 use crate::{event::*, SurfaceFlag};
 
@@ -71,7 +76,7 @@ pub struct Window {
     /// Mouse in relative mode
     mouse_relative: bool,
     /// Content of the last drop (file | text) operation
-    drop_content: RefCell<Option<String>>,
+    drop_content: RefCell<Option<(MediaKind, String)>>,
 }
 
 impl Drop for Window {
@@ -192,9 +197,12 @@ impl Window {
         let mut window_async = false;
         //TODO: Use z-order
         let mut _back = false;
-        let mut _front = false;
+        let mut front = false;
         let mut borderless = false;
         let mut resizable = false;
+        let mut maximized = false;
+        let mut fullscreen = false;
+        let mut hidden = false;
         //TODO: Transparent
         let mut _transparent = false;
         //TODO: Hide exit button
@@ -203,9 +211,12 @@ impl Window {
             match flag {
                 WindowFlag::Async => window_async = true,
                 WindowFlag::Back => _back = true,
-                WindowFlag::Front => _front = true,
+                WindowFlag::Front => front = true,
                 WindowFlag::Borderless => borderless = true,
+                WindowFlag::Maximized => maximized = true,
+                WindowFlag::Fullscreen => fullscreen = true,
                 WindowFlag::Resizable => resizable = true,
+                WindowFlag::Hidden => hidden = true,
                 WindowFlag::Transparent => _transparent = true,
                 WindowFlag::Unclosable => _unclosable = true,
             }
@@ -223,6 +234,20 @@ impl Window {
 
         if resizable {
             builder.resizable();
+        }
+
+        if hidden {
+            builder.hidden();
+        }
+
+        if fullscreen {
+            builder.fullscreen();
+        } else if maximized {
+            builder.maximized();
+        }
+
+        if front {
+            builder.always_on_top();
         }
 
         if x >= 0 || y >= 0 {
@@ -246,35 +271,53 @@ impl Window {
         }
     }
 
+    fn sdl(&self) -> &mut sdl2::Sdl {
+        unsafe { &mut *SDL_CTX }
+    }
+
+    fn video(&self) -> &mut sdl2::VideoSubsystem {
+        unsafe { &mut *VIDEO_CTX }
+    }
+
     pub fn event_sender(&self) -> sdl2::event::EventSender {
-        unsafe { &mut *SDL_CTX }.event().unwrap().event_sender()
+        self.sdl().event().unwrap().event_sender()
     }
 
-    pub fn clipboard(&self) -> String {
-        let result = unsafe { &*VIDEO_CTX }.clipboard().clipboard_text();
-
-        match result {
-            Ok(value) => return value,
-            Err(message) => println!("{}", message),
-        }
-
-        String::default()
+    pub fn clipboard(&self) -> Option<(MediaKind, String)> {
+        self.video()
+            .clipboard()
+            .clipboard_text()
+            .ok()
+            .map(|s| (MediaKind::Text, s))
     }
 
-    pub fn set_clipboard(&mut self, text: &str) {
-        let result = unsafe { &*VIDEO_CTX }.clipboard().set_clipboard_text(text);
-
-        if let Err(message) = result {
-            println!("{}", message);
-        }
+    pub fn clipboard_c(&self) -> Option<(MediaKind, CString)> {
+        self.clipboard()
+            .and_then(|(k, s)| Some((k, CString::new(s).ok()?)))
     }
 
-    /// Pops the content of the last drop event from the window.
-    pub fn pop_drop_content(&self) -> Option<String> {
-        let result = self.drop_content.borrow().clone();
-        *self.drop_content.borrow_mut() = None;
+    pub fn set_clipboard(&mut self, text: &str, _kind: MediaKind) -> bool {
+        self.video().clipboard().set_clipboard_text(text).is_ok()
+    }
 
-        result
+    pub fn push_drag_content(&self, _content: &str, _kind: MediaKind) -> bool {
+        // SDL2 crate does not support dragging
+        false
+    }
+
+    pub fn peek_drop_content(&self) -> Ref<'_, Option<(MediaKind, String)>> {
+        self.drop_content.borrow()
+    }
+
+    pub fn peek_drop_content_c(&self) -> Option<(MediaKind, CString)> {
+        self.drop_content
+            .borrow()
+            .as_ref()
+            .and_then(|(k, s)| Some((*k, CString::from_str(s.as_str()).ok()?)))
+    }
+
+    pub fn pop_drop_content(&self) -> Option<(MediaKind, String)> {
+        self.drop_content.borrow_mut().take()
     }
 
     pub fn sync_path(&mut self) {
@@ -318,12 +361,17 @@ impl Window {
 
     /// Set cursor visibility
     pub fn set_mouse_cursor(&mut self, visible: bool) {
-        unsafe { &mut *SDL_CTX }.mouse().show_cursor(visible);
+        self.sdl().mouse().show_cursor(visible);
     }
 
     /// Set mouse grabbing
     pub fn set_mouse_grab(&mut self, grab: bool) {
-        unsafe { &mut *SDL_CTX }.mouse().capture(grab);
+        self.sdl().mouse().capture(grab);
+    }
+
+    /// Set window dragging
+    pub fn set_window_drag(&mut self, _kind: WindowDragKind) {
+        // TODO: SDL_SetWindowHitTest only accept callback
     }
 
     /// Set mouse relative mode
@@ -545,21 +593,38 @@ impl Window {
                 }
             }
             sdl2::event::Event::DropFile { filename, .. } => {
-                *self.drop_content.borrow_mut() = Some(filename);
+                *self.drop_content.borrow_mut() = Some((MediaKind::File, filename));
 
                 let (x, y) = self.get_mouse_position();
 
                 events.push(MouseEvent { x, y }.to_event());
 
-                events.push(DropEvent { kind: DROP_FILE }.to_event())
+                events.push(
+                    DropEvent {
+                        kind: DragAction::Copy,
+                        size: 0, // TODO
+                        x,
+                        y,
+                    }
+                    .to_event(),
+                )
             }
             sdl2::event::Event::DropText { filename, .. } => {
-                *self.drop_content.borrow_mut() = Some(filename);
+                let size = filename.len();
+                *self.drop_content.borrow_mut() = Some((MediaKind::Text, filename));
 
                 let (x, y) = self.get_mouse_position();
 
                 events.push(MouseEvent { x, y }.to_event());
-                events.push(DropEvent { kind: DROP_TEXT }.to_event())
+                events.push(
+                    DropEvent {
+                        kind: DragAction::Copy,
+                        size,
+                        x,
+                        y,
+                    }
+                    .to_event(),
+                )
             }
             sdl2::event::Event::KeyUp { scancode, .. } => {
                 if let Some(code) = self.convert_scancode(scancode, shift) {
