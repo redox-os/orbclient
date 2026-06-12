@@ -1,5 +1,7 @@
 use core::fmt::Display;
 use core::str::FromStr;
+#[cfg(not(feature = "std"))]
+use alloc::string::String;
 
 #[derive(Clone, Copy, Debug)]
 pub enum WindowFlag {
