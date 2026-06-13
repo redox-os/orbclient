@@ -22,6 +22,8 @@ pub enum WindowFlag {
     Fullscreen,
     /// Window manager can resize the window
     Resizable,
+    /// Window manager can enable window scaling
+    Scalable,
     /// Apply blending with window behind (slower)
     Transparent,
     /// Cannot be closed, handle your own window close API
@@ -42,6 +44,7 @@ impl Display for WindowFlag {
             WindowFlag::Maximized => write!(f, "m"),
             WindowFlag::Fullscreen => write!(f, "M"),
             WindowFlag::Resizable => write!(f, "r"),
+            WindowFlag::Scalable => write!(f, "s"),
             WindowFlag::Transparent => write!(f, "t"),
             WindowFlag::Unclosable => write!(f, "u"),
         }
@@ -92,6 +95,7 @@ impl Iterator for WindowFlags {
             b'm' => Some(WindowFlag::Maximized),
             b'M' => Some(WindowFlag::Fullscreen),
             b'r' => Some(WindowFlag::Resizable),
+            b's' => Some(WindowFlag::Scalable),
             b't' => Some(WindowFlag::Transparent),
             b'u' => Some(WindowFlag::Unclosable),
             _ => None,
