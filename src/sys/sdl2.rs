@@ -205,6 +205,8 @@ impl Window {
         let mut hidden = false;
         //TODO: Transparent
         let mut _transparent = false;
+        //TODO: Scalable
+        let mut _scalable = false;
         //TODO: Hide exit button
         let mut _unclosable = false;
         for &flag in flags.iter() {
@@ -217,6 +219,7 @@ impl Window {
                 WindowFlag::Fullscreen => fullscreen = true,
                 WindowFlag::Resizable => resizable = true,
                 WindowFlag::Hidden => hidden = true,
+                WindowFlag::Scalable => _scalable = true,
                 WindowFlag::Transparent => _transparent = true,
                 WindowFlag::Unclosable => _unclosable = true,
             }
