@@ -25,6 +25,8 @@ pub const EVENT_SCALE: i64 = 16;
 pub const EVENT_DRAG_ENTER: i64 = 17;
 pub const EVENT_DRAG_MOVE: i64 = 18;
 pub const EVENT_DRAG_LEAVE: i64 = 19;
+pub const EVENT_CONTROLLER_AXIS: i64 = 20;
+pub const EVENT_CONTROLLER_BUTTON: i64 = 21;
 
 /// An optional event
 #[derive(Copy, Clone, Debug)]
@@ -67,6 +69,10 @@ pub enum EventOption {
     Drop(DropEvent),
     /// A hover event
     Hover(HoverEvent),
+    /// A controller axis event
+    ControllerAxis(ControllerAxisEvent),
+    /// A controller button event
+    ControllerButton(ControllerButtonEvent),
     /// An unknown event
     Unknown(Event),
     /// No event
@@ -121,6 +127,12 @@ impl Event {
             EVENT_DRAG_ENTER => EventOption::DragEnter(DragEnterEvent::from_event(self)),
             EVENT_DRAG_MOVE => EventOption::DragMove(DragMoveEvent::from_event(self)),
             EVENT_DRAG_LEAVE => EventOption::DragLeave(DragLeaveEvent::from_event(self)),
+            EVENT_CONTROLLER_AXIS => {
+                EventOption::ControllerAxis(ControllerAxisEvent::from_event(self))
+            }
+            EVENT_CONTROLLER_BUTTON => {
+                EventOption::ControllerButton(ControllerButtonEvent::from_event(self))
+            }
             _ => EventOption::Unknown(self),
         }
     }
@@ -821,6 +833,90 @@ impl ScaleEvent {
     pub fn from_event(event: Event) -> ScaleEvent {
         ScaleEvent {
             scale: event.a as i32,
+        }
+    }
+}
+
+// Taken from generic desktop HID definitions
+pub const CONTROLLER_AXIS_X: u16 = 0x30;
+pub const CONTROLLER_AXIS_Y: u16 = 0x31;
+pub const CONTROLLER_AXIS_Z: u16 = 0x32;
+pub const CONTROLLER_AXIS_RX: u16 = 0x33;
+pub const CONTROLLER_AXIS_RY: u16 = 0x34;
+pub const CONTROLLER_AXIS_RZ: u16 = 0x35;
+
+/// A controller axis event
+#[derive(Copy, Clone, Debug)]
+pub struct ControllerAxisEvent {
+    /// Controller ID
+    pub id: u32,
+    pub axis: u16,
+    pub value: i32,
+}
+
+impl ControllerAxisEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_CONTROLLER_AXIS,
+            a: self.id as i64 | ((self.axis as i64) << 32),
+            b: self.value as i64,
+        }
+    }
+
+    /// Convert from an `Event`
+    pub fn from_event(event: Event) -> Self {
+        Self {
+            id: event.a as u32,
+            axis: (event.a >> 32) as u16,
+            value: event.b as i32,
+        }
+    }
+}
+
+// Button layout from Xbox controller
+pub const CONTROLLER_A: u16 = 1;
+pub const CONTROLLER_B: u16 = 2;
+pub const CONTROLLER_X: u16 = 3;
+pub const CONTROLLER_Y: u16 = 4;
+pub const CONTROLLER_LB: u16 = 5;
+pub const CONTROLLER_RB: u16 = 6;
+pub const CONTROLLER_BACK: u16 = 7;
+pub const CONTROLLER_START: u16 = 8;
+pub const CONTROLLER_LS: u16 = 9;
+pub const CONTROLLER_RS: u16 = 10;
+pub const CONTROLLER_GUIDE: u16 = 11;
+// Taken from generic desktop page
+pub const CONTROLLER_DPAD_UP: u16 = 0x90;
+pub const CONTROLLER_DPAD_DOWN: u16 = 0x91;
+pub const CONTROLLER_DPAD_RIGHT: u16 = 0x92;
+pub const CONTROLLER_DPAD_LEFT: u16 = 0x93;
+
+/// A controller button event
+#[derive(Copy, Clone, Debug)]
+pub struct ControllerButtonEvent {
+    /// Controller ID
+    pub id: u32,
+    pub button: u16,
+    pub pressed: bool,
+}
+
+impl ControllerButtonEvent {
+    /// Convert to an `Event`
+    pub fn to_event(&self) -> Event {
+        Event {
+            code: EVENT_CONTROLLER_BUTTON,
+            a: self.id as i64 | ((self.button as i64) << 32),
+            b: if self.pressed { 1 } else { 0 },
+        }
+    }
+
+    /// Convert from an `Event`
+    pub fn from_event(event: Event) -> Self {
+        Self {
+            id: event.a as u32,
+            button: (event.a >> 32) as u16,
+            pressed: event.b != 0,
         }
     }
 }
