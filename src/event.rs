@@ -816,9 +816,10 @@ impl HoverEvent {
 /// A screen scale event
 #[derive(Copy, Clone, Debug)]
 pub struct ScaleEvent {
-    /// Integer scale factor (1 or more)
+    /// Integer scale (premultiplied with baseline)
     pub scale: i32,
-    // TODO: fractional scaling?
+    /// Baseline of the scale
+    pub baseline: i32,
 }
 
 impl ScaleEvent {
@@ -826,13 +827,14 @@ impl ScaleEvent {
         Event {
             code: EVENT_SCALE,
             a: self.scale as i64,
-            b: 0,
+            b: self.baseline as i64,
         }
     }
 
     pub fn from_event(event: Event) -> ScaleEvent {
         ScaleEvent {
             scale: event.a as i32,
+            baseline: event.b as i32,
         }
     }
 }
