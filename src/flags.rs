@@ -1,7 +1,6 @@
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
 use core::fmt::Display;
-use core::fmt::Write;
 use core::str::FromStr;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -30,8 +29,60 @@ pub enum WindowFlag {
     Unclosable,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct WindowFlags(String, usize);
+impl WindowFlag {
+    pub const fn from_u64(val: u64) -> Option<Self> {
+        let val = match val {
+            0x0001 => WindowFlag::Async,
+            0x0002 => WindowFlag::Back,
+            0x0004 => WindowFlag::Front,
+            0x0008 => WindowFlag::Resizable,
+            0x0010 => WindowFlag::Unclosable,
+            0x0020 => WindowFlag::Borderless,
+            0x0040 => WindowFlag::Transparent,
+            0x0080 => WindowFlag::Maximized,
+            0x0100 => WindowFlag::Fullscreen,
+            0x0200 => WindowFlag::Hidden,
+            0x0400 => WindowFlag::Scalable,
+            _ => return None,
+        };
+        Some(val)
+    }
+    pub const fn to_u64(&self) -> u64 {
+        match self {
+            WindowFlag::Async => 0x0001,
+            WindowFlag::Back => 0x0002,
+            WindowFlag::Front => 0x0004,
+            WindowFlag::Resizable => 0x0008,
+            WindowFlag::Unclosable => 0x0010,
+            WindowFlag::Borderless => 0x0020,
+            WindowFlag::Transparent => 0x0040,
+            WindowFlag::Maximized => 0x0080,
+            WindowFlag::Fullscreen => 0x0100,
+            WindowFlag::Hidden => 0x0200,
+            WindowFlag::Scalable => 0x0400,
+        }
+    }
+    pub const fn from_char(val: u8) -> Option<Self> {
+        match val {
+            b'a' => Some(WindowFlag::Async),
+            b'b' => Some(WindowFlag::Back),
+            b'f' => Some(WindowFlag::Front),
+            b'h' => Some(WindowFlag::Hidden),
+            b'l' => Some(WindowFlag::Borderless),
+            b'm' => Some(WindowFlag::Maximized),
+            b'M' => Some(WindowFlag::Fullscreen),
+            b'r' => Some(WindowFlag::Resizable),
+            b's' => Some(WindowFlag::Scalable),
+            b't' => Some(WindowFlag::Transparent),
+            b'u' => Some(WindowFlag::Unclosable),
+            _ => None,
+        }
+    }
+    const fn max_u64() -> u64 {
+        // TODO: use https://github.com/rust-lang/rust/issues/73662
+        WindowFlag::Scalable.to_u64()
+    }
+}
 
 impl Display for WindowFlag {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -51,29 +102,71 @@ impl Display for WindowFlag {
     }
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct WindowFlags(u64, u64);
+
 impl WindowFlags {
-    pub fn new(flags: String) -> Self {
+    /// New flags from string
+    pub fn new(flags: &str) -> Self {
+        let mut iflags = 0;
+        for c in flags.bytes() {
+            let Some(ch) = WindowFlag::from_char(c) else {
+                continue;
+            };
+            iflags |= ch.to_u64()
+        }
+        Self(iflags, 0)
+    }
+
+    /// New flags from u64. Unknown constants will be saved as it is but not appear in the iterator.
+    pub const fn from_u64(flags: u64) -> Self {
         Self(flags, 0)
     }
 
+    /// Encode flags into u64
+    pub const fn to_64(&self) -> u64 {
+        self.0
+    }
+
+    /// Clear flags
+    pub fn clear(&mut self) {
+        self.0 = 0;
+    }
+
+    /// Reset the iterator
     pub fn reset(&mut self) {
         self.1 = 0;
     }
 
+    /// Check if flags contains a flag
+    pub const fn contains(&self, flag: WindowFlag) -> bool {
+        self.0 | flag.to_u64() > 0
+    }
+
+    /// Add a flag into flags
     pub fn push(&mut self, flag: WindowFlag) {
-        let _ = write!(self.0, "{}", flag);
+        self.0 |= flag.to_u64();
+    }
+
+    /// Remove a flag from flags
+    pub fn remove(&mut self, flag: WindowFlag) {
+        self.0 &= !(flag.to_u64());
     }
 }
 
 impl Display for WindowFlags {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Into<String> for WindowFlags {
-    fn into(self) -> String {
-        self.0
+        let mut i = 1;
+        while i <= WindowFlag::max_u64() {
+            let Some(flag) = WindowFlag::from_u64(i) else {
+                continue;
+            };
+            if self.contains(flag) {
+                write!(f, "{}", flag)?;
+            }
+            i *= 2;
+        }
+        Ok(())
     }
 }
 
@@ -81,25 +174,17 @@ impl Iterator for WindowFlags {
     type Item = WindowFlag;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let i = self.1;
-        if self.0.len() >= i {
-            return None;
+        while 1 << self.1 <= WindowFlag::max_u64() {
+            let r = self.0 & 1 << self.1;
+            self.1 += 1;
+            if r == 0 {
+                continue;
+            }
+            if let Some(flag) = WindowFlag::from_u64(r) {
+                return Some(flag);
+            }
         }
-        self.1 += 1;
-        match self.0.as_bytes()[i] {
-            b'a' => Some(WindowFlag::Async),
-            b'b' => Some(WindowFlag::Back),
-            b'f' => Some(WindowFlag::Front),
-            b'h' => Some(WindowFlag::Hidden),
-            b'l' => Some(WindowFlag::Borderless),
-            b'm' => Some(WindowFlag::Maximized),
-            b'M' => Some(WindowFlag::Fullscreen),
-            b'r' => Some(WindowFlag::Resizable),
-            b's' => Some(WindowFlag::Scalable),
-            b't' => Some(WindowFlag::Transparent),
-            b'u' => Some(WindowFlag::Unclosable),
-            _ => None,
-        }
+        return None;
     }
 }
 
@@ -135,7 +220,7 @@ impl Display for WindowDragKind {
 }
 
 impl WindowDragKind {
-    pub fn from_u8(val: i64) -> Option<Self> {
+    pub const fn from_u8(val: i64) -> Option<Self> {
         match val {
             0 => Some(WindowDragKind::None),
             1 => Some(WindowDragKind::Move),
@@ -146,7 +231,7 @@ impl WindowDragKind {
             _ => None,
         }
     }
-    pub fn to_u8(&self) -> i64 {
+    pub const fn to_u8(&self) -> i64 {
         match self {
             WindowDragKind::None => 0,
             WindowDragKind::Move => 1,
@@ -202,7 +287,7 @@ pub enum MediaKind {
 }
 
 impl MediaKind {
-    pub fn from_i64(val: i64) -> Self {
+    pub const fn from_i64(val: i64) -> Self {
         match val {
             1 => MediaKind::Text,
             2 => MediaKind::File,
@@ -211,7 +296,7 @@ impl MediaKind {
             _ => MediaKind::Any,
         }
     }
-    pub fn to_i64(&self) -> i64 {
+    pub const fn to_i64(&self) -> i64 {
         match self {
             MediaKind::Text => 1,
             MediaKind::File => 2,
@@ -276,7 +361,7 @@ pub enum ClipboardAction {
 }
 
 impl ClipboardAction {
-    pub fn from_u8(val: u8) -> Option<Self> {
+    pub const fn from_u8(val: u8) -> Option<Self> {
         match val {
             1 => Some(ClipboardAction::Copy),
             2 => Some(ClipboardAction::Cut),
@@ -284,7 +369,7 @@ impl ClipboardAction {
             _ => None,
         }
     }
-    pub fn to_u8(&self) -> u8 {
+    pub const fn to_u8(&self) -> u8 {
         match self {
             ClipboardAction::Copy => 1,
             ClipboardAction::Cut => 2,
@@ -302,7 +387,7 @@ pub enum DragAction {
 }
 
 impl DragAction {
-    pub fn from_u8(val: u8) -> Option<Self> {
+    pub const fn from_u8(val: u8) -> Option<Self> {
         match val {
             1 => Some(DragAction::Copy),
             2 => Some(DragAction::Move),
@@ -311,7 +396,7 @@ impl DragAction {
             _ => None,
         }
     }
-    pub fn to_u8(&self) -> u8 {
+    pub const fn to_u8(&self) -> u8 {
         match self {
             DragAction::Copy => 1,
             DragAction::Move => 2,
