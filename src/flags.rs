@@ -138,7 +138,7 @@ impl WindowFlags {
 
     /// Check if flags contains a flag
     pub const fn contains(&self, flag: WindowFlag) -> bool {
-        self.0 | flag.to_u64() > 0
+        self.0 & flag.to_u64() > 0
     }
 
     /// Add a flag into flags
@@ -182,7 +182,7 @@ impl Iterator for WindowFlagsIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         while 1 << self.1 <= WindowFlag::max_u64() {
-            let r = self.0 & 1 << self.1;
+            let r = self.0 & (1 << self.1);
             self.1 += 1;
             if r == 0 {
                 continue;
