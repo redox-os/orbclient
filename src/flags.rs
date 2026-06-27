@@ -102,8 +102,11 @@ impl Display for WindowFlag {
     }
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct WindowFlags(u64, u64);
+#[derive(Debug, Default, Clone, Copy)]
+pub struct WindowFlags(u64);
+
+#[derive(Debug, Clone)]
+pub struct WindowFlagsIter(u64, u64);
 
 impl WindowFlags {
     /// New flags from string
@@ -115,12 +118,12 @@ impl WindowFlags {
             };
             iflags |= ch.to_u64()
         }
-        Self(iflags, 0)
+        Self(iflags)
     }
 
     /// New flags from u64. Unknown constants will be saved as it is but not appear in the iterator.
     pub const fn from_u64(flags: u64) -> Self {
-        Self(flags, 0)
+        Self(flags)
     }
 
     /// Encode flags into u64
@@ -131,11 +134,6 @@ impl WindowFlags {
     /// Clear flags
     pub fn clear(&mut self) {
         self.0 = 0;
-    }
-
-    /// Reset the iterator
-    pub fn reset(&mut self) {
-        self.1 = 0;
     }
 
     /// Check if flags contains a flag
@@ -170,7 +168,16 @@ impl Display for WindowFlags {
     }
 }
 
-impl Iterator for WindowFlags {
+impl IntoIterator for WindowFlags {
+    type Item = WindowFlag;
+    type IntoIter = WindowFlagsIter;
+
+    fn into_iter(self) -> WindowFlagsIter {
+        WindowFlagsIter(self.0, 0)
+    }
+}
+
+impl Iterator for WindowFlagsIter {
     type Item = WindowFlag;
 
     fn next(&mut self) -> Option<Self::Item> {
