@@ -675,7 +675,7 @@ impl ClipboardEvent {
 
     pub fn from_event(event: Event) -> ClipboardEvent {
         ClipboardEvent {
-            kind: ClipboardAction::from_u8(event.a as u8).unwrap_or(ClipboardAction::Copy),
+            kind: ClipboardAction::try_from_u8(event.a as u8).unwrap_or(ClipboardAction::Copy),
             size: event.b as usize,
         }
     }
@@ -690,7 +690,7 @@ fn pack_dnd(kind: DragAction, size: usize, x: i32, y: i32) -> (i64, i64) {
 
 fn unpack_dnd(ev: Event) -> (DragAction, usize, i32, i32) {
     (
-        DragAction::from_u8((ev.a & 0xFF) as u8).unwrap_or(DragAction::Copy),
+        DragAction::try_from_u8((ev.a & 0xFF) as u8).unwrap_or(DragAction::Copy),
         (ev.a >> 8) as usize,
         ev.b as i32,
         (ev.b >> 32) as i32,

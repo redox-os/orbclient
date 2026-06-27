@@ -30,7 +30,7 @@ pub enum WindowFlag {
 }
 
 impl WindowFlag {
-    pub const fn from_u64(val: u64) -> Option<Self> {
+    pub const fn try_from_u64(val: u64) -> Option<Self> {
         let val = match val {
             0x0001 => WindowFlag::Async,
             0x0002 => WindowFlag::Back,
@@ -62,7 +62,7 @@ impl WindowFlag {
             WindowFlag::Scalable => 0x0400,
         }
     }
-    pub const fn from_char(val: u8) -> Option<Self> {
+    pub const fn try_from_byte(val: u8) -> Option<Self> {
         match val {
             b'a' => Some(WindowFlag::Async),
             b'b' => Some(WindowFlag::Back),
@@ -113,7 +113,7 @@ impl WindowFlags {
     pub fn new(flags: &str) -> Self {
         let mut iflags = 0;
         for c in flags.bytes() {
-            let Some(ch) = WindowFlag::from_char(c) else {
+            let Some(ch) = WindowFlag::try_from_byte(c) else {
                 continue;
             };
             iflags |= ch.to_u64()
@@ -156,7 +156,7 @@ impl Display for WindowFlags {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut i = 1;
         while i <= WindowFlag::max_u64() {
-            let Some(flag) = WindowFlag::from_u64(i) else {
+            let Some(flag) = WindowFlag::try_from_u64(i) else {
                 continue;
             };
             if self.contains(flag) {
@@ -187,7 +187,7 @@ impl Iterator for WindowFlagsIter {
             if r == 0 {
                 continue;
             }
-            if let Some(flag) = WindowFlag::from_u64(r) {
+            if let Some(flag) = WindowFlag::try_from_u64(r) {
                 return Some(flag);
             }
         }
@@ -368,7 +368,7 @@ pub enum ClipboardAction {
 }
 
 impl ClipboardAction {
-    pub const fn from_u8(val: u8) -> Option<Self> {
+    pub const fn try_from_u8(val: u8) -> Option<Self> {
         match val {
             1 => Some(ClipboardAction::Copy),
             2 => Some(ClipboardAction::Cut),
@@ -394,7 +394,7 @@ pub enum DragAction {
 }
 
 impl DragAction {
-    pub const fn from_u8(val: u8) -> Option<Self> {
+    pub const fn try_from_u8(val: u8) -> Option<Self> {
         match val {
             1 => Some(DragAction::Copy),
             2 => Some(DragAction::Move),
