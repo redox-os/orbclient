@@ -118,7 +118,7 @@ impl Renderer for Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
-        Window::new_flags(x, y, w, h, title, &[])
+        Window::new_flags(x, y, w, h, title, WindowFlags::default())
     }
 
     /// Create a new window with flags
@@ -128,27 +128,13 @@ impl Window {
         w: u32,
         h: u32,
         title: &str,
-        flags: &[WindowFlag],
+        flags: WindowFlags,
     ) -> Option<Self> {
-        let mut flag_str = WindowFlags::default();
-
-        let mut window_async = false;
-        let mut resizable = false;
-        for &flag in flags.iter() {
-            flag_str.push(flag);
-            match flag {
-                WindowFlag::Async => {
-                    window_async = true;
-                }
-                WindowFlag::Resizable => {
-                    resizable = true;
-                }
-                _ => {}
-            }
-        }
+        let window_async = flags.contains(WindowFlag::Async);
+        let resizable = flags.contains(WindowFlag::Resizable);
 
         if let Ok(file) = File::open(&format!(
-            "{}/{flag_str}/{x}/{y}/{w}/{h}/{title}",
+            "{}/{flags}/{x}/{y}/{w}/{h}/{title}",
             env::var("ORBITAL_DISPLAY").unwrap_or("/scheme/orbital".to_owned()),
         )) {
             let mut window = Window {

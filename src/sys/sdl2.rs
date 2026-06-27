@@ -9,12 +9,12 @@ use std::{mem, ptr, slice};
 
 use crate::color::Color;
 use crate::renderer::Renderer;
-use crate::DragAction;
 use crate::MediaKind;
 use crate::Mode;
 use crate::WindowDragKind;
 use crate::WindowFlag;
 use crate::{event::*, SurfaceFlag};
+use crate::{DragAction, WindowFlags};
 
 static SDL_USAGES: AtomicUsize = AtomicUsize::new(0);
 /// SDL2 Context
@@ -179,7 +179,7 @@ impl Renderer for Window {
 impl Window {
     /// Create a new window
     pub fn new(x: i32, y: i32, w: u32, h: u32, title: &str) -> Option<Self> {
-        Window::new_flags(x, y, w, h, title, &[])
+        Window::new_flags(x, y, w, h, title, WindowFlags::default())
     }
 
     /// Create a new window with flags
@@ -189,41 +189,26 @@ impl Window {
         w: u32,
         h: u32,
         title: &str,
-        flags: &[WindowFlag],
+        flags: WindowFlags,
     ) -> Option<Self> {
         //Insure that init has been called
         unsafe { init() };
 
-        let mut window_async = false;
+        let window_async = flags.contains(WindowFlag::Async);
         //TODO: Use z-order
-        let mut _back = false;
-        let mut front = false;
-        let mut borderless = false;
-        let mut resizable = false;
-        let mut maximized = false;
-        let mut fullscreen = false;
-        let mut hidden = false;
+        let _back = flags.contains(WindowFlag::Back);
+        let front = flags.contains(WindowFlag::Front);
+        let borderless = flags.contains(WindowFlag::Borderless);
+        let resizable = flags.contains(WindowFlag::Resizable);
+        let maximized = flags.contains(WindowFlag::Maximized);
+        let fullscreen = flags.contains(WindowFlag::Fullscreen);
+        let hidden = flags.contains(WindowFlag::Hidden);
         //TODO: Transparent
-        let mut _transparent = false;
+        let _transparent = flags.contains(WindowFlag::Transparent);
         //TODO: Scalable
-        let mut _scalable = false;
+        let _scalable = flags.contains(WindowFlag::Scalable);
         //TODO: Hide exit button
-        let mut _unclosable = false;
-        for &flag in flags.iter() {
-            match flag {
-                WindowFlag::Async => window_async = true,
-                WindowFlag::Back => _back = true,
-                WindowFlag::Front => front = true,
-                WindowFlag::Borderless => borderless = true,
-                WindowFlag::Maximized => maximized = true,
-                WindowFlag::Fullscreen => fullscreen = true,
-                WindowFlag::Resizable => resizable = true,
-                WindowFlag::Hidden => hidden = true,
-                WindowFlag::Scalable => _scalable = true,
-                WindowFlag::Transparent => _transparent = true,
-                WindowFlag::Unclosable => _unclosable = true,
-            }
-        }
+        let _unclosable = flags.contains(WindowFlag::Unclosable);
 
         let mut builder = unsafe { &*VIDEO_CTX }.window(title, w, h);
 
