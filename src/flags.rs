@@ -227,7 +227,7 @@ impl Display for WindowDragKind {
 }
 
 impl WindowDragKind {
-    pub const fn from_u8(val: i64) -> Option<Self> {
+    pub const fn try_from_u8(val: i64) -> Option<Self> {
         match val {
             0 => Some(WindowDragKind::None),
             1 => Some(WindowDragKind::Move),
