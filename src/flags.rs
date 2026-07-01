@@ -109,14 +109,15 @@ pub struct WindowFlags(u64);
 pub struct WindowFlagsIter(u64, u64);
 
 impl WindowFlags {
-    /// New flags from string
-    pub fn new(flags: &str) -> Self {
+    /// New flags from array of WindowFlag
+    pub const fn new(flags: &[WindowFlag]) -> Self {
         let mut iflags = 0;
-        for c in flags.bytes() {
-            let Some(ch) = WindowFlag::try_from_byte(c) else {
-                continue;
-            };
-            iflags |= ch.to_u64()
+        let mut i = 0;
+        // Using while loop because of `const fn`
+        while i < flags.len() {
+            let flag = flags[i];
+            i += 1;
+            iflags |= flag.to_u64()
         }
         Self(iflags)
     }
@@ -149,6 +150,28 @@ impl WindowFlags {
     /// Remove a flag from flags
     pub fn remove(&mut self, flag: WindowFlag) {
         self.0 &= !(flag.to_u64());
+    }
+}
+
+impl FromStr for WindowFlags {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut iflags = 0;
+        for (i, c) in s.bytes().enumerate() {
+            let Some(ch) = WindowFlag::try_from_byte(c) else {
+                // return remaining flags
+                return Err(s.get(i..).unwrap_or("").into());
+            };
+            iflags |= ch.to_u64()
+        }
+        Ok(Self(iflags))
+    }
+}
+
+impl<'a, const N: usize> From<&[WindowFlag; N]> for WindowFlags {
+    fn from(value: &[WindowFlag; N]) -> Self {
+        Self::new(value)
     }
 }
 

@@ -183,17 +183,18 @@ impl Window {
     }
 
     /// Create a new window with flags
-    pub fn new_flags(
+    pub fn new_flags<F: Into<WindowFlags>>(
         x: i32,
         y: i32,
         w: u32,
         h: u32,
         title: &str,
-        flags: WindowFlags,
+        flags: F,
     ) -> Option<Self> {
         //Insure that init has been called
         unsafe { init() };
 
+        let flags = flags.into();
         let window_async = flags.contains(WindowFlag::Async);
         //TODO: Use z-order
         let _back = flags.contains(WindowFlag::Back);
