@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 
-use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window};
+use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window, WindowFlag};
 
 fn main() {
     let (width, height) = orbclient::get_display_size().unwrap();
 
-    let mut window = Window::new(
+    let mut window = Window::new_flags(
         (width as i32) / 4,
         (height as i32) / 4,
         width / 2,
         height / 2,
         "TITLE",
+        &[WindowFlag::Transparent],
     )
     .unwrap();
 
