@@ -104,6 +104,35 @@ impl<'a> ImageRoi<'a> {
     pub fn cells(&self) -> impl Iterator<Item = &Color> {
         self.rows().flatten()
     }
+
+    /// Draw the ROI image on a renderer
+    pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, mut y: i32) {
+        let mut offset = self.top * self.stride + self.left;
+        let last_offset = cmp::min(
+            (self.top + self.height) * self.stride + self.left,
+            self.data.len(),
+        );
+        if renderer.width() as usize == self.stride
+            && self.left == 0
+            && x == 0
+            && self.width == self.stride
+        {
+            renderer.image(
+                x,
+                y,
+                renderer.width(),
+                ((last_offset - offset) / self.stride) as u32,
+                &self.data[offset..],
+            );
+            return;
+        }
+        while offset < last_offset {
+            let next_offset = offset + self.stride;
+            renderer.image(x, y, self.width as u32, 1, &self.data[offset..]);
+            offset = next_offset;
+            y += 1;
+        }
+    }
 }
 
 impl<'a> Display for ImageRoi<'a> {
@@ -240,6 +269,20 @@ impl<'a> Display for ImageRoiMut<'a> {
         )
     }
 }
+
+impl<'a> From<ImageRoiMut<'a>> for ImageRoi<'a> {
+    fn from(value: ImageRoiMut<'a>) -> Self {
+        Self {
+            height: value.height,
+            top: value.top,
+            left: value.left,
+            width: value.width,
+            stride: value.stride,
+            data: value.data,
+        }
+    }
+}
+
 /// A structure to borrow an existing image in software memory.
 pub struct ImageRef<'a> {
     w: u32,
@@ -268,6 +311,7 @@ impl<'a> ImageRef<'a> {
         }
     }
 
+    /// Read a specified rect of the image
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
             width: rect.width() as usize,
@@ -279,15 +323,21 @@ impl<'a> ImageRef<'a> {
         }
     }
 
-    pub fn roi_mut(self, rect: &Rect) -> ImageRoiMut<'a> {
+    /// Read or write a specified rect of the image
+    pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
             width: rect.width() as usize,
             height: rect.height() as usize,
             left: rect.left() as usize,
             top: rect.top() as usize,
             stride: self.w as usize,
-            data: self.data,
+            data: &mut self.data,
         }
+    }
+
+    /// Draw the whole image on a renderer.
+    pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, y: i32) {
+        renderer.image(x, y, self.w, self.h, &self.data);
     }
 }
 
@@ -474,6 +524,15 @@ impl Image {
             data: &mut self.data,
         }
     }
+
+    pub fn data_mut(&mut self) -> &mut [Color] {
+        &mut self.data
+    }
+
+    /// Draw the whole image on a renderer.
+    pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, y: i32) {
+        renderer.image(x, y, self.w, self.h, &self.data);
+    }
 }
 
 impl Renderer for Image {
@@ -557,6 +616,7 @@ impl ImageAligned {
         self.h
     }
 
+    /// Read a specified rect of the image
     pub fn roi(&self, rect: &Rect) -> ImageRoi<'_> {
         ImageRoi {
             width: rect.width() as usize,
@@ -568,6 +628,7 @@ impl ImageAligned {
         }
     }
 
+    /// Read or write a specified rect of the image
     pub fn roi_mut(&mut self, rect: &Rect) -> ImageRoiMut<'_> {
         ImageRoiMut {
             width: rect.width() as usize,
@@ -581,5 +642,10 @@ impl ImageAligned {
 
     pub fn data_mut(&mut self) -> &mut [Color] {
         &mut self.data
+    }
+
+    /// Draw the whole image on a renderer.
+    pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, y: i32) {
+        renderer.image(x, y, self.w, self.h, &self.data);
     }
 }
