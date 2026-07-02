@@ -335,6 +335,18 @@ impl<'a> ImageRef<'a> {
         }
     }
 
+    /// Convert into a [`ImageRoiMut`] with a specified rect of the image
+    pub fn into_roi_mut(self, rect: Rect) -> ImageRoiMut<'a> {
+        ImageRoiMut {
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: self.w as usize,
+            data: self.data,
+        }
+    }
+
     /// Draw the whole image on a renderer.
     pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, y: i32) {
         renderer.image(x, y, self.w, self.h, &self.data);
@@ -392,6 +404,11 @@ pub struct Image {
 impl Image {
     pub fn new(width: u32, height: u32) -> Self {
         Self::from_color(width, height, Color::rgb(0, 0, 0))
+    }
+
+    /// An empty image with zero size
+    pub fn empty() -> Self {
+        Self::new(0, 0)
     }
 
     pub fn from_color(width: u32, height: u32, color: Color) -> Self {
