@@ -191,22 +191,17 @@ impl<'a> ImageRoiMut<'a> {
     pub fn blend(&'a mut self, other: &ImageRoi) {
         for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
             for (old, new) in self_row.iter_mut().zip(other_row.iter()) {
-                let alpha = (new.data >> 24) & 0xFF;
-                if alpha >= 255 {
-                    old.data = new.data;
-                } else if alpha > 0 {
-                    let n_r = (((new.data >> 16) & 0xFF) * alpha) >> 8;
-                    let n_g = (((new.data >> 8) & 0xFF) * alpha) >> 8;
-                    let n_b = ((new.data & 0xFF) * alpha) >> 8;
+                let new_data = new.data;
+                let old_data = old.data;
+                let alpha = (new_data >> 24) & 0xFF;
+                let n_alpha = 255 - alpha;
 
-                    let n_alpha = 255 - alpha;
+                let rb =
+                    ((n_alpha * (old_data & 0x00FF00FF)) + (alpha * (new_data & 0x00FF00FF))) >> 8;
+                let ag = (n_alpha * ((old_data & 0xFF00FF00) >> 8))
+                    + (alpha * (0x01000000 | ((new_data & 0x0000FF00) >> 8)));
 
-                    let o_r = (((old.data >> 16) & 0xFF) * n_alpha) >> 8;
-                    let o_g = (((old.data >> 8) & 0xFF) * n_alpha) >> 8;
-                    let o_b = ((old.data & 0xFF) * n_alpha) >> 8;
-
-                    old.data = ((o_r << 16) | (o_g << 8) | o_b) + ((n_r << 16) | (n_g << 8) | n_b);
-                }
+                old.data = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
             }
         }
     }
@@ -215,9 +210,11 @@ impl<'a> ImageRoiMut<'a> {
     pub fn blit_mask(&'a mut self, other: &ImageRoi) {
         for (self_row, other_row) in self.rows_mut().zip(other.rows()) {
             for (old, new) in self_row.iter_mut().zip(other_row.iter()) {
-                if new.data >> 24 >= 128 {
-                    old.data = new.data;
-                }
+                old.data = if new.data >> 24 >= 128 {
+                    new.data
+                } else {
+                    old.data
+                };
             }
         }
     }
