@@ -511,49 +511,56 @@ pub trait Renderer {
         let w = w as usize;
         let h = h as usize;
         let width = self.width() as usize;
-        let start_x = start_x as usize;
-        let start_y = start_y as usize;
+        let height = self.height() as usize;
 
         //simply return if image is outside of window
-        if start_x >= width || start_y >= self.height() as usize {
+        if start_x < 0 || start_y < 0 {
             return;
         }
+        let start_x = start_x as usize;
+        let start_y = start_y as usize;
+        if start_x >= width || start_y >= height {
+            return;
+        }
+
+        //check boundaries
+        let active_w = if start_x + w > width {
+            width - start_x
+        } else {
+            w
+        };
+
         let window_data = self.data_mut();
         let offset = start_y * width + start_x;
 
         //copy image slices to window line by line
         for l in 0..h {
-            let start = offset + l * width;
-            let mut stop = start + w;
-            let begin = l * w;
-            let end = begin + w;
-
-            //check boundaries
-            if start_x + w > width {
-                stop = (start_y + l + 1) * width;
+            if start_y + l >= height {
+                break;
             }
-            let mut k = 0;
-            for i in begin..end {
-                if i < image_data.len() {
-                    let new = image_data[i].data;
-                    let alpha = (new >> 24) & 0xFF;
-                    if alpha > 0 && (start + k) < window_data.len() && (start + k) < stop {
-                        let old = &mut window_data[start + k].data;
-                        if alpha >= 255 {
-                            *old = new;
-                        } else {
-                            let n_alpha = 255 - alpha;
-                            let rb = ((n_alpha * (*old & 0x00FF00FF))
-                                + (alpha * (new & 0x00FF00FF)))
-                                >> 8;
-                            let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8))
-                                + (alpha * (0x01000000 | ((new & 0x0000FF00) >> 8)));
 
-                            *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
-                        }
-                    }
-                    k += 1;
-                }
+            let win_start = offset + l * width;
+            let img_start = l * w;
+            let row_w = active_w.min(image_data.len() - img_start);
+            let Some(target_slice) = window_data.get_mut(win_start..win_start + row_w) else {
+                break;
+            };
+            let Some(source_slice) = image_data.get(img_start..img_start + row_w) else {
+                break;
+            };
+
+            for (old_pixel, new_pixel) in target_slice.iter_mut().zip(source_slice.iter()) {
+                let new = new_pixel.data;
+                let old = old_pixel.data;
+
+                let alpha = (new >> 24) & 0xFF;
+                let n_alpha = 255 - alpha;
+
+                let rb = ((n_alpha * (old & 0x00FF00FF)) + (alpha * (new & 0x00FF00FF))) >> 8;
+                let ag = (n_alpha * ((old & 0xFF00FF00) >> 8))
+                    + (alpha * (0x01000000 | ((new & 0x0000FF00) >> 8)));
+
+                old_pixel.data = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
             }
         }
     }
