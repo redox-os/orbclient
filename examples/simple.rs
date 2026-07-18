@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+use std::time::Instant;
+
 use orbclient::{Color, EventOption, GraphicsPath, Mode, Renderer, Window, WindowFlag};
 
 fn main() {
@@ -17,7 +19,8 @@ fn main() {
 
     let (win_w, win_h) = (width / 2, height / 2);
 
-    // top left -> bottom rigth
+    let start = Instant::now();
+    // top left -> bottom right
     window.linear_gradient(
         0,
         0,
@@ -127,6 +130,11 @@ fn main() {
 
     //Draw a shadow around a box
     window.box_shadow(170, 100, 150, 150, 0, 0, 20, Color::rgba(0, 0, 0, 255));
+
+    println!(
+        "Drawing took {}ms",
+        (start.elapsed().as_micros() / 100) as f32 / 10.0
+    );
 
     window.sync();
 
