@@ -587,14 +587,14 @@ impl Renderer for Image {
     }
 }
 
-#[cfg(target_os = "redox")]
+#[cfg(feature = "std")]
 pub struct ImageAligned {
     w: u32,
     h: u32,
     data: &'static mut [Color],
 }
 
-#[cfg(target_os = "redox")]
+#[cfg(feature = "std")]
 impl Drop for ImageAligned {
     fn drop(&mut self) {
         unsafe {
@@ -603,7 +603,7 @@ impl Drop for ImageAligned {
     }
 }
 
-#[cfg(target_os = "redox")]
+#[cfg(feature = "std")]
 impl ImageAligned {
     pub fn new(w: u32, h: u32, align: usize) -> ImageAligned {
         let size = (w * h) as usize;
