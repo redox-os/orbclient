@@ -17,8 +17,16 @@ use crate::renderer::Renderer;
 use crate::{MediaKind, Mode, SurfaceFlag, WindowFlags};
 use crate::{WindowDragKind, WindowFlag};
 
+fn is_display_path(s: &String) -> bool {
+    s.starts_with("/scheme/") && s.split('/').skip(2).next().is_some_and(|s| !s.is_empty())
+}
+
 pub fn get_display_size() -> Result<(u32, u32), String> {
-    let display_path = env::var("DISPLAY").unwrap_or("/scheme/orbital/99.0".into());
+    let display_path = env::var("ORBITAL_DISPLAY")
+        .ok()
+        .filter(is_display_path)
+        .or_else(|| env::var("DISPLAY").ok().filter(is_display_path))
+        .unwrap_or_else(|| "/scheme/orbital/99.0".into());
     match File::open(&display_path) {
         Ok(display) => {
             let mut buf: [u8; 4096] = [0; 4096];
