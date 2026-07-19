@@ -10,6 +10,9 @@ pub struct Color {
 }
 
 impl Color {
+    /// A black color, with solid alpha value
+    pub const BLACK: Color = Self::rgb(0, 0, 0);
+
     /// Create a new color from RGB
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Color {

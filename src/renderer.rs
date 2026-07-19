@@ -304,7 +304,7 @@ pub trait Renderer {
 
     /// Sets the whole window to black
     fn clear(&mut self) {
-        self.set(Color::rgb(0, 0, 0));
+        self.set(Color::BLACK);
     }
 
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
@@ -322,10 +322,9 @@ pub trait Renderer {
         let len = cmp::max(start_x, cmp::min(self_w as i32, x + w as i32)) - start_x;
 
         let alpha = (color.data >> 24) & 0xFF;
-        //if alpha > 0 {
+        let data = self.data_mut();
+        let data_ptr = data.as_mut_ptr();
         if alpha >= 255 || replace {
-            let data = self.data_mut();
-            let data_ptr = data.as_mut_ptr();
             for y in start_y..end_y {
                 let start = (y * self_w as i32 + start_x) as isize;
                 let end = start + len as isize;
@@ -336,13 +335,25 @@ pub trait Renderer {
                 }
             }
         } else {
+            let n_alpha = 255 - alpha;
+            let new = color.data;
+
             for y in start_y..end_y {
-                for x in start_x..start_x + len {
-                    self.pixel(x, y, color);
+                let start = (y * self_w as i32 + start_x) as isize;
+                let end = start + len as isize;
+                for i in start..end {
+                    unsafe {
+                        let old = (data_ptr as *mut u32).offset(i);
+                        let rb =
+                            ((n_alpha * (*old & 0x00FF00FF)) + (alpha * (new & 0x00FF00FF))) >> 8;
+                        let ag = (n_alpha * ((*old & 0xFF00FF00) >> 8))
+                            + (alpha * (0x01000000 | ((new & 0x0000FF00) >> 8)));
+
+                        *old = (rb & 0x00FF00FF) | (ag & 0xFF00FF00);
+                    }
                 }
             }
         }
-        //}
     }
 
     #[cfg(feature = "std")]
