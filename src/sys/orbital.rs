@@ -24,7 +24,7 @@ fn is_display_path(s: &String) -> bool {
 pub fn get_display_size() -> Result<(u32, u32), String> {
     let display_path = env::var("ORBITAL_DISPLAY")
         .ok()
-        .filter(is_display_path)
+        .map(|display| format!("{display}/99.0"))
         .or_else(|| env::var("DISPLAY").ok().filter(is_display_path))
         .unwrap_or_else(|| "/scheme/orbital/99.0".into());
     match File::open(&display_path) {
