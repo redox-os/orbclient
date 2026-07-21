@@ -31,7 +31,7 @@ raw-window-handle = { version = "0.5.2", optional = true }
 libredox = "0.1"
 
 [features]
-default = ["std", "sdl", "unifont", "image"]
+default = ["std", "sdl", "unifont"]
 image = ["std", "dep:image", "dep:fast_image_resize"]
 std = ["dep:libc"]
 sdl = ["dep:sdl2"]
