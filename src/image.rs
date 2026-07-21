@@ -8,11 +8,11 @@ use core::{cmp, mem, ptr};
 #[cfg(not(feature = "std"))]
 use alloc::{boxed::Box, vec};
 #[cfg(feature = "image")]
+pub use fast_image_resize::FilterType as ResizeType;
+#[cfg(feature = "image")]
 pub use image::ImageError;
 #[cfg(feature = "image")]
 pub use image::ImageFormat;
-#[cfg(feature = "image")]
-pub use resize::Type as ResizeType;
 #[cfg(feature = "image")]
 use std::path::Path;
 
@@ -448,36 +448,48 @@ impl Image {
     fn from_dynamic_image(
         d_img: image::ImageResult<image::DynamicImage>,
     ) -> Result<Self, ImageError> {
-        let img = d_img?.to_rgba();
+        use image::error::{ParameterError, ParameterErrorKind};
+
+        let img = d_img?.to_rgba8();
         let data: Vec<_> = img
             .pixels()
-            .map(|p| Color::rgba(p.data[0], p.data[1], p.data[2], p.data[3]))
+            .map(|p| Color::rgba(p[0], p[1], p[2], p[3]))
             .collect();
-        Self::from_data(img.width(), img.height(), data.into_boxed_slice())
-            .ok_or(ImageError::DimensionError)
+        Self::from_data(img.width(), img.height(), data.into_boxed_slice()).ok_or(
+            ImageError::Parameter(ParameterError::from_kind(
+                ParameterErrorKind::DimensionMismatch,
+            )),
+        )
     }
 
     #[cfg(feature = "image")]
     pub fn resize(&self, w: u32, h: u32, resize_type: ResizeType) -> Self {
+        use fast_image_resize::{images::Image, PixelType, ResizeAlg, ResizeOptions};
+
         let mut dst_color = vec![Color { data: 0 }; w as usize * h as usize].into_boxed_slice();
 
         let src = unsafe {
-            core::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * 4)
+            // TODO: constness
+            core::slice::from_raw_parts_mut(self.data.as_ptr() as *mut u8, self.data.len() * 4)
         };
+        let src = Image::from_slice_u8(self.w, self.h, src, PixelType::U8x4).unwrap();
 
-        let mut dst = unsafe {
+        let dst = unsafe {
             core::slice::from_raw_parts_mut(dst_color.as_mut_ptr() as *mut u8, dst_color.len() * 4)
         };
+        let mut dst = Image::from_slice_u8(w, h, dst, PixelType::U8x4).unwrap();
 
-        let mut resizer = resize::new(
-            self.w as usize,
-            self.h as usize,
-            w as usize,
-            h as usize,
-            resize::Pixel::RGBA,
-            resize_type,
-        );
-        resizer.resize(&src, &mut dst);
+        let mut resizer = fast_image_resize::Resizer::new();
+        resizer
+            .resize(
+                &src,
+                &mut dst,
+                Some(&ResizeOptions {
+                    algorithm: ResizeAlg::Convolution(resize_type),
+                    ..Default::default()
+                }),
+            )
+            .unwrap();
 
         Self::from_data_unchecked(w, h, dst_color)
     }

@@ -227,6 +227,7 @@ pub enum Mode {
     Overwrite, //Replace
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum WindowDragKind {
     None,
     Move,
