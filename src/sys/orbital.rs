@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::cell::Cell;
-use std::ffi::CString;
+use std::ffi::{c_char, CString};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
@@ -598,12 +598,18 @@ impl Surface {
         let pid = redox::getpid().unwrap();
         let counter = SHM_COUNTER.fetch_add(1, Ordering::Relaxed);
         let shm_name = CString::new(format!("surface_{}_{}", pid, counter)).unwrap();
-        let shm = unsafe { libc::shm_open(shm_name.as_ptr(), libc::O_CREAT | libc::O_RDWR, 0o700) };
+        let shm = unsafe {
+            libc::shm_open(
+                shm_name.as_ptr() as *const c_char,
+                libc::O_CREAT | libc::O_RDWR,
+                0o700,
+            )
+        };
         if shm == -1 {
             return None;
         }
         // drop as soon as file closed
-        unsafe { libc::shm_unlink(shm_name.as_ptr()) };
+        unsafe { libc::shm_unlink(shm_name.as_ptr() as *const c_char) };
 
         let mut surface = Surface {
             w,
