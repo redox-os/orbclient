@@ -8,6 +8,9 @@ use crate::blur;
 use crate::color::Color;
 use crate::graphicspath::GraphicsPath;
 use crate::graphicspath::PointType;
+use crate::image::ImageRoi;
+use crate::image::ImageRoiMut;
+use crate::rect::Rect;
 use crate::Mode;
 
 /// The trait to allow rendering code to be placed.
@@ -36,6 +39,20 @@ pub trait Renderer {
 
     /// Set/get drawing mode
     fn mode(&self) -> &Cell<Mode>;
+
+    fn roi<'a>(&'a self, rect: &Rect) -> ImageRoi<'a>
+    where
+        Self: Sized,
+    {
+        ImageRoi::from_renderer(self, rect)
+    }
+
+    fn roi_mut<'a>(&'a mut self, rect: &Rect) -> ImageRoiMut<'a>
+    where
+        Self: Sized,
+    {
+        ImageRoiMut::from_renderer(self, rect)
+    }
 
     ///Draw a pixel
     //faster pixel implementation (multiplexing)
@@ -305,6 +322,12 @@ pub trait Renderer {
     /// Sets the whole window to black
     fn clear(&mut self) {
         self.set(Color::BLACK);
+    }
+
+    /// Draw a solid rectangle
+    fn solid_rect(&mut self, rect: &Rect, color: Color) {
+        let (x, y, w, h) = (rect.left(), rect.top(), rect.width(), rect.height());
+        self.rect(x, y, w, h, color);
     }
 
     fn rect(&mut self, x: i32, y: i32, w: u32, h: u32, color: Color) {
