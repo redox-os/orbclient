@@ -89,6 +89,17 @@ pub struct ImageRoi<'a> {
 }
 
 impl<'a> ImageRoi<'a> {
+    pub fn from_renderer(renderer: &'a impl Renderer, rect: &Rect) -> Self {
+        ImageRoi {
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: renderer.width() as usize,
+            data: renderer.data(),
+        }
+    }
+
     pub fn rows(&'a self) -> ImageRoiRows<'a> {
         ImageRoiRows {
             height: self.height,
@@ -163,6 +174,17 @@ pub struct ImageRoiMut<'a> {
 }
 
 impl<'a> ImageRoiMut<'a> {
+    pub fn from_renderer(renderer: &'a mut impl Renderer, rect: &Rect) -> Self {
+        ImageRoiMut {
+            width: rect.width() as usize,
+            height: rect.height() as usize,
+            left: rect.left() as usize,
+            top: rect.top() as usize,
+            stride: renderer.width() as usize,
+            data: renderer.data_mut(),
+        }
+    }
+
     pub fn rows(&'a self) -> ImageRoiRows<'a> {
         ImageRoiRows {
             height: self.height,
@@ -604,6 +626,7 @@ pub struct ImageAligned {
     w: u32,
     h: u32,
     data: &'static mut [Color],
+    mode: Cell<Mode>,
 }
 
 #[cfg(feature = "std")]
@@ -622,6 +645,7 @@ impl ImageAligned {
         let size_bytes = size * mem::size_of::<Color>();
         let size_alignments = (size_bytes + align - 1) / align;
         let size_aligned = size_alignments * align;
+        let mode = Cell::new(Mode::Blend);
         let data;
         unsafe {
             let ptr = libc::memalign(align, size_aligned);
@@ -631,7 +655,7 @@ impl ImageAligned {
                 size_aligned / mem::size_of::<Color>(),
             );
         }
-        ImageAligned { w, h, data }
+        ImageAligned { w, h, data, mode }
     }
 
     pub fn width(&self) -> u32 {
@@ -673,5 +697,40 @@ impl ImageAligned {
     /// Draw the whole image on a renderer.
     pub fn draw<R: Renderer>(&self, renderer: &mut R, x: i32, y: i32) {
         renderer.image(x, y, self.w, self.h, &self.data);
+    }
+}
+
+#[cfg(feature = "std")]
+impl Renderer for ImageAligned {
+    fn width(&self) -> u32 {
+        self.w
+    }
+
+    fn height(&self) -> u32 {
+        self.h
+    }
+
+    fn data(&self) -> &[Color] {
+        self.data
+    }
+
+    fn data_mut(&mut self) -> &mut [Color] {
+        self.data
+    }
+
+    fn sync(&mut self) -> bool {
+        true
+    }
+
+    fn update(&mut self) -> bool {
+        true
+    }
+
+    fn update_rects(&mut self, _rects: &[(i32, i32, u32, u32)]) -> bool {
+        true
+    }
+
+    fn mode(&self) -> &Cell<Mode> {
+        &self.mode
     }
 }
