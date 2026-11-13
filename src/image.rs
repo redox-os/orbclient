@@ -643,17 +643,13 @@ impl ImageAligned {
     pub fn new(w: u32, h: u32, align: usize) -> ImageAligned {
         let size = (w * h) as usize;
         let size_bytes = size * mem::size_of::<Color>();
-        let size_alignments = (size_bytes + align - 1) / align;
-        let size_aligned = size_alignments * align;
+        let size_aligned = size_bytes.next_multiple_of(align);
         let mode = Cell::new(Mode::Blend);
         let data;
         unsafe {
             let ptr = libc::memalign(align, size_aligned);
             libc::memset(ptr, 0, size_aligned);
-            data = core::slice::from_raw_parts_mut(
-                ptr as *mut Color,
-                size_aligned / mem::size_of::<Color>(),
-            );
+            data = core::slice::from_raw_parts_mut(ptr as *mut Color, size);
         }
         ImageAligned { w, h, data, mode }
     }

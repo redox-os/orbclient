@@ -453,11 +453,12 @@ impl Window {
         self.unmap();
 
         let size = (self.w * self.h) as usize;
+        let size_aligned = (size * mem::size_of::<Color>()).next_multiple_of(4096);
         let fd = self.file().as_raw_fd() as usize;
         let address = redox::mmap(redox::MmapArgs {
             fd,
             offset: 0,
-            length: size * mem::size_of::<Color>(),
+            length: size_aligned,
             flags: flag::MAP_SHARED,
             prot: flag::PROT_READ | flag::PROT_WRITE,
             addr: core::ptr::null_mut(),
@@ -469,11 +470,9 @@ impl Window {
 
     unsafe fn unmap(&mut self) {
         if let Some(data) = self.data_opt.take() {
-            redox::munmap(
-                data.as_mut_ptr().cast(),
-                data.len() * mem::size_of::<Color>(),
-            )
-            .expect("orbclient: failed to unmap memory");
+            let size_aligned = (data.len() * mem::size_of::<Color>()).next_multiple_of(4096);
+            redox::munmap(data.as_mut_ptr().cast(), size_aligned)
+                .expect("orbclient: failed to unmap memory");
         }
     }
 }
