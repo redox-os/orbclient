@@ -239,6 +239,9 @@ pub const K_COMMA: u8 = 0x33;
 pub const K_PERIOD: u8 = 0x34;
 /// Slash key
 pub const K_SLASH: u8 = 0x35;
+/// Extra key immediately to the left of Right Shift on ABNT2 and JIS keyboards
+/// (`/ ?` on ABNT2, `\ ろ` on JIS).
+pub const K_INTL_RO: u8 = 0x60;
 /// Backspace key
 pub const K_BKSP: u8 = 0x0E;
 /// Space key
